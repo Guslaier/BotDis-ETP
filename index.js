@@ -61,18 +61,11 @@ const kazagumo = new QueueManager(client);
 // Event เมื่อกำลังเตรียมโหลดเพลงถัดไป
 kazagumo.on("playerPrepare", async (player, track) => {
     if (!player || player._destroyed || !player.connection) return;
-    if (!player.textId) return;
-    const channel = client.channels.cache.get(player.textId);
-    if (!channel) return;
+    if (!player.nowPlayingMessage) return;
 
     try {
-        const prepCard = createPreparingCard(player, track, 'กำลังเตรียมสตรีมเสียง...');
-        if (player.nowPlayingMessage) {
-            await player.nowPlayingMessage.edit(prepCard).catch(() => {});
-            return;
-        }
-        const msg = await channel.send(prepCard).catch(() => {});
-        if (msg) player.nowPlayingMessage = msg;
+        const prepCard = createNowPlayingCard(player, track, { isPreparing: true, statusText: 'กำลังเตรียมสตรีมเสียง...' });
+        await player.nowPlayingMessage.edit(prepCard).catch(() => {});
     } catch {}
 });
 
@@ -206,7 +199,7 @@ client.on('interactionCreate', async interaction => {
         if (!customId.startsWith('music_') && !customId.startsWith('vol_')) return;
 
         const player = kazagumo.players.get(interaction.guildId);
-        if (!player || !player.playing || !player.queue.current) {
+        if (!player || (!player.playing && !player._starting && !player._actionDebounceTimer) || !player.queue.current) {
             if (customId.startsWith('music_')) {
                 try {
                     await interaction.message.delete();
@@ -224,17 +217,9 @@ client.on('interactionCreate', async interaction => {
             });
         }
 
-        // Stale card check: delete old lingering cards from previous tracks
-        if (customId.startsWith('music_') && player.nowPlayingMessage && interaction.message.id !== player.nowPlayingMessage.id) {
-            try {
-                await interaction.message.delete();
-            } catch {
-                await interaction.message.edit({ components: [] }).catch(() => {});
-            }
-            return interaction.reply({
-                content: i18n.t(interaction.guildId, 'STALE_CARD_REMOVED'),
-                flags: MessageFlags.Ephemeral
-            }).catch(() => {});
+        // Always bind interaction message as the active now playing card
+        if (customId.startsWith('music_')) {
+            player.nowPlayingMessage = interaction.message;
         }
 
         const voiceChannel = interaction.member?.voice?.channel;
