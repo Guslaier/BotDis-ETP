@@ -786,7 +786,7 @@ class AdminServer {
 
             if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/drain') && req.method === 'POST') {
                 const nodeId = pathname.split('/')[4];
-                const resDrain = nodeRouter.toggleDrain(nodeId);
+                const resDrain = await nodeRouter.toggleDrain(nodeId);
                 return this._sendJson(res, 200, resDrain);
             }
 
