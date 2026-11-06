@@ -62,6 +62,18 @@ class NodeRouter extends EventEmitter {
         }
     }
 
+    updateLocalStats(stats = {}) {
+        const local = this.nodes.get('local-0');
+        if (local) {
+            if (stats.activeRooms !== undefined) local.activeRooms = stats.activeRooms;
+            if (stats.maxRooms !== undefined) local.maxRooms = stats.maxRooms;
+            if (stats.cpu !== undefined) local.cpu = stats.cpu;
+            if (stats.ram !== undefined) local.ram = stats.ram;
+            if (stats.hostRam !== undefined) local.hostRam = stats.hostRam;
+            local.lastPing = Date.now();
+        }
+    }
+
     selectBestNode(guildId, isSupporter = false) {
         const availableNodes = Array.from(this.nodes.values()).filter(n => n.status === 'online');
         if (!availableNodes.length) {

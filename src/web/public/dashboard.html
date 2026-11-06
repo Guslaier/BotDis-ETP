@@ -242,11 +242,11 @@
         <div class="val" id="slotVal">0 / 12</div>
         <div class="sub" id="slotSub">สายฟรี: 0/6 • VIP ใช้ได้สูงสุด: 12 ห้อง</div>
     </div>
-    <!-- 2. Host RAM -->
+    <!-- 2. CPU & RAM -->
     <div class="stat-card">
-        <h4 id="lblStatRes">แรมทั้งระบบ (Host RAM)</h4>
-        <div class="val" id="resVal">0 MB / 0 MB (0%)</div>
-        <div class="sub" id="resSub">Node RSS: 0 MB • Heap: 0 MB</div>
+        <h4 id="lblStatRes">ทรัพยากรระบบ (CPU / RAM)</h4>
+        <div class="val" id="resVal" style="font-size: 19px;">CPU 0% • RAM 0%</div>
+        <div class="sub" id="resSub">Host: 0/0 MB • Node: 0 MB</div>
     </div>
     <!-- 3. NVMe Disk & Cache -->
     <div class="stat-card">
@@ -356,12 +356,14 @@
                             <th id="thNodeType">ชนิด</th>
                             <th id="thNodeHost">Host</th>
                             <th id="thNodeStatus">สถานะ</th>
+                            <th id="thNodeCpu">CPU</th>
+                            <th id="thNodeRam">RAM</th>
                             <th id="thNodeLoad">ภาระสตรีม</th>
                             <th id="thNodeAction">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="nodeTableBody">
-                        <tr><td colspan="6" style="text-align: center; color: var(--text-sub);">กำลังโหลดข้อมูลโหนด...</td></tr>
+                        <tr><td colspan="8" style="text-align: center; color: var(--text-sub);">กำลังโหลดข้อมูลโหนด...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -421,7 +423,7 @@
             forceSweep: "🧹 Force Sweep ห้องค้าง",
             logout: "ออกจากระบบ",
             statSlots: "ช่องสัญญาณสตรีม (Slots)",
-            statRes: "แรมทั้งระบบ (Host RAM)",
+            statRes: "ทรัพยากรระบบ (CPU / RAM)",
             statDisk: "ดิสก์ & แคชเพลง (Storage)",
             statNet: "แบนด์วิธ (Monthly Quota)",
             statVpn: "เครือข่าย & VPN",
@@ -453,6 +455,8 @@
             thNodeType: "ชนิด",
             thNodeHost: "Host",
             thNodeStatus: "สถานะ",
+            thNodeCpu: "CPU",
+            thNodeRam: "RAM",
             thNodeLoad: "ภาระสตรีม",
             thNodeAction: "จัดการ",
             liveConfig: "⚙️ ตั้งค่าระบบด่วน (Live Config)",
@@ -479,7 +483,7 @@
             forceSweep: "🧹 Force Sweep Idle Rooms",
             logout: "Sign Out",
             statSlots: "Stream Slots (Dynamic Quota)",
-            statRes: "Host System RAM",
+            statRes: "System CPU & RAM",
             statDisk: "NVMe Disk & Cache",
             statNet: "Monthly Bandwidth (800 GB)",
             statVpn: "Egress Network & VPN",
@@ -511,6 +515,8 @@
             thNodeType: "Type",
             thNodeHost: "Host",
             thNodeStatus: "Status",
+            thNodeCpu: "CPU",
+            thNodeRam: "RAM",
             thNodeLoad: "Stream Load",
             thNodeAction: "Action",
             liveConfig: "⚙️ Live Cluster Configuration",
@@ -586,6 +592,8 @@
         document.getElementById('thNodeType').textContent = t.thNodeType;
         document.getElementById('thNodeHost').textContent = t.thNodeHost;
         document.getElementById('thNodeStatus').textContent = t.thNodeStatus;
+        if (document.getElementById('thNodeCpu')) document.getElementById('thNodeCpu').textContent = t.thNodeCpu;
+        if (document.getElementById('thNodeRam')) document.getElementById('thNodeRam').textContent = t.thNodeRam;
         document.getElementById('thNodeLoad').textContent = t.thNodeLoad;
         if (document.getElementById('thNodeAction')) document.getElementById('thNodeAction').textContent = t.thNodeAction;
         document.getElementById('lblConfigTitle').textContent = t.liveConfig;
@@ -697,11 +705,12 @@
         document.getElementById('slotVal').textContent = `${slots.total || 0} / ${slots.maxTotal || 12}`;
         document.getElementById('slotSub').textContent = `สายฟรี: ${slots.free || 0}/${slots.maxFree || 6} • VIP เข้าได้สูงสุด: ${dynamicVip} ห้อง (Dynamic)`;
 
+        const cpuText = s.cpu || '0%';
         if (s.hostRam) {
-            document.getElementById('resVal').textContent = `${s.hostRam.usedMb} MB / ${s.hostRam.totalMb} MB (${s.hostRam.percent}%)`;
-            document.getElementById('resSub').textContent = s.nodeRam ? s.nodeRam.display : `Node RSS: ${s.ramMb || 0} MB`;
+            document.getElementById('resVal').textContent = `CPU ${cpuText} • RAM ${s.hostRam.percent}%`;
+            document.getElementById('resSub').textContent = `Host: ${s.hostRam.usedMb}/${s.hostRam.totalMb} MB • Node RSS: ${s.nodeRam ? s.nodeRam.rssMb : (s.ramMb || 0)} MB`;
         } else {
-            document.getElementById('resVal').textContent = `${s.ramMb || 0} MB`;
+            document.getElementById('resVal').textContent = `CPU ${cpuText} • RAM ${s.ramMb || 0} MB`;
             document.getElementById('resSub').textContent = `Heap: ${s.heapMb || 0} MB`;
         }
 
@@ -886,7 +895,7 @@
     function renderNodes(nodes) {
         const tbody = document.getElementById('nodeTableBody');
         if (!nodes || nodes.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-sub);">ไม่มีโหนดในระบบ</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-sub);">ไม่มีโหนดในระบบ</td></tr>`;
             return;
         }
 
@@ -907,13 +916,18 @@
                 ? `<button class="btn btn-primary btn-sm" onclick="toggleDrain('${n.id}')">🟢 Re-enable</button>`
                 : `<button class="btn btn-danger btn-sm" onclick="toggleDrain('${n.id}')">⏳ Drain</button>`;
 
+            const cpuDisplay = n.cpu || '0%';
+            const ramDisplay = n.ram ? `${n.ram}${n.hostRam ? ' • ' + n.hostRam : ''}` : (n.hostRam || '-');
+
             return `
                 <tr>
                     <td><strong>${n.name || n.id}</strong></td>
                     <td><span style="font-size: 11px; text-transform: uppercase;">${n.type || 'local'}</span></td>
                     <td><code>${n.host || '127.0.0.1'}</code></td>
                     <td><span class="badge-pill ${statusBadge}">${statusText}</span></td>
-                    <td>${n.activeRooms || 0} / ${n.maxRooms || 12}</td>
+                    <td><strong style="color: var(--slime-green);">${cpuDisplay}</strong></td>
+                    <td><span style="font-size: 11.5px; color: var(--text-sub);">${ramDisplay}</span></td>
+                    <td><strong>${n.activeRooms || 0} / ${n.maxRooms || 12}</strong></td>
                     <td>${drainBtn}</td>
                 </tr>
             `;

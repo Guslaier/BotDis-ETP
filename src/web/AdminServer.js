@@ -90,6 +90,67 @@ class AdminServer {
         return authManager.verifySessionToken(token);
     }
 
+    _getCpuUsage() {
+        let hostCpu = '0%';
+        try {
+            if (process.platform === 'linux' && fs.existsSync('/proc/stat')) {
+                const line = fs.readFileSync('/proc/stat', 'utf8').split('\n')[0];
+                const parts = line.trim().split(/\s+/).slice(1).map(Number);
+                const idle = parts[3] + (parts[4] || 0);
+                const total = parts.reduce((a, b) => a + b, 0);
+                if (this._lastHostCpu) {
+                    const deltaIdle = idle - this._lastHostCpu.idle;
+                    const deltaTotal = total - this._lastHostCpu.total;
+                    if (deltaTotal > 0) {
+                        const pct = Math.max(0, Math.min(100, Math.round(((deltaTotal - deltaIdle) / deltaTotal) * 100)));
+                        hostCpu = `${pct}%`;
+                    }
+                }
+                this._lastHostCpu = { idle, total };
+            } else {
+                const cpus = os.cpus();
+                let idle = 0;
+                let total = 0;
+                for (const c of cpus) {
+                    for (const t in c.times) total += c.times[t];
+                    idle += c.times.idle;
+                }
+                if (this._lastHostCpu) {
+                    const deltaIdle = idle - this._lastHostCpu.idle;
+                    const deltaTotal = total - this._lastHostCpu.total;
+                    if (deltaTotal > 0) {
+                        const pct = Math.max(0, Math.min(100, Math.round(((deltaTotal - deltaIdle) / deltaTotal) * 100)));
+                        hostCpu = `${pct}%`;
+                    }
+                }
+                this._lastHostCpu = { idle, total };
+            }
+        } catch {}
+
+        let processCpu = '0.0%';
+        try {
+            const now = Date.now();
+            const curCpu = process.cpuUsage();
+            if (this._lastProcCpu && this._lastProcTime) {
+                const deltaMs = now - this._lastProcTime;
+                if (deltaMs > 0) {
+                    const userDiff = curCpu.user - this._lastProcCpu.user;
+                    const sysDiff = curCpu.system - this._lastProcCpu.system;
+                    const pct = ((userDiff + sysDiff) / (deltaMs * 1000) * 100).toFixed(1);
+                    processCpu = `${Math.min(100, Math.max(0, parseFloat(pct)))}%`;
+                }
+            }
+            this._lastProcCpu = curCpu;
+            this._lastProcTime = now;
+        } catch {}
+
+        return {
+            host: hostCpu,
+            process: processCpu,
+            display: `${hostCpu} (Host) • ${processCpu} (Node)`
+        };
+    }
+
     _getSystemMemory() {
         let totalMb = Math.round(os.totalmem() / (1024 * 1024));
         let usedMb = Math.round((os.totalmem() - os.freemem()) / (1024 * 1024));
@@ -469,6 +530,15 @@ class AdminServer {
                     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
                     .slice(0, 50);
 
+                const cpuUsage = this._getCpuUsage();
+                nodeRouter.updateLocalStats({
+                    activeRooms: streamStats.total,
+                    maxRooms: maxTotal,
+                    cpu: cpuUsage.display,
+                    ram: `${rssMb} MB (Node)`,
+                    hostRam: `${sysMem.usedMb}/${sysMem.totalMb} MB (${sysMem.percent}%)`
+                });
+
                 const nodes = nodeRouter.getNodes();
                 const vpnPublicIp = proxyManager.lastExitIp || null;
 
@@ -483,7 +553,10 @@ class AdminServer {
                             maxTotal: maxTotal,
                             dynamicVipMax: dynamicVipMax
                         },
-                        cpu: `${sysMem.percent}%`,
+                        cpu: cpuUsage.host,
+                        cpuDisplay: cpuUsage.display,
+                        hostCpu: cpuUsage.host,
+                        nodeCpu: cpuUsage.process,
                         hostRam: {
                             usedMb: sysMem.usedMb,
                             totalMb: sysMem.totalMb,
