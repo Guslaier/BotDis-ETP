@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOOLIX • สนับสนุนค่าเซิร์ฟเวอร์ & รับสิทธิ์พิเศษ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0B0E14;
+            --card-bg: #151A23;
+            --card-border: #242C3D;
+            --primary: #FF2E93;
+            --primary-hover: #E01A7C;
+            --accent-green: #00E676;
+            --accent-blue: #00B0FF;
+            --text-main: #FFFFFF;
+            --text-sub: #94A3B8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            overflow: hidden;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(255, 46, 147, 0.15), rgba(0, 176, 255, 0.15));
+            border-bottom: 1px solid var(--card-border);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #FF69B4, #00B0FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-top: 4px;
+        }
+
+        .guild-card {
+            margin: 20px 24px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .guild-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            object-fit: cover;
+            background: #2D3748;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .guild-info h3 { font-size: 16px; font-weight: 600; }
+        .guild-info p { font-size: 12px; color: var(--text-sub); }
+
+        .tier-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .tier-supporter { background: rgba(255, 46, 147, 0.2); color: var(--primary); border: 1px solid var(--primary); }
+        .tier-free { background: rgba(148, 163, 184, 0.15); color: var(--text-sub); }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--card-border);
+            padding: 0 24px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 0;
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-content { padding: 24px; display: none; }
+        .tab-content.active { display: block; }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #CBD5E1;
+        }
+
+        input {
+            width: 100%;
+            background: #0B0E14;
+            border: 1px solid var(--card-border);
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: #FFFFFF;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .rate-hint {
+            font-size: 12px;
+            color: var(--accent-green);
+            margin-top: 4px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(90deg, #FF2E93, #FF69B4);
+            border: none;
+            color: #FFFFFF;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 46, 147, 0.4);
+        }
+
+        .btn-submit:hover { opacity: 0.95; }
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:disabled { background: #475569; cursor: not-allowed; box-shadow: none; }
+
+        .disclaimer-box {
+            margin: 0 24px 24px;
+            padding: 14px;
+            background: rgba(0, 176, 255, 0.05);
+            border: 1px dashed rgba(0, 176, 255, 0.3);
+            border-radius: 10px;
+            font-size: 11px;
+            color: #94A3B8;
+            line-height: 1.6;
+        }
+
+        .disclaimer-box strong { color: var(--accent-blue); }
+
+        .banner-drop {
+            background: linear-gradient(90deg, rgba(255, 105, 180, 0.2), rgba(0, 230, 118, 0.2));
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            text-align: center;
+            color: #A7F3D0;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            display: none;
+        }
+        .alert-error { background: rgba(239, 68, 68, 0.2); border: 1px solid #EF4444; color: #FCA5A5; }
+        .alert-success { background: rgba(16, 185, 129, 0.2); border: 1px solid #10B981; color: #6EE7B7; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>GOOLIX MUSIC ENGINE</h1>
+        <p>ระบบสนับสนุนค่าเซิร์ฟเวอร์ & รับของขวัญตอบแทนผู้สนับสนุน</p>
+    </div>
+
+    <!-- Guild Verification Card -->
+    <div class="guild-card" id="guildCard">
+        <div class="guild-avatar" id="guildAvatar">?</div>
+        <div class="guild-info">
+            <h3 id="guildName">กำลังโหลดข้อมูลเซิร์ฟเวอร์...</h3>
+            <p id="userInfo">กรุณารอสักครู่</p>
+            <span class="tier-badge tier-free" id="tierBadge">FREE TIER</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('donate')">🧧 ร่วมสนับสนุนเซิร์ฟเวอร์</button>
+        <button class="tab-btn" onclick="switchTab('redeem')">🎁 กรอกโค้ดรับสิทธิ์ฟรี</button>
+    </div>
+
+    <!-- Donate Tab -->
+    <div class="tab-content active" id="donateTab">
+        <div class="alert alert-error" id="donateError"></div>
+        <div class="alert alert-success" id="donateSuccess"></div>
+
+        <form id="donateForm" onsubmit="handleDonate(event)">
+            <div class="form-group">
+                <label>ลิงก์ซองของขวัญอั่งเปา TrueMoney Wallet</label>
+                <input type="text" id="voucherInput" placeholder="https://gift.truemoney.com/campaign/?v=..." required>
+                <p class="rate-hint">✨ แนะนำ 29฿ = 30 วัน (ระบบเฉลี่ยวันตามยอดจริง รับขั้นต่ำ 10฿)</p>
+            </div>
+
+            <div class="form-group">
+                <label>โค้ดชวนเพื่อน (Referral Code - ถ้ามี)</label>
+                <input type="text" id="refInput" placeholder="REF-XXXXXX" onblur="verifyReferral()">
+                <p id="refStatus" style="font-size: 11px; margin-top: 4px; color: var(--text-sub);"></p>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnDonateSubmit">ยืนยันการร่วมสนับสนุน</button>
+        </form>
+    </div>
+
+    <!-- Redeem Tab -->
+    <div class="tab-content" id="redeemTab">
+        <div class="banner-drop" id="earlyBirdBanner">
+            🔥 <strong>แคมเปญ Early-Bird Batch Drop:</strong> เช็คสิทธิ์โควต้าสด
+        </div>
+
+        <div class="alert alert-error" id="redeemError"></div>
+        <div class="alert alert-success" id="redeemSuccess"></div>
+
+        <form id="redeemForm" onsubmit="handleRedeem(event)">
+            <div class="form-group">
+                <label>รหัสโค้ดแคมเปญ (Redeem Code / Early-Bird)</label>
+                <input type="text" id="redeemInput" placeholder="เช่น GOOLIX-DROP1" required>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnRedeemSubmit">ปลดล็อกสิทธิ์ทันที</button>
+        </form>
+    </div>
+
+    <div class="disclaimer-box">
+        <strong>💖 ข้อตกลงและข้อกำหนด (Supporter Disclaimer):</strong><br>
+        รายการนี้เป็นการร่วมสนับสนุนค่าเซิร์ฟเวอร์และท่อสัญญาณความเร็วสูง (Server Supporter) โดยเงินสนับสนุนทั้งหมดจะนำไปใช้เป็นค่าเช่า VPS, แบนด์วิธ และการบำรุงรักษาระบบ เพื่อให้ GOOLIX ให้บริการต่อไปได้อย่างเสถียร ระบบจะมอบของขวัญตอบแทน (Priority Stream Slot, คิว 50 เพลง, เสียง High-Res) เพื่อเป็นการขอบคุณค่ะ
+    </div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const guildId = urlParams.get('guildId') || urlParams.get('guild') || '';
+    const userId = urlParams.get('userId') || urlParams.get('user') || '';
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        if (tab === 'donate') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('donateTab').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('redeemTab').classList.add('active');
+        }
+    }
+
+    async function loadGuildData() {
+        if (!guildId) {
+            document.getElementById('guildName').textContent = '⚠️ ไม่พบ Server ID';
+            document.getElementById('userInfo').textContent = 'กรุณากดลิงก์จากคำสั่ง /gdonate ใน Discord ค่ะ';
+            document.getElementById('btnDonateSubmit').disabled = true;
+            document.getElementById('btnRedeemSubmit').disabled = true;
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/public/verify-guild?guildId=${encodeURIComponent(guildId)}&userId=${encodeURIComponent(userId)}`);
+            const data = await res.json();
+
+            if (data.success && data.guild) {
+                const g = data.guild;
+                document.getElementById('guildName').textContent = g.name;
+                document.getElementById('userInfo').textContent = `ผู้ทำรายการ: @${data.user?.username || 'Member'} • รหัสชวน: ${g.referralCode}`;
+
+                if (g.icon) {
+                    document.getElementById('guildAvatar').innerHTML = `<img src="${g.icon}" style="width:100%;height:100%;border-radius:50%;">`;
+                } else {
+                    document.getElementById('guildAvatar').textContent = g.name.charAt(0);
+                }
+
+                const badge = document.getElementById('tierBadge');
+                if (g.isSupporter) {
+                    badge.className = 'tier-badge tier-supporter';
+                    badge.textContent = `💖 SUPPORTER (หมดอายุ: ${new Date(g.expiresAt).toLocaleDateString('th-TH')})`;
+                } else {
+                    badge.className = 'tier-badge tier-free';
+                    badge.textContent = '🆓 STANDARD (FREE TIER)';
+                }
+
+                if (data.campaign) {
+                    document.getElementById('earlyBirdBanner').innerHTML = `🔥 <strong>${data.campaign.name}:</strong> เหลือโควต้าอีก ${data.campaign.remaining}/${data.campaign.maxClaims} สิทธิ์!`;
+                }
+            } else {
+                document.getElementById('guildName').textContent = '❌ ไม่พบเซิร์ฟเวอร์นี้ในระบบ';
+                document.getElementById('userInfo').textContent = 'กรุณาดึงบอทเข้าเซิร์ฟเวอร์ก่อนทำรายการค่ะ';
+                document.getElementById('btnDonateSubmit').disabled = true;
+                document.getElementById('btnRedeemSubmit').disabled = true;
+            }
+        } catch (err) {
+            document.getElementById('guildName').textContent = '❌ เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ';
+        }
+    }
+
+    async function verifyReferral() {
+        const code = document.getElementById('refInput').value.trim();
+        const statusEl = document.getElementById('refStatus');
+        if (!code) { statusEl.textContent = ''; return; }
+
+        try {
+            const res = await fetch(`/api/public/verify-referral?code=${encodeURIComponent(code)}&guildId=${encodeURIComponent(guildId)}`);
+            const data = await res.json();
+            if (data.success) {
+                statusEl.style.color = '#00E676';
+                statusEl.textContent = `✅ โค้ดของเซิร์ฟเวอร์: "${data.referrerGuildName}" (ช่วยต่อวันฟรีให้เพื่อน)`;
+            } else {
+                statusEl.style.color = '#EF4444';
+                statusEl.textContent = `❌ ${data.error}`;
+            }
+        } catch {
+            statusEl.textContent = '';
+        }
+    }
+
+    async function handleDonate(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('donateError');
+        const okEl = document.getElementById('donateSuccess');
+        const btn = document.getElementById('btnDonateSubmit');
+
+        errEl.style.display = 'none';
+        okEl.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = '⏳ กำลังตรวจสอบซองของขวัญ...';
+
+        const voucher = document.getElementById('voucherInput').value.trim();
+        const ref = document.getElementById('refInput').value.trim();
+
+        try {
+            const res = await fetch('/api/public/topup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guildId, userId, voucher, referralCode: ref })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                okEl.innerHTML = `🎉 <strong>ขอบคุณสำหรับการร่วมสนับสนุน!</strong><br>บอทปลดล็อก Supporter Perks เพิ่ม +${data.addedDays} วัน เรียบร้อยแล้วค่ะ!`;
+                okEl.style.display = 'block';
+                document.getElementById('voucherInput').value = '';
+                loadGuildData();
+            } else {
+                errEl.textContent = `❌ ${data.error || 'ทำรายการไม่สำเร็จ'}`;
+                errEl.style.display = 'block';
+            }
+        } catch (err) {
+            errEl.textContent = '❌ เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาลองใหม่';
+            errEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'ยืนยันการร่วมสนับสนุน';
+        }
+    }
+
+    async function handleRedeem(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('redeemError');
+        const okEl = document.getElementById('redeemSuccess');
+        const btn = document.getElementById('btnRedeemSubmit');
+
+        errEl.style.display = 'none';
+        okEl.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = '⏳ กำลังตรวจสอบโค้ด...';
+
+        const code = document.getElementById('redeemInput').value.trim();
+
+        try {
+            const res = await fetch('/api/public/redeem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guildId, userId, code })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                okEl.innerHTML = `🎉 <strong>รับสิทธิ์สำเร็จ!</strong><br>ปลดล็อก Supporter Perks จากรอบ "${data.campaignName}" เพิ่ม +${data.addedDays} วัน เรียบร้อยแล้วค่ะ!`;
+                okEl.style.display = 'block';
+                document.getElementById('redeemInput').value = '';
+                loadGuildData();
+            } else {
+                errEl.textContent = `❌ ${data.error || 'ใช้โค้ดไม่สำเร็จ'}`;
+                errEl.style.display = 'block';
+            }
+        } catch (err) {
+            errEl.textContent = '❌ เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาลองใหม่';
+            errEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'ปลดล็อกสิทธิ์ทันที';
+        }
+    }
+
+    loadGuildData();
+</script>
+
+</body>
+</html>

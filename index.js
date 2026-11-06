@@ -6,6 +6,8 @@ const QueueManager = require('./src/QueueManager');
 const cacheManager = require('./src/CacheManager');
 const { createNowPlayingCard } = require('./src/helpers/musicCardHelper');
 const favoriteManager = require('./src/helpers/favoriteManager');
+const AdminServer = require('./src/web/AdminServer');
+const subscriptionManager = require('./src/billing/subscriptionManager');
 
 const client = new Client({
     intents: [
@@ -143,6 +145,16 @@ client.on('clientReady', async () => {
     } catch (error) {
         console.error(error);
     }
+
+    // Start Web Admin & Donation Portal if enabled (default true)
+    if (process.env.ENABLE_WEB_ADMIN !== 'false') {
+        const webPort = parseInt(process.env.WEB_PORT || '3000', 10);
+        const adminServer = new AdminServer(client, kazagumo, { port: webPort });
+        adminServer.start();
+    }
+
+    // Start 60s Heartbeat Sweep worker (idle cleaner, slot guard, expiration notice, 04:00 AM updater)
+    subscriptionManager.startHeartbeatSweep(client, kazagumo);
 });
 
 client.on('guildDelete', guild => {
@@ -283,6 +295,12 @@ client.on('interactionCreate', async interaction => {
                 }
             }
             case 'music_autoplay': {
+                if (!player.autoplay && !subscriptionManager.isSupporter(player.guildId)) {
+                    return interaction.reply({
+                        content: '💎 ฟีเจอร์ **เล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)** สงวนไว้สำหรับเซิร์ฟเวอร์ผู้สนับสนุน (Supporter VIP) ค่ะ!\n\nพิมพ์ `/gdonate` หรือเข้าเว็บเติมเงินเพื่อร่วมสนับสนุนเริ่มต้นเพียง **29฿/เดือน** นะคะ~ 💖',
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 player.autoplay = !player.autoplay;
                 const settingsManager = require('./src/helpers/settingsManager');
                 settingsManager.setGuildAutoplay(player.guildId, player.autoplay);

@@ -2,6 +2,7 @@ const { execFile, spawn, execSync } = require('child_process');
 const { PassThrough } = require('stream');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const proxyManager = require('./helpers/proxyManager');
 const youtubeCircuit = require('./helpers/youtubeCircuit');
 
@@ -58,13 +59,37 @@ class CacheManager {
         }
     }
 
+    getTrackHash(identifier) {
+        return crypto.createHash('sha256').update(String(identifier || '')).digest('hex').slice(0, 32);
+    }
+
     getTrackPath(identifier) {
-        return path.join(this.cacheDir, `${identifier}.opus`);
+        return path.join(this.cacheDir, `${this.getTrackHash(identifier)}.opus`);
     }
 
     isCached(identifier) {
         const filePath = this.getTrackPath(identifier);
         return fs.existsSync(filePath) && fs.statSync(filePath).size > 1024;
+    }
+
+    _buildAudioFilterChain(volume = 100, filter = 'off') {
+        const parts = [];
+        if (typeof volume === 'number' && volume !== 100) {
+            parts.push(`volume=${(volume / 100).toFixed(2)}`);
+        }
+        if (filter && filter !== 'off') {
+            const filterMap = {
+                bassboost: 'bass=g=10,dynaudnorm',
+                nightcore: 'asetrate=48000*1.25,aresample=48000',
+                pop: 'equalizer=f=1000:t=q:w=1:g=2',
+                soft: 'lowpass=f=3000',
+                vaporwave: 'asetrate=48000*0.8,aresample=48000'
+            };
+            if (filterMap[filter]) {
+                parts.push(filterMap[filter]);
+            }
+        }
+        return parts.length > 0 ? parts.join(',') : null;
     }
 
     _buildYtDlpArgs(source, isStreamOutput = false, outTemplate = null) {
@@ -149,9 +174,11 @@ class CacheManager {
         return res;
     }
 
-    _streamFromDisk(targetPath, seekSeconds = 0, volume = 100, onSpawn = null) {
+    _streamFromDisk(targetPath, seekSeconds = 0, volume = 100, onSpawn = null, filter = 'off', bitrate = '64k') {
+        const filterChain = this._buildAudioFilterChain(volume, filter);
+
         // Fast path: Zero-copy direct disk stream (No child process, zero CPU overhead)
-        if (seekSeconds <= 0 && (typeof volume !== 'number' || volume === 100)) {
+        if (seekSeconds <= 0 && !filterChain) {
             const fileStream = fs.createReadStream(targetPath, { highWaterMark: 1024 * 512 });
             fileStream.kill = () => {
                 try { fileStream.destroy(); } catch {}
@@ -167,8 +194,8 @@ class CacheManager {
             ffmpegArgs.push('-ss', seekSeconds.toString());
         }
         ffmpegArgs.push('-i', targetPath);
-        if (typeof volume === 'number' && volume !== 100) {
-            ffmpegArgs.push('-af', `volume=${(volume / 100).toFixed(2)}`, '-c:a', 'libopus', '-b:a', '96k');
+        if (filterChain) {
+            ffmpegArgs.push('-af', filterChain, '-c:a', 'libopus', '-b:a', bitrate || '128k', '-ar', '48000', '-ac', '2');
         } else {
             ffmpegArgs.push('-c:a', 'copy');
         }
@@ -185,14 +212,16 @@ class CacheManager {
         return ffmpegProc.stdout;
     }
 
-    async createTrackStream(track, seekSeconds = 0, volume = 100, onSpawn = null) {
+    async createTrackStream(track, seekSeconds = 0, volume = 100, onSpawn = null, options = {}) {
+        const filter = (options && options.audioFilter) || 'off';
+        const bitrate = (options && options.bitrate) || '64k';
         const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
         const targetPath = this.getTrackPath(identifier);
 
         // 1. Play from cached file if present (<0.1s latency)
         if (this.isCached(identifier)) {
-            console.log(`[CacheManager:Stream] Cache HIT for "${track.title}" (Serving from disk)`);
-            return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn);
+            console.log(`[CacheManager:Stream] Cache HIT for "${track.title}" (Serving from disk) | Filter: ${filter} | Bitrate: ${bitrate}`);
+            return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate);
         }
 
         const isYouTube = !track.uri?.includes('soundcloud.com');
@@ -201,7 +230,7 @@ class CacheManager {
         // Immediately pipe from SoundCloud (latency ~2-3s).
         if (isYouTube && youtubeCircuit.isOpen()) {
             console.log(`[CacheManager:Stream] Circuit OPEN -> Fast-tracking "${track.title}" directly via SoundCloud pipe`);
-            return this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn);
+            return this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn, filter, bitrate);
         }
 
         const streamMode = (process.env.STREAM_MODE || 'cache').toLowerCase().trim();
@@ -210,13 +239,13 @@ class CacheManager {
         // 1. Live Pipe Mode: stream directly via live pipe (<2.5s start latency)
         if (streamMode === 'pipe') {
             console.log(`[CacheManager:Stream] Live pipe stream for "${track.title}" (Mode: pipe, Duration: ${durationSec}s, Seek: ${seekSeconds}s)`);
-            return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn);
+            return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
         }
 
         // 2. Auto Mode: Direct live pipe for long tracks (>6 min), seeking, or live streams
         if (streamMode === 'auto' && (track.isStream || durationSec > 360 || seekSeconds > 0)) {
             console.log(`[CacheManager:Stream] Live pipe stream for long/live track "${track.title}" (Mode: auto, Duration: ${durationSec}s)`);
-            return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn);
+            return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
         }
 
         // 3. Cache Mode (Default, Zero-Stutter): Download full track to NVMe disk before playback
@@ -224,30 +253,30 @@ class CacheManager {
             console.log(`[CacheManager:Stream] Caching track to disk before playback: "${track.title}" (Mode: ${streamMode})`);
             await this.prepareTrack(track, false, onSpawn);
             if (this.isCached(identifier)) {
-                return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn);
+                return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate);
             }
         } catch (err) {
             if (youtubeCircuit.constructor.isBotBlock(err.message)) {
                 console.warn(`[CacheManager] Anti-bot block detected: ${err.message}. Fast-switching to SoundCloud...`);
                 youtubeCircuit.trip(err.message);
-                return this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn);
+                return this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn, filter, bitrate);
             }
             console.log(`[CacheManager] Disk caching timed out or failed for "${track.title}". Streaming directly via live pipe...`);
-            return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn);
+            return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
         }
 
         // 4. Fallback to direct streaming
-        return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn);
+        return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
     }
 
-    _spawnPipedStream(track, sourceUri, seekSeconds = 0, volume = 100, isFallback = false, onSpawn = null) {
+    _spawnPipedStream(track, sourceUri, seekSeconds = 0, volume = 100, isFallback = false, onSpawn = null, filter = 'off', bitrate = '64k') {
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
             const ytdlpArgs = this._buildYtDlpArgs(sourceUri, true);
             const ytdlpProc = spawn(this.binPath, ytdlpArgs);
 
             const threadQueueSize = process.env.THREAD_QUEUE_SIZE || '1024';
-            const opusBitrate = process.env.OPUS_BITRATE || '96k';
+            const opusBitrate = bitrate || process.env.OPUS_BITRATE || '64k';
             const passThroughKb = parseInt(process.env.PASSTHROUGH_BUFFER_KB || '512', 10);
             const preBufferKb = parseInt(process.env.PRE_BUFFER_KB || '32', 10);
             const preBufferTimeoutMs = parseInt(process.env.PRE_BUFFER_TIMEOUT_MS || '200', 10);
@@ -261,8 +290,9 @@ class CacheManager {
                 ffmpegArgs.push('-ss', seekSeconds.toString());
             }
             ffmpegArgs.push('-i', 'pipe:0', '-vn');
-            if (typeof volume === 'number' && volume !== 100) {
-                ffmpegArgs.push('-af', `volume=${(volume / 100).toFixed(2)}`);
+            const filterChain = this._buildAudioFilterChain(volume, filter);
+            if (filterChain) {
+                ffmpegArgs.push('-af', filterChain);
             }
             ffmpegArgs.push(
                 '-c:a', 'libopus',
@@ -353,7 +383,7 @@ class CacheManager {
                 if (!isFallback) {
                     console.log(`[CacheManager] Auto-switching to SoundCloud stream for: ${track.title}${isBotBan ? ' (Anti-Bot detected)' : ''}`);
                     try {
-                        const fallbackStream = await this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn);
+                        const fallbackStream = await this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn, filter, bitrate);
                         return resolve(fallbackStream);
                     } catch (fbErr) {
                         return reject(new Error(`Stream failed: ${reason || fbErr.message}`));
@@ -451,12 +481,12 @@ class CacheManager {
         });
     }
 
-    async _trySoundCloudFallback(track, seekSeconds = 0, volume = 100, onSpawn = null) {
+    async _trySoundCloudFallback(track, seekSeconds = 0, volume = 100, onSpawn = null, filter = 'off', bitrate = '64k') {
         const fallbackQuery = this._getSoundCloudFallback(track);
         if (!fallbackQuery) {
             throw new Error('No valid fallback search query could be generated.');
         }
-        return this._spawnPipedStream(track, fallbackQuery, seekSeconds, volume, true, onSpawn);
+        return this._spawnPipedStream(track, fallbackQuery, seekSeconds, volume, true, onSpawn, filter, bitrate);
     }
 
     /**
@@ -464,6 +494,7 @@ class CacheManager {
      */
     async prepareTrack(track, isBackground = false, onSpawn = null) {
         const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
+        const trackHash = this.getTrackHash(identifier);
         const targetPath = this.getTrackPath(identifier);
 
         if (this.isCached(identifier)) {
@@ -480,12 +511,12 @@ class CacheManager {
             }
         }
 
-        if (this.downloadPromises.has(identifier)) {
-            return this.downloadPromises.get(identifier);
+        if (this.downloadPromises.has(trackHash)) {
+            return this.downloadPromises.get(trackHash);
         }
 
         const downloadPromise = (async () => {
-            const outTemplate = path.join(this.cacheDir, `${identifier}.%(ext)s`);
+            const outTemplate = path.join(this.cacheDir, `${trackHash}.%(ext)s`);
             const isYouTube = !track.uri?.includes('soundcloud.com');
 
             // If circuit is open, download directly from SoundCloud
@@ -576,8 +607,9 @@ class CacheManager {
                     throw err;
                 }
             } finally {
-                this.downloadPromises.delete(identifier);
+                this.downloadPromises.delete(trackHash);
                 if (global.gc) global.gc();
+                this.cleanOldCache();
             }
 
             if (fs.existsSync(targetPath)) {
@@ -586,13 +618,13 @@ class CacheManager {
             throw new Error(`Cached file not found at ${targetPath}`);
         })();
 
-        this.downloadPromises.set(identifier, downloadPromise);
+        this.downloadPromises.set(trackHash, downloadPromise);
         return downloadPromise;
     }
 
     /**
      * Strict Disk LRU Sweeper:
-     * Enforces strict 50MB disk quota to protect container from ENOSPC errors.
+     * Enforces strict disk quota (default 350MB) to protect container from ENOSPC errors.
      */
     cleanOldCache(maxAgeHours = null) {
         try {
@@ -600,7 +632,7 @@ class CacheManager {
             const now = Date.now();
             const ageHours = maxAgeHours !== null 
                 ? maxAgeHours 
-                : parseFloat(process.env.CACHE_MAX_AGE_HOURS || '2');
+                : parseFloat(process.env.CACHE_MAX_AGE_HOURS || '6');
             const maxAgeMs = ageHours * 60 * 60 * 1000;
             const files = fs.readdirSync(this.cacheDir);
 
@@ -620,7 +652,7 @@ class CacheManager {
                 } catch {}
             }
 
-            const maxMb = parseInt(process.env.CACHE_MAX_SIZE_MB || '100', 10);
+            const maxMb = parseInt(process.env.CACHE_MAX_SIZE_MB || '350', 10);
             const maxCacheBytes = maxMb * 1024 * 1024;
             const targetBytes = Math.round(maxCacheBytes * 0.6);
             if (totalSizeBytes > maxCacheBytes) {
@@ -632,7 +664,7 @@ class CacheManager {
                         totalSizeBytes -= item.size;
                     } catch {}
                 }
-                console.log(`[CacheManager] LRU cache clean reduced cache size to ${(totalSizeBytes / 1024 / 1024).toFixed(1)}MB`);
+                console.log(`[CacheManager] Strict LRU clean reduced cache size to ${(totalSizeBytes / 1024 / 1024).toFixed(1)}MB (Cap: ${maxMb}MB)`);
             }
         } catch (err) {
             console.error('[CacheManager] Cache cleanup error:', err.message);

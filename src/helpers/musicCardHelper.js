@@ -34,6 +34,8 @@ function createProgressBar(currentMs, totalMs, barLength = 15) {
     return bar;
 }
 
+const subscriptionManager = require('../billing/subscriptionManager');
+
 function createNowPlayingCard(player, track) {
     const isPaused = !!player.paused;
     const currentPosition = player.position || 0;
@@ -48,30 +50,38 @@ function createNowPlayingCard(player, track) {
     const channelName = voiceChannel ? voiceChannel.name : 'Voice Channel';
     const membersCount = voiceChannel ? voiceChannel.members.filter(m => !m.user.bot).size : 1;
 
-    let sourceBadge = '🔴 YouTube';
+    let sourceBadge = '🔴 นกแดง';
     if (track.realSource) {
         if (track.realSource.includes('Bypass')) {
-            sourceBadge = '🟠 SoundCloud (Bypass)';
+            sourceBadge = '🟠 เมฆส้ม (Bypass)';
         } else if (track.realSource.includes('SoundCloud')) {
-            sourceBadge = '🟠 SoundCloud';
+            sourceBadge = '🟠 เมฆส้ม';
+        } else if (track.realSource.includes('Spotify')) {
+            sourceBadge = '🟢 นกเขียว';
         } else {
-            sourceBadge = '🔴 YouTube';
+            sourceBadge = '🔴 นกแดง';
         }
     } else if (track.uri && track.uri.includes('soundcloud.com')) {
-        sourceBadge = '🟠 SoundCloud';
+        sourceBadge = '🟠 เมฆส้ม';
+    } else if (track.uri && track.uri.includes('spotify.com')) {
+        sourceBadge = '🟢 นกเขียว';
     }
+
+    const isSupporter = subscriptionManager.isSupporter(player.guildId);
+    const bitrateBadge = isSupporter ? '⚡ 320kbps' : '📻 64kbps';
 
     let loopBadge = '🔁 Off';
     if (player.loop === 'track') loopBadge = '🔂 Track';
     else if (player.loop === 'queue') loopBadge = '🔁 Queue';
 
     const volBadge = `🔊 ${player.volume || 100}%`;
+    const filterBadge = (player.audioFilter && player.audioFilter !== 'off') ? `  \`🎛️ ${player.audioFilter}\`` : '';
     const requesterTag = track.requester ? `  •  👤 <@${track.requester.id || track.requester}>` : '';
     const safeTitle = track.title || 'Unknown Title';
     const safeAuthor = track.author || 'Unknown Artist';
 
     const embed = new EmbedBuilder()
-        .setColor('#FF69B4')
+        .setColor(isSupporter ? '#FF2E93' : '#FF69B4')
         .setAuthor({
             name: `${player.manager.client.user.username}  •  Now Playing`,
             iconURL: player.manager.client.user.displayAvatarURL()
@@ -80,7 +90,7 @@ function createNowPlayingCard(player, track) {
         .setURL(track.uri || 'https://discord.com')
         .setDescription(
             `**${safeAuthor}**${requesterTag}\n\n` +
-            `\`${sourceBadge}\`  \`⚡ 320kbps\`  \`${loopBadge}\`  \`${volBadge}\`\n\n` +
+            `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n` +
             `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\``
         )
         .setFooter({

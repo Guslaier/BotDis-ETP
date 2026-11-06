@@ -1,5 +1,6 @@
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
+const subscriptionManager = require('../src/billing/subscriptionManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -7,8 +8,18 @@ module.exports = {
         .setDescription('เปิดหรือปิดการเล่นเพลงต่อเนื่องอัตโนมัติเมื่อคิวหมด (Autoplay)'),
 
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const isSupporter = subscriptionManager.isSupporter(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
+
+        if (!isSupporter) {
+            embed.setColor('#FF2E93')
+                .setTitle('💎 ฟีเจอร์สำหรับผู้สนับสนุนเซิร์ฟเวอร์')
+                .setDescription('ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) สงวนไว้สำหรับเซิร์ฟเวอร์ **Supporter (VIP)** ค่ะ!\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุนค่าเซิร์ฟเวอร์เริ่มต้นเพียง **29฿/เดือน** นะคะ~ 💖');
+            return interaction.reply({ embeds: [embed], flags: 64 });
+        }
+
+        const player = kazagumo.players.get(guildId);
 
         let newStatus;
         if (player) {
@@ -23,8 +34,8 @@ module.exports = {
                 } catch {}
             }
         } else {
-            const current = settingsManager.getGuildAutoplay(interaction.guild.id);
-            newStatus = settingsManager.setGuildAutoplay(interaction.guild.id, !current);
+            const current = settingsManager.getGuildAutoplay(guildId);
+            newStatus = settingsManager.setGuildAutoplay(guildId, !current);
         }
 
         const statusText = newStatus ? 'เปิดใช้งาน (Enabled) 🟢' : 'ปิดใช้งาน (Disabled) 🔴';

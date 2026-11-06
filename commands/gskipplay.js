@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
+const subscriptionManager = require('../src/billing/subscriptionManager');
 
 module.exports = {
     data: {
@@ -9,7 +10,7 @@ module.exports = {
             {
                 name: 'query',
                 type: 3, // STRING
-                description: 'ชื่อเพลง หรือ ลิ้งก์ YouTube ที่ต้องการเล่น',
+                description: 'ชื่อเพลง หรือ ลิ้งก์ นกแดง / นกเขียว ที่ต้องการเล่น',
                 required: true,
             },
         ],
@@ -58,6 +59,14 @@ module.exports = {
             await interaction.followUp({ embeds: [embed] });
         } else {
             const track = result.tracks[0];
+            const tierConfig = subscriptionManager.getTierConfig(interaction.guild.id);
+            if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+                embed.setColor('#FFD600')
+                    .setTitle('⏱️ เพลงมีความยาวเกิน 30 นาที')
+                    .setDescription(`เพลง **${track.title}** มีความยาว ${Math.floor(track.duration / 60)} นาที\n\nผู้ใช้ทั่วไปจำกัดความยาวไม่เกิน 30 นาทีต่อเพลงค่ะ!\nร่วมเป็น 💖 **ผู้สนับสนุนเซิร์ฟเวอร์** เพื่อปลดล็อกการเล่นคลิปยาวและ Live Stream ไม่จำกัดความยาวที่ \`/gdonate\` นะคะ~`);
+                return interaction.followUp({ embeds: [embed] });
+            }
+
             player.queue.unshift(track);
             
             if (player.playing || player._starting) {

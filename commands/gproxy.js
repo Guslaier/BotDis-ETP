@@ -12,7 +12,7 @@ module.exports = {
         )
         .addSubcommand(sub =>
             sub.setName('test')
-                .setDescription('ทดสอบ Proxy ปัจจุบันกับ YouTube Anti-Bot ทันที')
+                .setDescription('ทดสอบ Proxy ปัจจุบันกับ นกแดง Anti-Bot ทันที')
         )
         .addSubcommand(sub =>
             sub.setName('blacklist')
@@ -42,13 +42,13 @@ module.exports = {
             embed.setTitle('🛡️ สถานะระบบ Smart Proxy Pool');
             embed.addFields(
                 { name: 'สถานะ', value: status.isOnline ? '🟢 ใช้งานได้ (Online)' : '🔴 สแตนด์บาย (Direct/Bypass)', inline: true },
-                { name: 'YouTube Circuit', value: `\`${circuit.status}\``, inline: true },
+                { name: 'นกแดง Circuit', value: `\`${circuit.status}\``, inline: true },
                 { name: 'Proxy ที่ดีที่สุด', value: `\`${status.url}\``, inline: true },
                 { name: 'Latency', value: `\`${status.bestLatency}\``, inline: true },
                 { name: 'คะแนน (Score)', value: `\`${status.bestScore}/100\``, inline: true },
                 { name: 'จำนวน Proxy ใน Pool', value: `\`${status.poolSize} ตัว (${status.activeCount} พร้อมใช้)\``, inline: true },
                 { name: '🚫 ติด Blacklist', value: `\`${status.blacklistCount} ตัว\``, inline: true },
-                { name: 'YouTube Verified', value: status.isYoutubeVerified ? '✅ ผ่านการทดสอบแล้ว' : '⏳ รอการยืนยัน', inline: true }
+                { name: 'นกแดง Verified', value: status.isYoutubeVerified ? '✅ ผ่านการทดสอบแล้ว' : '⏳ รอการยืนยัน', inline: true }
             );
             return interaction.reply({ embeds: [embed] });
         }
@@ -67,11 +67,11 @@ module.exports = {
                 embed.setColor('#00FF00');
                 embed.setTitle('✅ ผลการทดสอบ: ผ่านฉลุย!');
                 const targetName = proxyManager.isVpnActive() ? `ProtonVPN (${proxyManager.getVpnSourceIp()})` : targetArg;
-                embed.setDescription(`เครือข่าย \`${targetName}\` ใช้งานดึงสตรีม YouTube ได้ปกติ\n⏱️ Latency: \`${res.latency}ms\``);
+                embed.setDescription(`เครือข่าย \`${targetName}\` ใช้งานดึงสตรีมนกแดงได้ปกติ\n⏱️ Latency: \`${res.latency}ms\``);
             } else if (res.isBotBlock) {
                 embed.setColor('#FF0000');
-                embed.setTitle('🚫 ผลการทดสอบ: ติด YouTube Anti-Bot!');
-                embed.setDescription(`Proxy \`${bestProxy}\` โดน YouTube บล็อก (${res.reason})\nระบบทำการ **ย้ายเข้า Blacklist อัตโนมัติ (6 ชม.)** เรียบร้อยแล้วค่ะ!`);
+                embed.setTitle('🚫 ผลการทดสอบ: ติด นกแดง Anti-Bot!');
+                embed.setDescription(`Proxy \`${bestProxy}\` โดน นกแดง บล็อก (${res.reason})\nระบบทำการ **ย้ายเข้า Blacklist อัตโนมัติ (6 ชม.)** เรียบร้อยแล้วค่ะ!`);
             } else {
                 embed.setColor('#FFA500');
                 embed.setTitle('⚠️ ผลการทดสอบ: เกิดข้อผิดพลาดทางเน็ตเวิร์ก');

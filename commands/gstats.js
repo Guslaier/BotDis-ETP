@@ -24,8 +24,12 @@ module.exports = {
 
         const proxyManager = require('../src/helpers/proxyManager');
         const youtubeCircuit = require('../src/helpers/youtubeCircuit');
+        const subscriptionManager = require('../src/billing/subscriptionManager');
         const proxyStatus = proxyManager.getStatus();
         const circuitStatus = youtubeCircuit.getStatus();
+        const slotStats = subscriptionManager.getLiveStreamStats(kazagumo, client);
+        const slotConfig = subscriptionManager.getConfig();
+
         let proxyBadge = '⚪ Direct (Bypass Mode)';
         if (proxyStatus.isVpn) {
             proxyBadge = `🟢 ProtonVPN ${proxyStatus.serverName ? `(${proxyStatus.serverName})` : ''} [${proxyStatus.vpnIp}]`;
@@ -42,8 +46,8 @@ module.exports = {
                 { name: '⏱️ Uptime', value: `\`${uptimeStr}\``, inline: true },
                 { name: '🧠 RAM (RSS / Heap)', value: `\`${rssMB} MB / ${heapUsedMB} MB\``, inline: true },
                 { name: '🛡️ Proxy Egress', value: `\`${proxyBadge}\``, inline: true },
-                { name: '⚡ Circuit Breaker', value: `\`${circuitStatus.status}\``, inline: true },
-                { name: '🎧 Active Players', value: `\`${activePlayers} ห้อง\``, inline: true },
+                { name: '⚡ นกแดง Circuit', value: `\`${circuitStatus.status}\``, inline: true },
+                { name: '🎧 Active Slots', value: `\`${slotStats.total}/${slotConfig.maxTotalStreams || 12} (ฟรี ${slotStats.free}/${slotConfig.maxFreeStreams || 6})\``, inline: true },
                 { name: '🏰 Servers', value: `\`${totalGuilds} เซิร์ฟเวอร์\``, inline: true },
                 { name: '⚙️ Node.js / D.js', value: `\`${process.version} / v${djsVersion}\``, inline: true },
                 { name: '⚡ Audio Engine', value: '`Ultra-Light Direct OggOpus`', inline: true }

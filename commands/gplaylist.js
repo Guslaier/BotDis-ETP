@@ -1,24 +1,25 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
+const subscriptionManager = require('../src/billing/subscriptionManager');
 
 module.exports = {
     data: {
         name: 'gplaylist',
-        description: 'เล่นเพลย์ลิสต์จาก YouTube หรือ SoundCloud (เพิ่มทุกเพลงลงในคิว)',
+        description: 'เล่นเพลย์ลิสต์จาก นกแดง หรือ เมฆส้ม (เพิ่มทุกเพลงลงในคิว)',
         options: [
             {
                 name: 'query',
                 type: 3, // STRING
-                description: 'ชื่อเพลย์ลิสต์ หรือ ลิ้งก์ Playlist (YouTube, Mix, SoundCloud)',
+                description: 'ชื่อเพลย์ลิสต์ หรือ ลิ้งก์ Playlist (นกแดง, Mix, เมฆส้ม)',
                 required: true,
             },
             {
                 name: 'limit',
                 type: 4, // INTEGER
-                description: 'จำนวนเพลงสูงสุดที่จะดึงเข้าคิว (ค่าเริ่มต้น: 25, สูงสุด: 100)',
+                description: 'จำนวนเพลงสูงสุดที่จะดึงเข้าคิว (ค่าเริ่มต้น: 25, สูงสุด: 50)',
                 required: false,
                 min_value: 5,
-                max_value: 100,
+                max_value: 50,
             },
         ],
     },
@@ -31,6 +32,25 @@ module.exports = {
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
+        const host = process.env.PUBLIC_WEB_URL || `http://${process.env.VPN_SOURCE_IP || '15.235.164.106'}:${process.env.WEB_PORT || '3000'}`;
+        const donateUrl = `${host}/donate?guildId=${interaction.guild.id}&userId=${interaction.user.id}`;
+        const donateRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setLabel('💖 ร่วมสนับสนุนเซิร์ฟเวอร์ (ช่องด่วน VIP)')
+                .setStyle(ButtonStyle.Link)
+                .setURL(donateUrl)
+        );
+
+        // 1. Slot Guard Check
+        const slotCheck = subscriptionManager.checkStreamSlot(interaction.guild.id, kazagumo, client);
+        if (!slotCheck.allowed) {
+            embed.setColor('#FFD600')
+                .setTitle('⚠️ ช่องสัญญาณเซิร์ฟเวอร์เต็ม')
+                .setDescription(slotCheck.message);
+            return interaction.reply({ embeds: [embed], components: [donateRow] });
+        }
+
+        const tierConfig = subscriptionManager.getTierConfig(interaction.guild.id);
         const query = interaction.options.getString('query');
         const limit = interaction.options.getInteger('limit') || 25;
         await interaction.deferReply();
@@ -56,12 +76,29 @@ module.exports = {
             return interaction.followUp({ embeds: [embed] });
         }
 
+        const addedTracks = [];
+        let skippedOver30Min = 0;
+
         for (const track of result.tracks) {
+            if (player.queue.length + addedTracks.length >= tierConfig.maxQueue) break;
+
+            if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+                skippedOver30Min++;
+                continue;
+            }
+            addedTracks.push(track);
             player.queue.add(track);
         }
 
-        const playlistTitle = result.playlistName || 'Playlist';
-        embed.setDescription(`✅ จัดไปชุดใหญ่ไฟกระพริบ! เพิ่มเพลย์ลิสต์ **${playlistTitle}** (${result.tracks.length} เพลง) ลงในคิวแล้วค่ะ 💃✨`);
+        let desc = `✅ จัดไปชุดใหญ่ไฟกระพริบ! เพิ่มเพลย์ลิสต์ **${result.playlistName}** (${addedTracks.length} เพลง) ลงในคิวแล้วค่ะ 💃✨`;
+        if (skippedOver30Min > 0) {
+            desc += `\n*(ข้ามเพลงที่ยาวเกิน 30 นาทีไป ${skippedOver30Min} เพลงสำหรับผู้ใช้ทั่วไปค่ะ)*`;
+        }
+        if (player.queue.length >= tierConfig.maxQueue) {
+            desc += `\n*(คิวเต็มเพดาน ${tierConfig.maxQueue} เพลงแล้วค่ะ อัปเกรดเป็นผู้สนับสนุนเพื่อขยายเป็น 50 เพลงที่ \`/gdonate\` นะคะ)*`;
+        }
+
+        embed.setDescription(desc);
         await interaction.followUp({ embeds: [embed] });
 
         if (!player.playing && !player._starting && !player.paused) {
@@ -74,4 +111,3 @@ module.exports = {
         }
     }
 };
-

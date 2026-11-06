@@ -11,6 +11,7 @@ const {
 const prism = require('prism-media');
 const CacheManager = require('./CacheManager');
 const settingsManager = require('./helpers/settingsManager');
+const subscriptionManager = require('./billing/subscriptionManager');
 
 class PlayerQueue extends Array {
     static get [Symbol.species]() {
@@ -83,6 +84,8 @@ class Player {
         this.volume = typeof options.volume === 'number' ? options.volume : settingsManager.getGuildVolume(this.guildId);
         this.loop = 'none'; // 'none' | 'track' | 'queue'
         this.autoplay = typeof options.autoplay === 'boolean' ? options.autoplay : settingsManager.getGuildAutoplay(this.guildId);
+        const tier = subscriptionManager.getTierConfig(this.guildId);
+        this.audioFilter = tier.audioFilter || 'off';
         this.playedHistory = new Set();
         this.recentArtists = [];
         this._preloadedAutoplayTrack = null;
@@ -323,13 +326,22 @@ class Player {
             if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) return;
 
             // Direct real-time streaming with early process tracker
-            const stream = await CacheManager.createTrackStream(track, 0, this.volume, (proc) => {
-                if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) {
-                    try { proc.kill(); } catch {}
-                    return;
+            const stream = await CacheManager.createTrackStream(
+                track, 
+                0, 
+                this.volume, 
+                (proc) => {
+                    if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) {
+                        try { proc.kill(); } catch {}
+                        return;
+                    }
+                    this.currentProcess = proc;
+                },
+                {
+                    audioFilter: this.audioFilter || 'off',
+                    bitrate: this.getBitrate()
                 }
-                this.currentProcess = proc;
-            });
+            );
 
             if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) {
                 if (stream && stream.kill) {
@@ -422,6 +434,20 @@ class Player {
                 this._isStopping = false;
             }
         }, 500);
+    }
+
+    getBitrate() {
+        const tier = subscriptionManager.getTierConfig(this.guildId);
+        return tier.bitrate || '64k';
+    }
+
+    setFilter(filter) {
+        this.audioFilter = filter || 'off';
+        subscriptionManager.setGuildAudioFilter(this.guildId, this.audioFilter);
+        if (this.playing && this.queue.current) {
+            this.seek(this.position);
+        }
+        return this.audioFilter;
     }
 
     setVolume(volume) {
@@ -614,9 +640,18 @@ class Player {
             }
 
             const seekSeconds = Math.max(0, Math.floor(positionMs / 1000));
-            const stream = await CacheManager.createTrackStream(this.queue.current, seekSeconds, this.volume, (proc) => {
-                this.currentProcess = proc;
-            });
+            const stream = await CacheManager.createTrackStream(
+                this.queue.current, 
+                seekSeconds, 
+                this.volume, 
+                (proc) => {
+                    this.currentProcess = proc;
+                },
+                {
+                    audioFilter: this.audioFilter || 'off',
+                    bitrate: this.getBitrate()
+                }
+            );
 
             const buffered = this._createBufferedResource(stream);
             this.currentProcess = buffered.stream;
