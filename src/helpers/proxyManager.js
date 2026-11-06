@@ -15,6 +15,9 @@ class ProxyManager {
         this.isRepairingVpn = false;
         this.lastVpnEgressTest = 0;
         this.lastExitIp = null;
+        if (process.platform === 'linux' && this.vpnEnabled) {
+            setTimeout(() => this.fetchPublicExitIp(4000).catch(() => {}), 1200).unref();
+        }
     }
 
     /**
@@ -83,6 +86,24 @@ class ProxyManager {
 
     getExitIp() {
         return this.lastExitIp || this.getVpnSourceIp();
+    }
+
+    async fetchPublicExitIp(timeoutMs = 4000) {
+        if (process.platform !== 'linux' || !this.vpnEnabled) return null;
+        const vpnIp = this.getVpnSourceIp();
+        if (!vpnIp) return null;
+
+        return new Promise((resolve) => {
+            execFile('curl', ['-s', '-m', String(Math.max(1, Math.round(timeoutMs / 1000))), '--interface', vpnIp, 'https://api.ipify.org'], (err, stdout) => {
+                const ip = (stdout || '').trim();
+                if (!err && ip && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
+                    this.lastExitIp = ip;
+                    this.vpnHealthy = true;
+                    return resolve(ip);
+                }
+                resolve(this.lastExitIp || null);
+            });
+        });
     }
 
     isVpnActive() {
@@ -206,6 +227,9 @@ class ProxyManager {
                 this.consecutiveVpnFailures = 0;
                 const newServer = this.getVpnServerName();
                 const newIp = this.getVpnSourceIp();
+                setTimeout(() => {
+                    this.fetchPublicExitIp(5000).catch(() => {});
+                }, 1500).unref();
                 resolve({ ok: true, server: newServer, ip: newIp, output: out });
             });
         });

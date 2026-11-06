@@ -433,10 +433,35 @@ class AdminServer {
                 }
 
                 const allSubs = dbManager.get('subscriptions') || {};
-                const subsList = Object.values(allSubs).map(s => ({
-                    ...s,
-                    isSupporter: s.plan === 'SUPPORTER' && (s.expiresAt > Date.now())
-                }));
+                const guildMap = new Map();
+
+                if (this.client && this.client.guilds && this.client.guilds.cache) {
+                    for (const [id, g] of this.client.guilds.cache.entries()) {
+                        guildMap.set(id, {
+                            guildId: id,
+                            guildName: g.name,
+                            plan: 'FREE',
+                            source: 'FREE',
+                            expiresAt: 0,
+                            referralCode: `REF-${id.slice(-6).toUpperCase()}`,
+                            referralCount: 0,
+                            cumulativePaidBaht: 0,
+                            isSupporter: false
+                        });
+                    }
+                }
+
+                for (const [id, s] of Object.entries(allSubs)) {
+                    const g = this.client?.guilds?.cache?.get(id);
+                    const isSupp = s.plan === 'SUPPORTER' && (s.expiresAt > Date.now());
+                    guildMap.set(id, {
+                        ...s,
+                        guildName: g ? g.name : (s.guildName || id),
+                        isSupporter: isSupp
+                    });
+                }
+
+                const subsList = Array.from(guildMap.values());
                 const campaigns = dbManager.get('campaigns') || {};
 
                 const allTx = dbManager.get('transactions') || {};
@@ -445,6 +470,7 @@ class AdminServer {
                     .slice(0, 50);
 
                 const nodes = nodeRouter.getNodes();
+                const vpnPublicIp = proxyManager.lastExitIp || null;
 
                 return this._sendJson(res, 200, {
                     success: true,
@@ -494,8 +520,9 @@ class AdminServer {
                             connected: vpnActive,
                             server: vpnServer,
                             internalIp: vpnIp,
-                            exitIp: vpnExitIp,
-                            display: vpnActive ? `${vpnServer} • Exit: ${vpnExitIp}` : 'Standby / Direct'
+                            publicIp: vpnPublicIp,
+                            exitIp: vpnPublicIp || vpnIp,
+                            display: vpnActive ? (vpnPublicIp ? `${vpnServer} • Exit: ${vpnPublicIp}` : `${vpnServer} • Active`) : 'Standby / Direct'
                         },
                         circuit: {
                             isOpen: youtubeCircuit.isOpen(),
@@ -626,7 +653,19 @@ class AdminServer {
 
             if (pathname === '/api/admin/vpn/switch' && req.method === 'POST') {
                 const result = await proxyManager.switchVpnServer('next');
-                return this._sendJson(res, 200, { success: true, result });
+                const newExitIp = await proxyManager.fetchPublicExitIp(4000).catch(() => null);
+                return this._sendJson(res, 200, { success: true, result, newExitIp });
+            }
+
+            if (pathname === '/api/admin/cache/clear' && req.method === 'POST') {
+                const resClear = cacheManager.clearAllCache();
+                return this._sendJson(res, 200, { success: true, ...resClear });
+            }
+
+            if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/drain') && req.method === 'POST') {
+                const nodeId = pathname.split('/')[4];
+                const resDrain = nodeRouter.toggleDrain(nodeId);
+                return this._sendJson(res, 200, resDrain);
             }
 
             if (pathname === '/api/admin/circuit/reset' && req.method === 'POST') {

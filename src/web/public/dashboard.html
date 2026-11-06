@@ -250,7 +250,7 @@
     </div>
     <!-- 3. NVMe Disk & Cache -->
     <div class="stat-card">
-        <h4 id="lblStatDisk">ดิสก์ & แคชเพลง (Storage)</h4>
+        <h4><span id="lblStatDisk">ดิสก์ & แคชเพลง (Storage)</span> <button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="clearCache()" title="ล้างแคชไฟล์เสียงเพลงทั้งหมด">🗑️ ล้างแคช</button></h4>
         <div class="val" id="diskVal">0 / 350 MB (Cache)</div>
         <div class="sub" id="diskSub">Disk รวม: 0 GB / 0 GB</div>
     </div>
@@ -357,10 +357,11 @@
                             <th id="thNodeHost">Host</th>
                             <th id="thNodeStatus">สถานะ</th>
                             <th id="thNodeLoad">ภาระสตรีม</th>
+                            <th id="thNodeAction">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="nodeTableBody">
-                        <tr><td colspan="5" style="text-align: center; color: var(--text-sub);">กำลังโหลดข้อมูลโหนด...</td></tr>
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-sub);">กำลังโหลดข้อมูลโหนด...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -453,6 +454,7 @@
             thNodeHost: "Host",
             thNodeStatus: "สถานะ",
             thNodeLoad: "ภาระสตรีม",
+            thNodeAction: "จัดการ",
             liveConfig: "⚙️ ตั้งค่าระบบด่วน (Live Config)",
             paymentMode: "โหมดการชำระเงิน (Payment Mode)",
             optSandbox: "โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)",
@@ -510,6 +512,7 @@
             thNodeHost: "Host",
             thNodeStatus: "Status",
             thNodeLoad: "Stream Load",
+            thNodeAction: "Action",
             liveConfig: "⚙️ Live Cluster Configuration",
             paymentMode: "Billing Mode",
             optSandbox: "Sandbox Simulation (Safe, No real funds charged)",
@@ -584,6 +587,7 @@
         document.getElementById('thNodeHost').textContent = t.thNodeHost;
         document.getElementById('thNodeStatus').textContent = t.thNodeStatus;
         document.getElementById('thNodeLoad').textContent = t.thNodeLoad;
+        if (document.getElementById('thNodeAction')) document.getElementById('thNodeAction').textContent = t.thNodeAction;
         document.getElementById('lblConfigTitle').textContent = t.liveConfig;
         document.getElementById('lblPaymentMode').textContent = t.paymentMode;
         document.getElementById('lblPrice').textContent = t.price30d;
@@ -605,13 +609,20 @@
         if (optProd) optProd.textContent = t.optProd;
     }
 
+    let refreshTimer = null;
+
     function checkAuth() {
         if (!authToken) {
             document.getElementById('loginModal').style.display = 'flex';
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
         } else {
             document.getElementById('loginModal').style.display = 'none';
             refreshDashboard();
-            setInterval(refreshDashboard, 5000);
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(refreshDashboard, 4000);
         }
     }
 
@@ -713,11 +724,16 @@
 
         const vpnConn = s.vpn ? s.vpn.connected : !!s.vpnActive;
         const vpnServer = (s.vpn && s.vpn.server) || 'SG-FREE';
-        const exitIp = (s.vpn && s.vpn.exitIp) || s.vpnIp || '10.96.0.5';
+        const publicIp = s.vpn && s.vpn.publicIp;
+        const ifaceIp = (s.vpn && s.vpn.internalIp) || s.vpnIp || '10.96.0.5';
         const circuit = s.circuit ? (s.circuit.isOpen ? '⚠️ OPEN' : '✅ CLOSED') : 'CLOSED';
 
         document.getElementById('vpnVal').textContent = vpnConn ? `${vpnServer} (Online)` : 'Standby / Direct';
-        document.getElementById('vpnSub').textContent = `Exit IP: ${exitIp} • Circuit: ${circuit}`;
+        if (publicIp) {
+            document.getElementById('vpnSub').textContent = `Exit IP: ${publicIp} (Public) • Interface: ${ifaceIp} • Circuit: ${circuit}`;
+        } else {
+            document.getElementById('vpnSub').textContent = `Exit IP: ${ifaceIp} (Detecting...) • Circuit: ${circuit}`;
+        }
 
         const cfg = data.config || {};
         document.getElementById('billingModeVal').textContent = (cfg.paymentMode || 'sandbox').toUpperCase();
@@ -870,19 +886,35 @@
     function renderNodes(nodes) {
         const tbody = document.getElementById('nodeTableBody');
         if (!nodes || nodes.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">ไม่มีโหนดในระบบ</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-sub);">ไม่มีโหนดในระบบ</td></tr>`;
             return;
         }
 
         tbody.innerHTML = nodes.map(n => {
             const isOnline = n.status === 'online';
+            const isDraining = n.status === 'draining';
+            let statusBadge = 'badge-free';
+            let statusText = '🔴 OFFLINE';
+            if (isOnline) {
+                statusBadge = 'badge-vip';
+                statusText = '🟢 ONLINE';
+            } else if (isDraining) {
+                statusBadge = 'badge-free';
+                statusText = '🟡 DRAINING';
+            }
+
+            const drainBtn = isDraining 
+                ? `<button class="btn btn-primary btn-sm" onclick="toggleDrain('${n.id}')">🟢 Re-enable</button>`
+                : `<button class="btn btn-danger btn-sm" onclick="toggleDrain('${n.id}')">⏳ Drain</button>`;
+
             return `
                 <tr>
                     <td><strong>${n.name || n.id}</strong></td>
                     <td><span style="font-size: 11px; text-transform: uppercase;">${n.type || 'local'}</span></td>
                     <td><code>${n.host || '127.0.0.1'}</code></td>
-                    <td><span class="badge-pill ${isOnline ? 'badge-vip' : 'badge-free'}">${isOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}</span></td>
+                    <td><span class="badge-pill ${statusBadge}">${statusText}</span></td>
                     <td>${n.activeRooms || 0} / ${n.maxRooms || 12}</td>
+                    <td>${drainBtn}</td>
                 </tr>
             `;
         }).join('');
@@ -958,8 +990,43 @@
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
             const d = await res.json();
-            alert(d.success ? 'สั่งสลับเซิร์ฟเวอร์ VPN เรียบร้อยแล้ว' : 'ไม่สามารถสลับได้: ' + d.error);
+            const exitMsg = d.newExitIp ? ` (Exit IP ใหม่: ${d.newExitIp})` : '';
+            alert(d.success ? `สั่งสลับเซิร์ฟเวอร์ VPN เรียบร้อยแล้ว${exitMsg}` : 'ไม่สามารถสลับได้: ' + d.error);
             refreshDashboard();
+        } catch (err) {
+            alert('เกิดข้อผิดพลาด: ' + err.message);
+        }
+    }
+
+    async function clearCache() {
+        if (!confirm('ยืนยันการล้างแคชไฟล์เสียงเพลงทั้งหมดเพื่อคืนพื้นที่ว่างให้ดิสก์?')) return;
+        try {
+            const res = await fetch('/api/admin/cache/clear', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const d = await res.json();
+            alert(`ล้างแคชสำเร็จ! ลบ ${d.filesRemoved || 0} ไฟล์ คืนพื้นที่ดิสก์ ${d.freedMb || 0} MB`);
+            refreshDashboard();
+        } catch (err) {
+            alert('เกิดข้อผิดพลาด: ' + err.message);
+        }
+    }
+
+    async function toggleDrain(nodeId) {
+        if (!confirm(`เปลี่ยนสถานะ Drain ของโหนด ${nodeId} หรือไม่? (โหมด Drain จะงดรับห้องใหม่แต่ปล่อยให้เพลงเดิมเล่นจนจบอย่างราบรื่น)`)) return;
+        try {
+            const res = await fetch(`/api/admin/nodes/${nodeId}/drain`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const d = await res.json();
+            if (d.success) {
+                alert(`โหนด ${nodeId} เปลี่ยนสถานะเป็น: ${d.node.status}`);
+                refreshDashboard();
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + (d.error || 'Unknown error'));
+            }
         } catch (err) {
             alert('เกิดข้อผิดพลาด: ' + err.message);
         }

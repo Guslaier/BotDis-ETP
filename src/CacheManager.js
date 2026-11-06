@@ -699,6 +699,32 @@ class CacheManager {
             return { usedBytes: 0, usedMb: 0, maxMb: 350, files: 0 };
         }
     }
+    clearAllCache() {
+        try {
+            if (!fs.existsSync(this.cacheDir)) return { freedMb: 0, filesRemoved: 0 };
+            const files = fs.readdirSync(this.cacheDir);
+            let freedBytes = 0;
+            let filesRemoved = 0;
+            for (const file of files) {
+                if (file.endsWith('.opus') || file.endsWith('.m4a') || file.endsWith('.mp3')) {
+                    const fullPath = path.join(this.cacheDir, file);
+                    try {
+                        const stats = fs.statSync(fullPath);
+                        freedBytes += stats.size;
+                        fs.unlinkSync(fullPath);
+                        filesRemoved++;
+                    } catch {}
+                }
+            }
+            return {
+                freedMb: Math.round(freedBytes / (1024 * 1024)),
+                filesRemoved
+            };
+        } catch (err) {
+            console.error('[CacheManager] Error clearing cache:', err.message);
+            return { freedMb: 0, filesRemoved: 0, error: err.message };
+        }
+    }
 }
 
 module.exports = new CacheManager();

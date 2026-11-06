@@ -77,6 +77,24 @@ class NodeRouter extends EventEmitter {
 
         return availableNodes[0];
     }
+
+    toggleDrain(nodeId) {
+        const node = this.nodes.get(nodeId);
+        if (!node) return { success: false, error: 'Node not found' };
+        if (node.status === 'draining') {
+            node.status = 'online';
+        } else {
+            node.status = 'draining';
+        }
+        return { success: true, node };
+    }
+
+    setNodeStatus(nodeId, status) {
+        const node = this.nodes.get(nodeId);
+        if (!node) return { success: false, error: 'Node not found' };
+        node.status = status;
+        return { success: true, node };
+    }
 }
 
 module.exports = new NodeRouter();
