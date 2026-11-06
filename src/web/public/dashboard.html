@@ -732,6 +732,7 @@
     let dashLang = localStorage.getItem('goolix_dash_lang') || 'th';
     let authToken = localStorage.getItem('goolix_admin_token') || '';
     let allGuildsCache = [];
+    const guildDaysInputState = {};
 
     function setDashboardLanguage(lang) {
         dashLang = (lang === 'en' || lang === 'th') ? lang : 'th';
@@ -880,7 +881,14 @@
                 renderStats(data);
                 renderPlayers(data.players || []);
                 allGuildsCache = data.subscriptions || data.guilds || [];
-                renderGuilds(allGuildsCache);
+                const searchEl = document.getElementById('guildSearchInput');
+                const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
+                if (query) {
+                    const filtered = allGuildsCache.filter(g => (g.guildName || '').toLowerCase().includes(query) || (g.guildId || '').includes(query));
+                    renderGuilds(filtered);
+                } else {
+                    renderGuilds(allGuildsCache);
+                }
                 renderConfig(data.config || {});
                 renderCampaigns(data.campaigns || {});
                 renderTransactions(data.transactions || []);
@@ -998,10 +1006,21 @@
 
     function renderGuilds(guilds) {
         const tbody = document.getElementById('guildTableBody');
-        if (guilds.length === 0) {
+        if (!guilds || guilds.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-sub);">ไม่พบข้อมูลเซิร์ฟเวอร์</td></tr>`;
             return;
         }
+
+        // Preserve current user-typed days before re-rendering
+        document.querySelectorAll('input[id^="adj_"]').forEach(inp => {
+            const gid = inp.id.replace('adj_', '');
+            guildDaysInputState[gid] = inp.value;
+        });
+
+        const activeEl = document.activeElement;
+        const activeId = activeEl ? activeEl.id : null;
+        const selStart = (activeEl && typeof activeEl.selectionStart === 'number') ? activeEl.selectionStart : null;
+        const selEnd = (activeEl && typeof activeEl.selectionEnd === 'number') ? activeEl.selectionEnd : null;
 
         tbody.innerHTML = guilds.map(g => {
             const exp = formatExpiry(g.expiresAt);
@@ -1009,6 +1028,7 @@
             const refCount = g.referralCount || 0;
             const refBaht = g.cumulativePaidBaht || 0;
             const safeName = escapeHtml(g.guildName || g.guildId);
+            const userDays = (guildDaysInputState[g.guildId] !== undefined) ? guildDaysInputState[g.guildId] : '30';
 
             return `
                 <tr>
@@ -1028,7 +1048,7 @@
                     </td>
                     <td>
                         <div style="display: flex; gap: 4px; align-items: center;">
-                            <input type="number" id="adj_${g.guildId}" value="30" style="width: 58px; padding: 4px 6px; font-size: 11px;" ${g.isBanned ? 'disabled' : ''}>
+                            <input type="number" id="adj_${g.guildId}" value="${escapeHtml(userDays)}" oninput="guildDaysInputState['${g.guildId}'] = this.value" onkeydown="if(event.key==='Enter') customAddDays('${g.guildId}')" style="width: 58px; padding: 4px 6px; font-size: 11px;" ${g.isBanned ? 'disabled' : ''}>
                             <button class="btn btn-primary btn-sm" onclick="customAddDays('${g.guildId}')" ${g.isBanned ? 'disabled' : ''}>+วัน</button>
                         </div>
                     </td>
@@ -1045,19 +1065,38 @@
                 </tr>
             `;
         }).join('');
+
+        // Restore focus and cursor position if user was currently typing in an input
+        if (activeId) {
+            const restored = document.getElementById(activeId);
+            if (restored) {
+                restored.focus();
+                try {
+                    if (selStart !== null && selEnd !== null) {
+                        restored.setSelectionRange(selStart, selEnd);
+                    }
+                } catch {}
+            }
+        }
     }
 
     function filterGuilds() {
-        const q = document.getElementById('guildSearchInput').value.toLowerCase();
-        const filtered = allGuildsCache.filter(g => (g.guildName || '').toLowerCase().includes(q) || (g.guildId || '').includes(q));
+        const q = (document.getElementById('guildSearchInput').value || '').trim().toLowerCase();
+        const filtered = q ? allGuildsCache.filter(g => (g.guildName || '').toLowerCase().includes(q) || (g.guildId || '').includes(q)) : allGuildsCache;
         renderGuilds(filtered);
     }
 
     function renderConfig(cfg) {
-        document.getElementById('cfgPaymentMode').value = cfg.paymentMode || 'sandbox';
-        document.getElementById('cfgPrice').value = cfg.price30Days || 29;
-        document.getElementById('cfgFreeSlots').value = cfg.maxFreeStreams || 6;
-        document.getElementById('cfgTotalSlots').value = cfg.maxTotalStreams || 12;
+        const activeEl = document.activeElement;
+        const modeEl = document.getElementById('cfgPaymentMode');
+        const priceEl = document.getElementById('cfgPrice');
+        const freeEl = document.getElementById('cfgFreeSlots');
+        const totalEl = document.getElementById('cfgTotalSlots');
+
+        if (modeEl && activeEl !== modeEl) modeEl.value = cfg.paymentMode || 'sandbox';
+        if (priceEl && activeEl !== priceEl) priceEl.value = cfg.price30Days || 29;
+        if (freeEl && activeEl !== freeEl) freeEl.value = cfg.maxFreeStreams || 6;
+        if (totalEl && activeEl !== totalEl) totalEl.value = cfg.maxTotalStreams || 12;
     }
 
     function renderCampaigns(campaigns) {
@@ -1308,6 +1347,7 @@
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
                 body: JSON.stringify({ addDays: days })
             });
+            delete guildDaysInputState[guildId];
             notifySuccess('ปรับวันสำเร็จ', `ปรับเพิ่ม/ลด ${days} วันให้เซิร์ฟเวอร์เรียบร้อย`);
             refreshDashboard();
         } catch (err) {
