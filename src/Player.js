@@ -364,6 +364,12 @@ class Player {
 
             if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) return;
 
+            const nodeRouter = require('./cluster/NodeRouter');
+            const isSupporter = subscriptionManager.isSupporter(this.guildId);
+            if (!this.node || this.node.status !== 'online') {
+                this.node = nodeRouter.selectBestNode(this.guildId, isSupporter);
+            }
+
             // Direct real-time streaming with early process tracker
             const stream = await CacheManager.createTrackStream(
                 track, 
@@ -378,7 +384,8 @@ class Player {
                 },
                 {
                     audioFilter: this.audioFilter || 'off',
-                    bitrate: this.getBitrate()
+                    bitrate: this.getBitrate(),
+                    node: this.node
                 }
             );
 
@@ -693,7 +700,8 @@ class Player {
                 },
                 {
                     audioFilter: this.audioFilter || 'off',
-                    bitrate: this.getBitrate()
+                    bitrate: this.getBitrate(),
+                    node: this.node
                 }
             );
 

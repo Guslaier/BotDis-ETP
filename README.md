@@ -230,13 +230,36 @@ MAX_FREE_STREAMS=6          # Allocation cap for non-VIP servers
 
 ### 3. Cluster Scaling with `REMOTE_NODES`
 
-To register additional audio processing nodes in the cluster router, define `REMOTE_NODES` in `.env` as a JSON array:
-
+#### A. Running the Worker on an Audio Node VPS
+On each external Audio Node machine, configure `.env`:
 ```env
+NODE_PORT=2333                       # Listening port for AudioNodeServer (customizable)
+NODE_ID=sg-worker-1                 # Unique Node ID
+NODE_NAME="SG Worker (Proton SG)"   # Display name in Web Admin
+NODE_AUTH_SECRET=your_cluster_secret # Must match Controller NODE_AUTH_SECRET
+MAX_TOTAL_STREAMS=15                # Max concurrent playback slots on this node
+ENABLE_VPN=true                     # Egress via this node's OpenVPN tunnel
+```
+
+Start the Audio Node worker:
+```bash
+# Direct run
+npm run node
+# or
+node src/cluster/AudioNodeServer.js
+
+# 24/7 background run with PM2
+pm2 start ecosystem.config.cjs --only goolix-node
+```
+
+#### B. Registering Remote Nodes on Controller
+On the Main Controller VPS, register all worker nodes in `.env`:
+```env
+NODE_AUTH_SECRET=your_cluster_secret
 REMOTE_NODES='[{"id":"sg-worker-1","name":"SG Worker (Proton SG)","host":"103.20.10.15","port":2333,"maxRooms":15},{"id":"jp-worker-1","name":"JP Worker (Proton JP)","host":"133.15.20.30","port":2333,"maxRooms":15}]'
 ```
 
-- **NodeRouter (`src/cluster/NodeRouter.js`):** Continuously balances incoming playback requests to the online node with the lowest ratio of `activeRooms / maxRooms`.
+- **NodeRouter (`src/cluster/NodeRouter.js`):** Pings each node every 10 seconds via `/api/node/stats`, reporting real-time CPU, RAM, active streams, and VPN exit IP directly to the Web Admin dashboard. Incoming playback requests are automatically dispatched to the least loaded online node.
 - **Drain Mode (`⏳ Drain`):** In the Web Admin Dashboard, clicking **Drain** on a node flags it as draining: existing songs finish playing, but new streams are routed to other nodes. This allows zero-downtime maintenance or VPN rotation.
 
 ---

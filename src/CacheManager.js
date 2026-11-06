@@ -215,6 +215,17 @@ class CacheManager {
     async createTrackStream(track, seekSeconds = 0, volume = 100, onSpawn = null, options = {}) {
         const filter = (options && options.audioFilter) || 'off';
         const bitrate = (options && options.bitrate) || '64k';
+
+        // Remote Audio Node routing (Scale-Out Cluster)
+        if (options && options.node && options.node.type === 'remote' && options.node.status === 'online') {
+            try {
+                console.log(`[CacheManager:Stream] Routing track "${track.title}" through remote node: ${options.node.name} (${options.node.host}:${options.node.port})`);
+                return await this._streamFromRemoteNode(options.node, track, seekSeconds, volume, onSpawn, filter, bitrate);
+            } catch (remoteErr) {
+                console.warn(`[CacheManager] Remote node stream failed for "${track.title}", falling back to local:`, remoteErr.message);
+            }
+        }
+
         const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
         const targetPath = this.getTrackPath(identifier);
 
@@ -478,6 +489,55 @@ class CacheManager {
                 }
             }, 12000);
             streamTimeout.unref();
+        });
+    }
+
+    _streamFromRemoteNode(node, track, seekSeconds = 0, volume = 100, onSpawn = null, filter = 'off', bitrate = '64k') {
+        const http = require('http');
+        return new Promise((resolve, reject) => {
+            const queryParams = new URLSearchParams({
+                uri: track.uri,
+                seek: String(seekSeconds),
+                volume: String(volume),
+                filter: String(filter),
+                bitrate: String(bitrate)
+            });
+
+            const req = http.request({
+                hostname: node.host,
+                port: node.port || 2333,
+                path: `/api/node/stream?${queryParams.toString()}`,
+                method: 'GET',
+                timeout: 15000,
+                headers: {
+                    'x-node-secret': process.env.NODE_AUTH_SECRET || ''
+                }
+            }, (res) => {
+                if (res.statusCode !== 200) {
+                    return reject(new Error(`Remote node ${node.id} responded with status ${res.statusCode}`));
+                }
+
+                res.kill = () => {
+                    try { req.destroy(); } catch {}
+                };
+
+                if (typeof onSpawn === 'function') {
+                    onSpawn(res);
+                }
+
+                resolve(res);
+            });
+
+            req.on('timeout', () => {
+                req.destroy();
+                reject(new Error(`Remote node ${node.id} stream connection timed out`));
+            });
+
+            req.on('error', (err) => {
+                reject(err);
+            });
+
+            req.end();
         });
     }
 

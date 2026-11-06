@@ -1,4 +1,5 @@
 const EventEmitter = require('events');
+const http = require('http');
 
 class NodeRouter extends EventEmitter {
     constructor() {
@@ -6,6 +7,8 @@ class NodeRouter extends EventEmitter {
         this.nodes = new Map();
         this._initLocalNode();
         this._initRemoteNodes();
+        this._healthTimer = null;
+        this._startHealthChecks();
     }
 
     _initLocalNode() {
@@ -41,7 +44,8 @@ class NodeRouter extends EventEmitter {
                             activeRooms: 0,
                             maxRooms: node.maxRooms || 15,
                             latency: 0,
-                            lastPing: 0
+                            lastPing: 0,
+                            vpn: null
                         });
                     }
                 }
@@ -49,6 +53,73 @@ class NodeRouter extends EventEmitter {
         } catch (err) {
             console.warn('[NodeRouter] Failed to parse REMOTE_NODES config:', err.message);
         }
+    }
+
+    _startHealthChecks() {
+        if (this._healthTimer) clearInterval(this._healthTimer);
+        this._pollRemoteNodes();
+        this._healthTimer = setInterval(() => {
+            this._pollRemoteNodes();
+        }, 10000);
+        if (this._healthTimer.unref) this._healthTimer.unref();
+    }
+
+    _pollRemoteNodes() {
+        for (const node of this.nodes.values()) {
+            if (node.type === 'remote') {
+                this._checkRemoteNode(node);
+            }
+        }
+    }
+
+    _checkRemoteNode(node) {
+        const pingStart = Date.now();
+        const req = http.request({
+            hostname: node.host,
+            port: node.port || 2333,
+            path: '/api/node/stats',
+            method: 'GET',
+            timeout: 4000,
+            headers: {
+                'x-node-secret': process.env.NODE_AUTH_SECRET || ''
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        node.status = parsed.status || 'online';
+                        node.activeRooms = parsed.activeRooms || 0;
+                        node.maxRooms = parsed.maxRooms || node.maxRooms;
+                        node.cpu = parsed.cpu || '-';
+                        node.ram = parsed.ram || '-';
+                        node.hostRam = parsed.hostRam || '-';
+                        node.vpn = parsed.vpn || null;
+                        node.latency = Date.now() - pingStart;
+                        node.lastPing = Date.now();
+                    } catch (e) {
+                        node.status = 'offline';
+                    }
+                } else {
+                    node.status = 'offline';
+                }
+            });
+        });
+
+        req.on('timeout', () => {
+            req.destroy();
+            node.status = 'offline';
+            node.latency = -1;
+        });
+
+        req.on('error', () => {
+            node.status = 'offline';
+            node.latency = -1;
+        });
+
+        req.end();
     }
 
     getNodes() {
@@ -82,7 +153,7 @@ class NodeRouter extends EventEmitter {
             return this.nodes.get('local-0');
         }
 
-        // Sort by least load (activeRooms / maxRooms)
+        // Sort by least load ratio (activeRooms / maxRooms)
         availableNodes.sort((a, b) => {
             const loadA = a.activeRooms / Math.max(1, a.maxRooms);
             const loadB = b.activeRooms / Math.max(1, b.maxRooms);
@@ -92,9 +163,39 @@ class NodeRouter extends EventEmitter {
         return availableNodes[0];
     }
 
-    toggleDrain(nodeId) {
+    async toggleDrain(nodeId) {
         const node = this.nodes.get(nodeId);
         if (!node) return { success: false, error: 'Node not found' };
+
+        if (node.type === 'remote') {
+            return new Promise((resolve) => {
+                const req = http.request({
+                    hostname: node.host,
+                    port: node.port || 2333,
+                    path: '/api/node/drain',
+                    method: 'POST',
+                    timeout: 4000,
+                    headers: {
+                        'x-node-secret': process.env.NODE_AUTH_SECRET || ''
+                    }
+                }, (res) => {
+                    let d = '';
+                    res.on('data', c => d += c);
+                    res.on('end', () => {
+                        try {
+                            const parsed = JSON.parse(d);
+                            node.status = parsed.status;
+                            resolve({ success: true, node });
+                        } catch {
+                            resolve({ success: false, error: 'Invalid response from remote node' });
+                        }
+                    });
+                });
+                req.on('error', (err) => resolve({ success: false, error: err.message }));
+                req.end();
+            });
+        }
+
         if (node.status === 'draining') {
             node.status = 'online';
         } else {
