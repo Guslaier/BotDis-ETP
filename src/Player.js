@@ -433,9 +433,6 @@ class Player {
             try { this.audioPlayer.stop(); } catch {}
         } finally {
             this._starting = false;
-            if (!this._destroyed && !this._isStopping && token !== this._playToken && this.audioPlayer.state.status === AudioPlayerStatus.Idle && this.queue.length > 0) {
-                this._advanceQueue().catch(() => {});
-            }
         }
     }
 
