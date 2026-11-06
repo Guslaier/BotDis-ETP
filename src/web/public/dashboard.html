@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GOOLIX • Master Admin Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --bg-dark: #080B10;
@@ -197,6 +198,54 @@
             background: var(--card-bg); border: 1px solid var(--card-border);
             padding: 28px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center;
             box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 20px var(--slime-glow);
+        }
+        /* SweetAlert2 GOOLIX Theme */
+        .swal2-popup.goolix-swal {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--card-border) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.85), 0 0 25px var(--slime-glow) !important;
+            color: var(--text-main) !important;
+            font-family: 'Kanit', 'Plus Jakarta Sans', sans-serif !important;
+        }
+        .swal2-title {
+            color: #FFFFFF !important;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+        }
+        .swal2-html-container {
+            color: var(--text-sub) !important;
+            font-size: 13.5px !important;
+            line-height: 1.6 !important;
+        }
+        .swal2-confirm.goolix-swal-confirm {
+            background: var(--slime-green) !important;
+            color: #080B10 !important;
+            font-weight: 700 !important;
+            border-radius: 8px !important;
+            padding: 8px 18px !important;
+            box-shadow: 0 0 12px var(--slime-glow) !important;
+            border: none !important;
+            font-size: 12.5px !important;
+        }
+        .swal2-cancel.goolix-swal-cancel {
+            background: #1A2230 !important;
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+            border: 1px solid var(--card-border) !important;
+            border-radius: 8px !important;
+            padding: 8px 18px !important;
+            font-size: 12.5px !important;
+        }
+        .swal2-confirm.goolix-swal-danger {
+            background: #DC2626 !important;
+            color: #FFFFFF !important;
+            font-weight: 700 !important;
+            border-radius: 8px !important;
+            padding: 8px 18px !important;
+            border: none !important;
+            box-shadow: 0 0 12px rgba(220, 38, 38, 0.4) !important;
+            font-size: 12.5px !important;
         }
     </style>
 </head>
@@ -445,6 +494,86 @@
 </div>
 
 <script>
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: '#111620',
+        color: '#FFFFFF',
+        customClass: {
+            popup: 'goolix-swal'
+        }
+    });
+
+    function notifySuccess(title, text = '') {
+        return Swal.fire({
+            icon: 'success',
+            title,
+            text,
+            background: '#111620',
+            color: '#FFFFFF',
+            confirmButtonColor: '#00FF88',
+            customClass: {
+                popup: 'goolix-swal',
+                confirmButton: 'goolix-swal-confirm'
+            }
+        });
+    }
+
+    function notifyError(title, text = '') {
+        return Swal.fire({
+            icon: 'error',
+            title,
+            text,
+            background: '#111620',
+            color: '#FFFFFF',
+            confirmButtonColor: '#EF4444',
+            customClass: {
+                popup: 'goolix-swal',
+                confirmButton: 'goolix-swal-danger'
+            }
+        });
+    }
+
+    function notifyWarning(title, text = '') {
+        return Swal.fire({
+            icon: 'warning',
+            title,
+            text,
+            background: '#111620',
+            color: '#FFFFFF',
+            confirmButtonColor: '#FFD600',
+            customClass: {
+                popup: 'goolix-swal',
+                confirmButton: 'goolix-swal-confirm'
+            }
+        });
+    }
+
+    async function confirmAction(title, text, confirmBtnText = 'ยืนยัน', isDanger = false) {
+        const result = await Swal.fire({
+            title,
+            text,
+            icon: isDanger ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonText: confirmBtnText,
+            cancelButtonText: 'ยกเลิก',
+            background: '#111620',
+            color: '#FFFFFF',
+            confirmButtonColor: isDanger ? '#DC2626' : '#00FF88',
+            cancelButtonColor: '#1E2838',
+            reverseButtons: true,
+            customClass: {
+                popup: 'goolix-swal',
+                confirmButton: isDanger ? 'goolix-swal-danger' : 'goolix-swal-confirm',
+                cancelButton: 'goolix-swal-cancel'
+            }
+        });
+        return result.isConfirmed;
+    }
+
     const dashTranslations = {
         th: {
             title: "GOOLIX • Master Admin Dashboard",
@@ -701,19 +830,25 @@
                 authToken = data.token;
                 localStorage.setItem('goolix_admin_token', authToken);
                 checkAuth();
+                Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
             } else {
                 errEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง หรือถูกล็อกชั่วคราว';
                 errEl.style.display = 'block';
+                notifyError('เข้าสู่ระบบไม่สำเร็จ', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
             }
         } catch {
             errEl.textContent = '❌ ไม่สามารถเชื่อมต่อ API ได้';
             errEl.style.display = 'block';
+            notifyError('เชื่อมต่อล้มเหลว', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ API ได้');
         }
     }
 
     function logout() {
         localStorage.removeItem('goolix_admin_token');
         authToken = '';
+        checkAuth();
+        Toast.fire({ icon: 'info', title: 'ออกจากระบบเรียบร้อย' });
+    }
         checkAuth();
     }
 
@@ -1018,20 +1153,12 @@
         const alertEl = document.getElementById('configAlert');
 
         if (isNaN(freeSlots) || isNaN(totalSlots) || freeSlots < 0 || totalSlots < 1) {
-            alertEl.style.display = 'block';
-            alertEl.style.background = 'rgba(239, 68, 68, 0.2)';
-            alertEl.style.border = '1px solid #EF4444';
-            alertEl.style.color = '#FCA5A5';
-            alertEl.textContent = '❌ กรุณากรอกตัวเลขโควต้าสตรีมให้ถูกต้อง';
+            notifyWarning('ข้อมูลไม่ถูกต้อง', 'กรุณากรอกตัวเลขโควต้าสตรีมให้ถูกต้อง');
             return;
         }
 
         if (freeSlots > totalSlots) {
-            alertEl.style.display = 'block';
-            alertEl.style.background = 'rgba(239, 68, 68, 0.2)';
-            alertEl.style.border = '1px solid #EF4444';
-            alertEl.style.color = '#FCA5A5';
-            alertEl.textContent = '❌ โควตาสตรีมสายฟรี (Max Free Streams) ต้องไม่มากกว่าโควตาสตรีมรวม (Max Total Streams)';
+            notifyError('การตั้งค่าขัดแย้ง', 'โควตาสตรีมสายฟรี (Max Free Streams) ต้องไม่มากกว่าโควตาสตรีมรวม (Max Total Streams)');
             return;
         }
 
@@ -1050,31 +1177,19 @@
             });
             const data = await res.json();
             if (data.success) {
-                alertEl.style.display = 'block';
-                alertEl.style.background = 'rgba(0, 255, 136, 0.15)';
-                alertEl.style.border = '1px solid var(--slime-green)';
-                alertEl.style.color = 'var(--slime-green)';
-                alertEl.textContent = '✅ บันทึกการตั้งค่าระบบสำเร็จแล้ว!';
-                setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
+                notifySuccess('บันทึกสำเร็จ!', 'บันทึกการตั้งค่าระบบ Live Config เรียบร้อยแล้ว');
                 refreshDashboard();
             } else {
-                alertEl.style.display = 'block';
-                alertEl.style.background = 'rgba(239, 68, 68, 0.2)';
-                alertEl.style.border = '1px solid #EF4444';
-                alertEl.style.color = '#FCA5A5';
-                alertEl.textContent = `❌ ${data.error || 'เกิดข้อผิดพลาดในการบันทึก'}`;
+                notifyError('บันทึกไม่สำเร็จ', data.error || 'เกิดข้อผิดพลาดในการบันทึก');
             }
-        } catch {
-            alertEl.style.display = 'block';
-            alertEl.style.background = 'rgba(239, 68, 68, 0.2)';
-            alertEl.style.border = '1px solid #EF4444';
-            alertEl.style.color = '#FCA5A5';
-            alertEl.textContent = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+        } catch (err) {
+            notifyError('เชื่อมต่อล้มเหลว', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ' + err.message);
         }
     }
 
     async function switchVpn() {
-        if (!confirm('สลับโปรไฟล์เซิร์ฟเวอร์ VPN ทันที?')) return;
+        const ok = await confirmAction('สลับโปรไฟล์ VPN?', 'ต้องการสลับโปรไฟล์เซิร์ฟเวอร์ VPN ทันทีหรือไม่?', 'สลับทันที', false);
+        if (!ok) return;
         try {
             const res = await fetch('/api/admin/vpn/switch', {
                 method: 'POST',
@@ -1082,30 +1197,36 @@
             });
             const d = await res.json();
             const exitMsg = d.newExitIp ? ` (Exit IP ใหม่: ${d.newExitIp})` : '';
-            alert(d.success ? `สั่งสลับเซิร์ฟเวอร์ VPN เรียบร้อยแล้ว${exitMsg}` : 'ไม่สามารถสลับได้: ' + d.error);
+            if (d.success) {
+                notifySuccess('สลับ VPN สำเร็จ', `สั่งสลับเซิร์ฟเวอร์ VPN เรียบร้อยแล้ว${exitMsg}`);
+            } else {
+                notifyError('สลับ VPN ล้มเหลว', 'ไม่สามารถสลับได้: ' + d.error);
+            }
             refreshDashboard();
         } catch (err) {
-            alert('เกิดข้อผิดพลาด: ' + err.message);
+            notifyError('เกิดข้อผิดพลาด', err.message);
         }
     }
 
     async function clearCache() {
-        if (!confirm('ยืนยันการล้างแคชไฟล์เสียงเพลงทั้งหมดเพื่อคืนพื้นที่ว่างให้ดิสก์?')) return;
+        const ok = await confirmAction('ล้างแคชเพลงทั้งหมด?', 'ยืนยันการล้างแคชไฟล์เสียงเพลงทั้งหมดเพื่อคืนพื้นที่ว่างให้ดิสก์?', 'ล้างแคชทันที', true);
+        if (!ok) return;
         try {
             const res = await fetch('/api/admin/cache/clear', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
             const d = await res.json();
-            alert(`ล้างแคชสำเร็จ! ลบ ${d.filesRemoved || 0} ไฟล์ คืนพื้นที่ดิสก์ ${d.freedMb || 0} MB`);
+            notifySuccess('ล้างแคชสำเร็จ', `ลบ ${d.filesRemoved || 0} ไฟล์ คืนพื้นที่ดิสก์ ${d.freedMb || 0} MB`);
             refreshDashboard();
         } catch (err) {
-            alert('เกิดข้อผิดพลาด: ' + err.message);
+            notifyError('เกิดข้อผิดพลาด', err.message);
         }
     }
 
     async function toggleDrain(nodeId) {
-        if (!confirm(`เปลี่ยนสถานะ Drain ของโหนด ${nodeId} หรือไม่? (โหมด Drain จะงดรับห้องใหม่แต่ปล่อยให้เพลงเดิมเล่นจนจบอย่างราบรื่น)`)) return;
+        const ok = await confirmAction('เปลี่ยนสถานะ Drain?', `เปลี่ยนสถานะ Drain ของโหนด ${nodeId} หรือไม่? (โหมด Drain จะงดรับห้องใหม่แต่ปล่อยให้เพลงเดิมเล่นจนจบอย่างราบรื่น)`, 'เปลี่ยนสถานะ', false);
+        if (!ok) return;
         try {
             const res = await fetch(`/api/admin/nodes/${nodeId}/drain`, {
                 method: 'POST',
@@ -1113,84 +1234,115 @@
             });
             const d = await res.json();
             if (d.success) {
-                alert(`โหนด ${nodeId} เปลี่ยนสถานะเป็น: ${d.node.status}`);
+                notifySuccess('เปลี่ยนสถานะโหนดสำเร็จ', `โหนด ${nodeId} เปลี่ยนสถานะเป็น: ${d.node.status}`);
                 refreshDashboard();
             } else {
-                alert('เกิดข้อผิดพลาด: ' + (d.error || 'Unknown error'));
+                notifyError('เกิดข้อผิดพลาด', d.error || 'Unknown error');
             }
         } catch (err) {
-            alert('เกิดข้อผิดพลาด: ' + err.message);
+            notifyError('เกิดข้อผิดพลาด', err.message);
         }
     }
 
     async function triggerSweep() {
-        if (!confirm('สั่ง Heartbeat sweep เพื่อตัดการเชื่อมต่อห้องเสียงที่ไม่มีคนฟัง?')) return;
-        await fetch('/api/admin/force-sweep', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        alert('ส่งคำสั่ง Sweep เรียบร้อย');
-        refreshDashboard();
+        const ok = await confirmAction('Force Sweep?', 'สั่ง Heartbeat sweep เพื่อตัดการเชื่อมต่อห้องเสียงที่ไม่มีคนฟัง?', 'เริ่ม Sweep', false);
+        if (!ok) return;
+        try {
+            await fetch('/api/admin/force-sweep', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            notifySuccess('สำเร็จ', 'ส่งคำสั่ง Heartbeat sweep เรียบร้อย');
+            refreshDashboard();
+        } catch (err) {
+            notifyError('เกิดข้อผิดพลาด', err.message);
+        }
     }
 
     async function stopPlayer(guildId) {
-        if (!confirm(`ต้องการหยุดเพลงในเซิร์ฟเวอร์ ${guildId} หรือไม่?`)) return;
-        await fetch(`/api/admin/players/${guildId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        refreshDashboard();
+        const ok = await confirmAction('หยุดเพลง?', `ต้องการหยุดเพลงในเซิร์ฟเวอร์ ${guildId} หรือไม่?`, 'หยุดเพลง', true);
+        if (!ok) return;
+        try {
+            await fetch(`/api/admin/players/${guildId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            notifySuccess('สำเร็จ', 'หยุดเพลงและตัดการเชื่อมต่อเรียบร้อย');
+            refreshDashboard();
+        } catch (err) {
+            notifyError('เกิดข้อผิดพลาด', err.message);
+        }
     }
 
     async function customAddDays(guildId) {
         const input = document.getElementById(`adj_${guildId}`);
         const days = parseInt(input ? input.value : '30', 10);
-        if (isNaN(days) || days === 0) return alert('กรุณากรอกจำนวนวัน');
+        if (isNaN(days) || days === 0) return notifyWarning('ข้อมูลไม่ถูกต้อง', 'กรุณากรอกจำนวนวัน');
 
-        await fetch(`/api/admin/subscriptions/${guildId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ addDays: days })
-        });
-        alert(`ปรับเพิ่ม/ลด ${days} วันให้เซิร์ฟเวอร์เรียบร้อย`);
-        refreshDashboard();
+        try {
+            await fetch(`/api/admin/subscriptions/${guildId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify({ addDays: days })
+            });
+            notifySuccess('ปรับวันสำเร็จ', `ปรับเพิ่ม/ลด ${days} วันให้เซิร์ฟเวอร์เรียบร้อย`);
+            refreshDashboard();
+        } catch (err) {
+            notifyError('เกิดข้อผิดพลาด', err.message);
+        }
     }
 
     async function resetSub(guildId) {
-        if (!confirm(`⚠️ ยืนยันการรีเซ็ตแพ็กเกจเซิร์ฟเวอร์ ${guildId} กลับเป็นสายฟรี (Free Tier)?`)) return;
-        await fetch(`/api/admin/subscriptions/${guildId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ plan: 'FREE', expiresAt: 0 })
-        });
-        refreshDashboard();
+        const ok = await confirmAction('ยืนยันรีเซ็ตสิทธิ์?', `ยืนยันการรีเซ็ตแพ็กเกจเซิร์ฟเวอร์ ${guildId} กลับเป็นสายฟรี (Free Tier)?`, 'รีเซ็ตเป็นฟรี', true);
+        if (!ok) return;
+        try {
+            await fetch(`/api/admin/subscriptions/${guildId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify({ plan: 'FREE', expiresAt: 0 })
+            });
+            notifySuccess('รีเซ็ตสำเร็จ', 'ปรับเซิร์ฟเวอร์กลับเป็นสายฟรีเรียบร้อย');
+            refreshDashboard();
+        } catch (err) {
+            notifyError('เกิดข้อผิดพลาด', err.message);
+        }
     }
 
     async function createCampaign() {
         const code = document.getElementById('newCampCode').value.trim();
         const maxClaims = parseInt(document.getElementById('newCampLimit').value, 10) || 50;
         const days = parseInt(document.getElementById('newCampDays').value, 10) || 30;
-        if (!code) return alert('กรุณาระบุรหัสโค้ด');
+        if (!code) return notifyWarning('ข้อมูลไม่ครบ', 'กรุณาระบุรหัสโค้ด');
 
-        await fetch('/api/admin/campaigns', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ code, name: code, days, maxClaims })
-        });
-        document.getElementById('newCampCode').value = '';
-        document.getElementById('newCampLimit').value = '';
-        document.getElementById('newCampDays').value = '30';
-        alert('สร้างรอบแคมเปญสำเร็จ');
-        refreshDashboard();
+        try {
+            await fetch('/api/admin/campaigns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify({ code, name: code, days, maxClaims })
+            });
+            document.getElementById('newCampCode').value = '';
+            document.getElementById('newCampLimit').value = '';
+            document.getElementById('newCampDays').value = '30';
+            notifySuccess('สร้างสำเร็จ', `สร้างรอบแคมเปญ ${code} สำเร็จ`);
+            refreshDashboard();
+        } catch (err) {
+            notifyError('เกิดข้อผิดพลาด', err.message);
+        }
     }
 
     async function deleteCampaign(code) {
-        if (!confirm(`ยืนยันการลบแคมเปญ ${code}?`)) return;
-        await fetch(`/api/admin/campaigns/${encodeURIComponent(code)}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        refreshDashboard();
+        const ok = await confirmAction('ลบแคมเปญ?', `ยืนยันการลบแคมเปญ ${code}?`, 'ลบแคมเปญ', true);
+        if (!ok) return;
+        try {
+            await fetch(`/api/admin/campaigns/${encodeURIComponent(code)}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            notifySuccess('ลบสำเร็จ', `ลบแคมเปญ ${code} เรียบร้อย`);
+            refreshDashboard();
+        } catch (err) {
+            notifyError('เกิดข้อผิดพลาด', err.message);
+        }
     }
 
     function openBanModal(guildId, guildName) {
@@ -1220,19 +1372,20 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert(`🔨 สั่งแบนเซิร์ฟเวอร์เรียบร้อย (${days === 0 ? 'ถาวร' : days + ' วัน'})`);
                 closeBanModal();
+                notifySuccess('แบนเซิร์ฟเวอร์สำเร็จ', `สั่งระงับการใช้งานเรียบร้อย (${days === 0 ? 'ถาวร' : days + ' วัน'})`);
                 refreshDashboard();
             } else {
-                alert(`❌ เกิดข้อผิดพลาด: ${data.error || 'Unknown error'}`);
+                notifyError('เกิดข้อผิดพลาด', data.error || 'Unknown error');
             }
         } catch (err) {
-            alert(`❌ เชื่อมต่อ API ล้มเหลว: ${err.message}`);
+            notifyError('เชื่อมต่อล้มเหลว', err.message);
         }
     }
 
     async function unbanGuild(guildId) {
-        if (!confirm(`ยืนยันการปลดแบนเซิร์ฟเวอร์ ${guildId} หรือไม่?`)) return;
+        const ok = await confirmAction('ปลดแบนเซิร์ฟเวอร์?', `ยืนยันการปลดแบนเซิร์ฟเวอร์ ${guildId} หรือไม่?`, 'ปลดแบนทันที', false);
+        if (!ok) return;
 
         try {
             const res = await fetch(`/api/admin/guilds/${guildId}/unban`, {
@@ -1241,13 +1394,13 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert(`🔓 ปลดแบนเซิร์ฟเวอร์ ${guildId} เรียบร้อย`);
+                notifySuccess('ปลดแบนสำเร็จ', `ปลดแบนเซิร์ฟเวอร์ ${guildId} เรียบร้อย`);
                 refreshDashboard();
             } else {
-                alert(`❌ เกิดข้อผิดพลาด: ${data.error || 'Unknown error'}`);
+                notifyError('เกิดข้อผิดพลาด', data.error || 'Unknown error');
             }
         } catch (err) {
-            alert(`❌ เชื่อมต่อ API ล้มเหลว: ${err.message}`);
+            notifyError('เชื่อมต่อล้มเหลว', err.message);
         }
     }
 
