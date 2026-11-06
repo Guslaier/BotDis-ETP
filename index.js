@@ -296,7 +296,17 @@ client.on('interactionCreate', async interaction => {
                 }
             }
             case 'music_autoplay': {
-                if (!player.autoplay && !subscriptionManager.isSupporter(player.guildId)) {
+                const isSupporter = subscriptionManager.isSupporter(player.guildId);
+                if (!isSupporter) {
+                    player.autoplay = false;
+                    const settingsManager = require('./src/helpers/settingsManager');
+                    settingsManager.setGuildAutoplay(player.guildId, false);
+                    if (player.nowPlayingMessage && player.queue?.current) {
+                        try {
+                            const cardData = createNowPlayingCard(player, player.queue.current);
+                            await player.nowPlayingMessage.edit(cardData).catch(() => {});
+                        } catch {}
+                    }
                     return interaction.reply({
                         content: i18n.t(player.guildId, 'AUTOPLAY_VIP_ONLY'),
                         flags: MessageFlags.Ephemeral

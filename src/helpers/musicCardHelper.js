@@ -68,7 +68,7 @@ function createNowPlayingCard(player, track) {
     }
 
     const isSupporter = subscriptionManager.isSupporter(player.guildId);
-    const bitrateBadge = isSupporter ? '⚡ 320k VIP' : '📻 64k Standard';
+    const bitrateBadge = isSupporter ? '⚡ 320k VIP' : '📻 128k Standard';
 
     let loopBadge = '🔁 Off';
     if (player.loop === 'track') loopBadge = '🔂 Track';

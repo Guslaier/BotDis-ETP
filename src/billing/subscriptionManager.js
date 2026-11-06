@@ -107,21 +107,53 @@ class SubscriptionManager extends EventEmitter {
             plan: supporter ? 'SUPPORTER' : 'FREE',
             expiresAt: sub ? sub.expiresAt : 0,
             referralCode: sub ? sub.referralCode : '',
-            audioFilter: sub ? sub.audioFilter : 'off',
+            audioFilter: (supporter && sub) ? (sub.audioFilter || 'off') : 'off',
             maxQueue: supporter ? 50 : 10,
+            maxPlaylistTracks: supporter ? 25 : 5,
             maxSongDuration: supporter ? Infinity : 1800, // 30 minutes for free
-            bitrate: supporter ? '128k' : '64k',
+            bitrate: supporter ? '320k' : '128k',
             allowAutoplay: supporter,
             allowFilter: supporter
         };
     }
 
     setGuildAudioFilter(guildId, filter) {
+        if (!this.isSupporter(guildId)) return 'off';
         const sub = this.getGuildSubscription(guildId);
         if (!sub) return 'off';
         sub.audioFilter = filter || 'off';
         dbManager.set('subscriptions', guildId, sub);
         return sub.audioFilter;
+    }
+
+    downgradeGuildToFree(guildId, kazagumo = null) {
+        const sub = this.getGuildSubscription(guildId);
+        if (sub) {
+            sub.plan = 'FREE';
+            sub.audioFilter = 'off';
+            sub.updatedAt = Date.now();
+            dbManager.set('subscriptions', guildId, sub);
+        }
+
+        const settingsManager = require('../helpers/settingsManager');
+        settingsManager.setGuildAutoplay(guildId, false);
+
+        if (kazagumo && kazagumo.players) {
+            const player = kazagumo.players.get(guildId);
+            if (player) {
+                if (typeof player.enforceTierLimits === 'function') {
+                    player.enforceTierLimits();
+                }
+                if (player.nowPlayingMessage && player.queue?.current) {
+                    try {
+                        const { createNowPlayingCard } = require('../helpers/musicCardHelper');
+                        const cardData = createNowPlayingCard(player, player.queue.current);
+                        player.nowPlayingMessage.edit(cardData).catch(() => {});
+                    } catch {}
+                }
+            }
+        }
+        console.log(`[SubscriptionManager] Enforced FREE downgrade on guild ${guildId} (VIP features stripped).`);
     }
 
     /**
@@ -457,11 +489,17 @@ class SubscriptionManager extends EventEmitter {
 
                 // Expired
                 if (timeLeft <= 0) {
-                    sub.plan = 'FREE';
-                    sub.audioFilter = 'off';
-                    sub.updatedAt = now;
-                    dbManager.set('subscriptions', guildId, sub);
-                    console.log(`[SubscriptionManager] Guild ${sub.guildName} (${guildId}) expired, downgraded to Free.`);
+                    this.downgradeGuildToFree(guildId, kazagumo);
+                }
+            }
+        }
+
+        // Active Player Tier Enforcement Sweep
+        if (kazagumo && kazagumo.players) {
+            for (const [guildId, player] of kazagumo.players.entries()) {
+                if (!player || player._destroyed) continue;
+                if (!this.isSupporter(guildId) && typeof player.enforceTierLimits === 'function') {
+                    player.enforceTierLimits();
                 }
             }
         }

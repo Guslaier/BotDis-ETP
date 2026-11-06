@@ -26,6 +26,7 @@ const dictionary = {
         SLOTS_FULL: '⚠️ ขณะนี้ช่องสัญญาณทั่วไปเต็มแล้ว ({current}/{max} ห้อง) — ร่วมสนับสนุนเซิร์ฟเวอร์เพื่อเข้าใช้ช่องทางด่วนได้ทันที!',
         SONG_TOO_LONG: '⏳ เพลงนี้ยาวเกิน 30 นาที ({duration}) — สิทธิพิเศษสำหรับผู้สนับสนุนฟังได้ยาวไม่จำกัด!',
         QUEUE_LIMIT_FREE: '⚠️ คิวเพลงเซิร์ฟเวอร์ทั่วไปจำกัดสูงสุด 10 เพลง — ร่วมสนับสนุนเซิร์ฟเวอร์เพื่อขยายคิวเป็น 50 เพลง!',
+        PLAYLIST_LIMIT_FREE: '⚠️ เซิร์ฟเวอร์ทั่วไป (Free) สามารถดึงเพลย์ลิสต์ได้ครั้งละสูงสุด 5 เพลงค่ะ (อัปเกรด VIP ดึงได้สูงสุด 25 เพลง)',
         FILTER_CHANGED: '🎛️ ปรับแต่งโทนเสียง Equalizer เป็น: **{filter}**\n*(มีผลทันทีกับเพลงที่กำลังเล่นและเพลงถัดไป)*',
 
         // Language command
@@ -56,6 +57,7 @@ const dictionary = {
         SLOTS_FULL: '⚠️ Free stream slots are full ({current}/{max} rooms) — Support GOOLIX to access priority lanes instantly!',
         SONG_TOO_LONG: '⏳ Track exceeds 30 minutes ({duration}) — Supporters enjoy unlimited song length!',
         QUEUE_LIMIT_FREE: '⚠️ Free queue limit reached (10 songs max) — Become a Supporter to expand queue up to 50 songs!',
+        PLAYLIST_LIMIT_FREE: '⚠️ Free servers can add up to 5 songs per playlist (Upgrade to VIP for up to 25 songs)',
         FILTER_CHANGED: '🎛️ Equalizer tone set to: **{filter}**\n*(Applied immediately to current and upcoming tracks)*',
 
         // Language command

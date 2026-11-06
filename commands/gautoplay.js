@@ -13,6 +13,16 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!isSupporter) {
+            settingsManager.setGuildAutoplay(guildId, false);
+            const player = kazagumo.players.get(guildId);
+            if (player) {
+                player.autoplay = false;
+                player._preloadedAutoplayTrack = null;
+                if (player._autoplayPreloadTimer) {
+                    clearTimeout(player._autoplayPreloadTimer);
+                    player._autoplayPreloadTimer = null;
+                }
+            }
             embed.setColor('#FF2E93')
                 .setTitle('💎 ฟีเจอร์สำหรับผู้สนับสนุนเซิร์ฟเวอร์')
                 .setDescription('ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) สงวนไว้สำหรับเซิร์ฟเวอร์ **Supporter (VIP)** ค่ะ!\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุนค่าเซิร์ฟเวอร์เริ่มต้นเพียง **29฿/เดือน** นะคะ~ 💖');

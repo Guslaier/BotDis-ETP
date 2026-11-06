@@ -29,6 +29,14 @@ module.exports = {
         const embed = new EmbedBuilder();
 
         if (!isSupporter) {
+            subscriptionManager.setGuildAudioFilter(guildId, 'off');
+            const player = kazagumo.players.get(guildId);
+            if (player) {
+                player.audioFilter = 'off';
+                if (player.playing && player.position !== undefined) {
+                    try { player.seek(player.position); } catch {}
+                }
+            }
             embed.setColor('#FF2E93')
                 .setTitle('💎 Supporter Feature')
                 .setDescription(i18n.t(guildId, 'FILTER_VIP_ONLY'));

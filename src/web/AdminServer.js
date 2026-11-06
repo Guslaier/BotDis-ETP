@@ -656,6 +656,9 @@ class AdminServer {
                 if (body.plan === 'FREE' || days < 0) {
                     sub.expiresAt = 0;
                     sub.plan = 'FREE';
+                    sub.audioFilter = 'off';
+                    dbManager.set('subscriptions', guildId, sub);
+                    subscriptionManager.downgradeGuildToFree(guildId, this.kazagumo);
                 } else if (days > 0) {
                     if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
                         sub.expiresAt += days * 24 * 3600 * 1000;
@@ -664,8 +667,10 @@ class AdminServer {
                     }
                     sub.plan = 'SUPPORTER';
                     sub.source = 'ADMIN_GRANT';
+                    dbManager.set('subscriptions', guildId, sub);
+                } else {
+                    dbManager.set('subscriptions', guildId, sub);
                 }
-                dbManager.set('subscriptions', guildId, sub);
                 return this._sendJson(res, 200, { success: true, sub });
             }
 

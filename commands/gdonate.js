@@ -65,8 +65,8 @@ module.exports = {
                 .setColor(isSupporter ? '#FF2E93' : '#64748B')
                 .addFields(
                     {
-                        name: '🏰 เซิร์ฟเวอร์',
-                        value: `**${guildName}** (\`${guildId}\`)`,
+                        name: '\n🏰 เซิร์ฟเวอร์',
+                        value: `**${guildName}** (\`${guildId}\`)\n\n`,
                         inline: false
                     },
                     {
@@ -80,13 +80,13 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '🎁 รหัสชวนเพื่อนประจำเซิร์ฟเวอร์',
+                        name: '\n\n🎁 รหัสชวนเพื่อนประจำเซิร์ฟเวอร์',
                         value: `\`${sub.referralCode}\` (ชวนเพื่อนสำเร็จ: **${sub.referralCount || 0}** เซิร์ฟเวอร์)`,
                         inline: false
                     },
                     {
-                        name: '✨ สิทธิ์ตอบแทนผู้สนับสนุน (Supporter Perks)',
-                        value: '• ⚡ **Priority Stream Slot** (การันตีช่องสัญญาณทันที ไม่ติดคิว)\n• 🎵 **คิวเพลง & เพลย์ลิสต์สูงสุด 50 เพลง** (สายฟรี 10 เพลง)\n• 📻 **เล่นเพลง/คลิปยาว & Live Stream ไม่จำกัดความยาว** (สายฟรี <= 30 นาที)\n• 🎛️ **ปรับแต่งเสียง Equalizer** (`/gfilter` BassBoost, ฯลฯ)\n• 🔄 **ระบบ Autoplay เล่นเพลงต่อเนื่องอัตโนมัติ**\n• 🎧 **คุณภาพเสียง High-Res (Opus 128k/320k eq)**',
+                        name: '\n\n✨ สิทธิ์ตอบแทนผู้สนับสนุน (Supporter Perks)',
+                        value: '• ⚡ **Priority Stream Slot** (การันตีช่องสัญญาณทันที ไม่ติดคิว)\n• 🎵 **คิวเพลงสูงสุด 50 เพลง & เพลย์ลิสต์ครั้งละ 25 เพลง** (สายฟรี คิว 10 เพลง / เพลย์ลิสต์ 5 เพลง)\n• 📻 **เล่นเพลง/คลิปยาว & Live Stream ไม่จำกัดความยาว** (สายฟรี <= 30 นาที)\n• 🎛️ **ปรับแต่งเสียง Equalizer** (`/gfilter` BassBoost, ฯลฯ)\n• 🔄 **ระบบ Autoplay เล่นเพลงต่อเนื่องอัตโนมัติ**\n• 🎧 **คุณภาพเสียง High-Res (Opus 128k/320k eq)**',
                         inline: false
                     }
                 )

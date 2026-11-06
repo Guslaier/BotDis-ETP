@@ -116,6 +116,33 @@ class Player {
 
         this._setupVoiceConnection(options);
         this._setupAudioPlayer();
+        this.enforceTierLimits();
+    }
+
+    enforceTierLimits() {
+        const isSupp = subscriptionManager.isSupporter(this.guildId);
+        if (!isSupp) {
+            if (this.autoplay) {
+                this.autoplay = false;
+                settingsManager.setGuildAutoplay(this.guildId, false);
+                this._preloadedAutoplayTrack = null;
+                if (this._autoplayPreloadTimer) {
+                    clearTimeout(this._autoplayPreloadTimer);
+                    this._autoplayPreloadTimer = null;
+                }
+            }
+            if (this.audioFilter && this.audioFilter !== 'off') {
+                this.audioFilter = 'off';
+                subscriptionManager.setGuildAudioFilter(this.guildId, 'off');
+                if (this.playing && this.queue.current) {
+                    try { this.seek(this.position); } catch {}
+                }
+            }
+            if (this.queue && this.queue.length > 10) {
+                this.queue.splice(10);
+            }
+        }
+        return isSupp;
     }
 
     _setupVoiceConnection(options) {
@@ -211,11 +238,23 @@ class Player {
 
             if (this._destroyed || this._isStopping || !this.connection) return;
 
+            this.enforceTierLimits();
+            const isSupp = subscriptionManager.isSupporter(this.guildId);
+
             const referenceTrack = finishedTrack || this.queue.previous;
             if (this.queue.length > 0) {
-                const nextTrack = this.queue.shift();
-                await this.playTrack(nextTrack);
-            } else if (this.autoplay && (this._preloadedAutoplayTrack || referenceTrack)) {
+                let nextTrack = this.queue.shift();
+                while (nextTrack && !isSupp && (nextTrack.duration > 1800 || nextTrack.isStream)) {
+                    console.log(`[Player] Skipping over-30min track "${nextTrack.title}" for Free tier.`);
+                    nextTrack = this.queue.shift();
+                }
+                if (nextTrack) {
+                    await this.playTrack(nextTrack);
+                } else {
+                    this.queue.current = null;
+                    this.manager.emit('playerEmpty', this);
+                }
+            } else if (this.autoplay && isSupp && (this._preloadedAutoplayTrack || referenceTrack)) {
                 let nextTrack = this._preloadedAutoplayTrack;
                 this._preloadedAutoplayTrack = null;
 
@@ -438,10 +477,15 @@ class Player {
 
     getBitrate() {
         const tier = subscriptionManager.getTierConfig(this.guildId);
-        return tier.bitrate || '64k';
+        return tier.bitrate || '128k';
     }
 
     setFilter(filter) {
+        if (!subscriptionManager.isSupporter(this.guildId)) {
+            this.audioFilter = 'off';
+            subscriptionManager.setGuildAudioFilter(this.guildId, 'off');
+            return 'off';
+        }
         this.audioFilter = filter || 'off';
         subscriptionManager.setGuildAudioFilter(this.guildId, this.audioFilter);
         if (this.playing && this.queue.current) {
@@ -486,11 +530,11 @@ class Player {
             this._autoplayPreloadTimer = null;
         }
 
-        if (this._destroyed || this._isStopping || !this.connection || !this.autoplay || this.queue.length > 0) return;
+        if (this._destroyed || this._isStopping || !this.connection || !this.autoplay || !subscriptionManager.isSupporter(this.guildId) || this.queue.length > 0) return;
 
         // Pre-fetch next autoplay song in background 3 seconds after playback starts
         this._autoplayPreloadTimer = setTimeout(async () => {
-            if (this._destroyed || this._isStopping || !this.connection || !this.autoplay || this.queue.length > 0 || this._preloadedAutoplayTrack) return;
+            if (this._destroyed || this._isStopping || !this.connection || !this.autoplay || !subscriptionManager.isSupporter(this.guildId) || this.queue.length > 0 || this._preloadedAutoplayTrack) return;
             try {
                 console.log(`[Player:Autoplay] Pre-fetching next song in background for: "${currentTrack.title}"`);
                 const track = await this._findNextAutoplayTrack(currentTrack);

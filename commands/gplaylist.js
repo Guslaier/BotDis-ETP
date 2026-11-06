@@ -17,10 +17,10 @@ module.exports = {
             {
                 name: 'limit',
                 type: 4, // INTEGER
-                description: 'จำนวนเพลงสูงสุดที่จะดึงเข้าคิว (ค่าเริ่มต้น: 25, สูงสุด: 50)',
+                description: 'จำนวนเพลงสูงสุดที่จะดึงเข้าคิว (Free: 1-5 เพลง, VIP: 1-25 เพลง)',
                 required: false,
-                min_value: 5,
-                max_value: 50,
+                min_value: 1,
+                max_value: 25,
             },
         ],
     },
@@ -53,8 +53,10 @@ module.exports = {
         }
 
         const tierConfig = subscriptionManager.getTierConfig(interaction.guild.id);
+        const maxPlaylistAllowed = tierConfig.isSupporter ? 25 : 5;
+        const requestedLimit = interaction.options.getInteger('limit');
+        const limit = requestedLimit ? Math.min(requestedLimit, maxPlaylistAllowed) : maxPlaylistAllowed;
         const query = interaction.options.getString('query');
-        const limit = interaction.options.getInteger('limit') || 25;
         await interaction.deferReply();
 
         let player = kazagumo.players.get(interaction.guild.id);
@@ -82,6 +84,7 @@ module.exports = {
         let skippedOver30Min = 0;
 
         for (const track of result.tracks) {
+            if (addedTracks.length >= maxPlaylistAllowed) break;
             if (player.queue.length + addedTracks.length >= tierConfig.maxQueue) break;
 
             if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
@@ -93,6 +96,12 @@ module.exports = {
         }
 
         let desc = `📋 **${result.playlistName || 'Playlist'}**\n\n${i18n.t(guildId, 'PLAYLIST_ADDED')} (${addedTracks.length} tracks)`;
+        if (!tierConfig.isSupporter) {
+            desc += `\n*(${i18n.t(guildId, 'PLAYLIST_LIMIT_FREE')})*`;
+        }
+        if (requestedLimit && requestedLimit > maxPlaylistAllowed) {
+            desc += `\n*(จำกัดดึงสูงสุด ${maxPlaylistAllowed} เพลงตามโควต้าเซิร์ฟเวอร์ค่ะ)*`;
+        }
         if (skippedOver30Min > 0) {
             desc += `\n*(Skipped ${skippedOver30Min} tracks > 30 mins for Free Tier)*`;
         }
