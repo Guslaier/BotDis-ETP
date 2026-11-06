@@ -691,7 +691,9 @@ class Player {
     }
 
     async seek(positionMs) {
-        if (!this.queue.current) return;
+        if (!this.queue.current || this._destroyed || this._isStopping) return;
+        const token = ++this._playToken;
+        this._starting = true;
         try {
             try { this.audioPlayer.stop(true); } catch {}
             if (this.currentProcess) {
@@ -705,6 +707,10 @@ class Player {
                 seekSeconds, 
                 100, 
                 (proc) => {
+                    if (this._destroyed || this._isStopping || token !== this._playToken) {
+                        try { proc.kill(); } catch {}
+                        return;
+                    }
                     this.currentProcess = proc;
                 },
                 {
@@ -713,6 +719,11 @@ class Player {
                     node: this.node
                 }
             );
+
+            if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) {
+                if (stream && stream.kill) try { stream.kill(); } catch {}
+                return;
+            }
 
             const buffered = this._createBufferedResource(stream);
             this.currentProcess = buffered.stream;
@@ -724,6 +735,8 @@ class Player {
             this.audioPlayer.play(resource);
         } catch (error) {
             console.error('[Player] Seek error:', error.message);
+        } finally {
+            this._starting = false;
         }
     }
 

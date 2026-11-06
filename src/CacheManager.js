@@ -196,6 +196,8 @@ class CacheManager {
         ffmpegArgs.push('-i', targetPath);
         if (filterChain) {
             ffmpegArgs.push('-af', filterChain, '-c:a', 'libopus', '-b:a', bitrate || '128k', '-ar', '48000', '-ac', '2');
+        } else if (seekSeconds > 0) {
+            ffmpegArgs.push('-c:a', 'libopus', '-b:a', bitrate || '128k', '-vbr', 'on', '-ar', '48000', '-ac', '2');
         } else {
             ffmpegArgs.push('-c:a', 'copy');
         }
@@ -511,7 +513,7 @@ class CacheManager {
                 port: node.port || 2333,
                 path: `/api/node/stream?${queryParams.toString()}`,
                 method: 'GET',
-                timeout: 15000,
+                timeout: 7000,
                 headers: {
                     'x-node-secret': process.env.NODE_AUTH_SECRET || ''
                 }
