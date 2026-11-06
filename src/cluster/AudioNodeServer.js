@@ -154,6 +154,19 @@ class AudioNodeServer {
                 });
             }
 
+            // Pre-cache track endpoint: /api/node/precache?uri=...&identifier=...&title=...
+            if (pathname === '/api/node/precache' && req.method === 'POST') {
+                const query = parsedUrl.query;
+                const uri = query.uri;
+                const title = query.title ? decodeURIComponent(query.title) : 'Track';
+                const identifier = query.identifier || (uri ? Buffer.from(uri).toString('hex').slice(0, 20) : null);
+                if (uri && identifier && !cacheManager.isCached(identifier)) {
+                    console.log(`[AudioNode] Background pre-caching next song: "${title}" (${identifier})`);
+                    cacheManager.prepareTrack({ uri, identifier, title }, true).catch(() => {});
+                }
+                return this._sendJson(res, 200, { success: true });
+            }
+
             // Stream audio endpoint: /api/node/stream?uri=...&seek=0&bitrate=64k&filter=off&volume=100
             if (pathname === '/api/node/stream' && req.method === 'GET') {
                 const query = parsedUrl.query;
@@ -171,6 +184,7 @@ class AudioNodeServer {
                 const filter = query.filter || 'off';
                 const bitrate = query.bitrate || '64k';
                 const title = query.title ? decodeURIComponent(query.title) : 'Track';
+                const identifier = query.identifier || Buffer.from(uri).toString('hex').slice(0, 20);
 
                 this.activeStreams++;
                 console.log(`[AudioNode] Stream requested: "${title}" (${uri}) (Active: ${this.activeStreams}/${this.maxRooms})`);
@@ -193,17 +207,29 @@ class AudioNodeServer {
                 res.on('error', cleanup);
 
                 try {
-                    const track = { title, uri };
-                    const spawned = await cacheManager._spawnPipedStream(
-                        track,
-                        uri,
-                        seekSeconds,
-                        volume,
-                        false,
-                        null,
-                        filter,
-                        bitrate
-                    );
+                    const track = { title, uri, identifier };
+                    const targetPath = cacheManager.getTrackPath(identifier);
+
+                    let spawned = null;
+                    if (cacheManager.isCached(identifier)) {
+                        console.log(`[AudioNode] Disk Cache HIT for "${title}" (Instant 0ms start)`);
+                        spawned = cacheManager._streamFromDisk(targetPath, seekSeconds, volume, null, filter, bitrate);
+                    } else {
+                        spawned = await cacheManager._spawnPipedStream(
+                            track,
+                            uri,
+                            seekSeconds,
+                            volume,
+                            false,
+                            null,
+                            filter,
+                            bitrate
+                        );
+                        // Trigger background caching for future replays
+                        if (seekSeconds === 0) {
+                            cacheManager.prepareTrack(track, true).catch(() => {});
+                        }
+                    }
 
                     if (isTerminated) {
                         try { spawned.kill(); } catch {}

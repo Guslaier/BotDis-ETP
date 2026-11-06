@@ -317,8 +317,13 @@ class Player {
             try { demuxer.destroy(); } catch {}
         };
 
+        const resource = createAudioResource(demuxed, { inputType: StreamType.Opus, inlineVolume: true });
+        if (resource.volume) {
+            resource.volume.setVolume(Math.max(0, (this.volume ?? 100) / 100));
+        }
+
         return {
-            resource: createAudioResource(demuxed, { inputType: StreamType.Opus }),
+            resource,
             stream: demuxed
         };
     }
@@ -374,7 +379,7 @@ class Player {
             const stream = await CacheManager.createTrackStream(
                 track, 
                 0, 
-                this.volume, 
+                100, 
                 (proc) => {
                     if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) {
                         try { proc.kill(); } catch {}
@@ -504,6 +509,10 @@ class Player {
     setVolume(volume) {
         this.volume = volume;
         settingsManager.setGuildVolume(this.guildId, volume);
+        if (this.currentResource && this.currentResource.volume) {
+            this.currentResource.volume.setVolume(Math.max(0, volume / 100));
+            return;
+        }
         if (this.playing && this.queue.current) {
             this.seek(this.position);
         }
@@ -551,10 +560,7 @@ class Player {
                     console.log(`[Player:Autoplay] Pre-cached candidate ready: "${track.title}" (${track.uri})`);
                     const streamMode = (process.env.STREAM_MODE || 'auto').toLowerCase().trim();
                     if (streamMode !== 'pipe') {
-                        const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
-                        if (!CacheManager.isCached(identifier)) {
-                            CacheManager.prepareTrack(track, true).catch(() => {});
-                        }
+                        this._triggerNodePrecache(track);
                     }
                 }
             } catch (err) {
@@ -694,7 +700,7 @@ class Player {
             const stream = await CacheManager.createTrackStream(
                 this.queue.current, 
                 seekSeconds, 
-                this.volume, 
+                100, 
                 (proc) => {
                     this.currentProcess = proc;
                 },
@@ -737,12 +743,36 @@ class Player {
 
             if (this.queue.length > 0 && this.playing) {
                 const nextTrack = this.queue[0];
-                const identifier = nextTrack.identifier || Buffer.from(nextTrack.uri || '').toString('hex').slice(0, 20);
-                if (!CacheManager.isCached(identifier)) {
-                    CacheManager.prepareTrack(nextTrack, true).catch(() => {});
-                }
+                this._triggerNodePrecache(nextTrack);
             }
         }, 8000);
+    }
+
+    _triggerNodePrecache(track) {
+        if (!track || !track.uri) return;
+        const identifier = track.identifier || Buffer.from(track.uri).toString('hex').slice(0, 20);
+        if (this.node && this.node.type === 'remote' && this.node.status === 'online') {
+            const http = require('http');
+            const q = new URLSearchParams({
+                uri: track.uri,
+                identifier: identifier,
+                title: track.title || ''
+            });
+            const req = http.request({
+                hostname: this.node.host,
+                port: this.node.port || 2333,
+                path: `/api/node/precache?${q.toString()}`,
+                method: 'POST',
+                timeout: 5000,
+                headers: {
+                    'x-node-secret': process.env.NODE_AUTH_SECRET || ''
+                }
+            });
+            req.on('error', () => {});
+            req.end();
+        } else if (!CacheManager.isCached(identifier)) {
+            CacheManager.prepareTrack(track, true).catch(() => {});
+        }
     }
 
     destroy() {

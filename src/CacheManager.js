@@ -495,9 +495,11 @@ class CacheManager {
     _streamFromRemoteNode(node, track, seekSeconds = 0, volume = 100, onSpawn = null, filter = 'off', bitrate = '64k') {
         const http = require('http');
         return new Promise((resolve, reject) => {
+            const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
             const queryParams = new URLSearchParams({
                 uri: track.uri,
                 title: track.title || '',
+                identifier: identifier,
                 seek: String(seekSeconds),
                 volume: String(volume),
                 filter: String(filter),
