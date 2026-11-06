@@ -494,7 +494,21 @@
 </div>
 
 <script>
-    const Toast = Swal.mixin({
+    function getSwal() {
+        if (typeof Swal !== 'undefined') return Swal;
+        return {
+            fire: (opts) => {
+                if (opts.showCancelButton) {
+                    return Promise.resolve({ isConfirmed: window.confirm(opts.text || opts.title) });
+                }
+                window.alert((opts.title ? opts.title + '\n' : '') + (opts.text || ''));
+                return Promise.resolve({ isConfirmed: true });
+            },
+            mixin: () => ({ fire: () => {} })
+        };
+    }
+
+    const Toast = (typeof Swal !== 'undefined') ? Swal.mixin({
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
@@ -505,10 +519,11 @@
         customClass: {
             popup: 'goolix-swal'
         }
-    });
+    }) : { fire: () => {} };
 
     function notifySuccess(title, text = '') {
-        return Swal.fire({
+        const s = getSwal();
+        return s.fire({
             icon: 'success',
             title,
             text,
@@ -523,7 +538,8 @@
     }
 
     function notifyError(title, text = '') {
-        return Swal.fire({
+        const s = getSwal();
+        return s.fire({
             icon: 'error',
             title,
             text,
@@ -538,7 +554,8 @@
     }
 
     function notifyWarning(title, text = '') {
-        return Swal.fire({
+        const s = getSwal();
+        return s.fire({
             icon: 'warning',
             title,
             text,
@@ -553,7 +570,8 @@
     }
 
     async function confirmAction(title, text, confirmBtnText = 'ยืนยัน', isDanger = false) {
-        const result = await Swal.fire({
+        const s = getSwal();
+        const result = await s.fire({
             title,
             text,
             icon: isDanger ? 'warning' : 'question',
@@ -848,8 +866,6 @@
         authToken = '';
         checkAuth();
         Toast.fire({ icon: 'info', title: 'ออกจากระบบเรียบร้อย' });
-    }
-        checkAuth();
     }
 
     async function refreshDashboard() {
