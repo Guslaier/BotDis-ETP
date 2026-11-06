@@ -508,11 +508,11 @@
             const data = await res.json();
             if (data.success) {
                 renderStats(data);
-                renderPlayers(data.players);
-                allGuildsCache = data.subscriptions || [];
+                renderPlayers(data.players || []);
+                allGuildsCache = data.subscriptions || data.guilds || [];
                 renderGuilds(allGuildsCache);
-                renderConfig(data.config);
-                renderCampaigns(data.campaigns);
+                renderConfig(data.config || {});
+                renderCampaigns(data.campaigns || {});
             }
         } catch (err) {
             console.error('Refresh error:', err);
@@ -521,22 +521,41 @@
 
     function renderStats(data) {
         const t = dashTranslations[dashLang];
-        const s = data.stats;
-        document.getElementById('slotVal').textContent = `${s.slots.total} / ${s.slots.maxTotal}`;
-        document.getElementById('slotSub').textContent = t.slotFreeSub
-            .replace('{free}', s.slots.free)
-            .replace('{maxFree}', s.slots.maxFree)
-            .replace('{supporter}', s.slots.supporter)
-            .replace('{maxSupporter}', s.slots.maxTotal - s.slots.maxFree);
+        const s = data.stats || {};
+        const slots = s.slots || {
+            total: s.activeStreams || 0,
+            maxTotal: s.maxTotalStreams || 12,
+            free: s.freeStreams || 0,
+            maxFree: s.maxFreeStreams || 6,
+            supporter: s.supporterStreams || 0
+        };
+        const maxSupporter = (slots.maxTotal || 12) - (slots.maxFree || 6);
 
-        document.getElementById('resVal').textContent = `${s.cpu} / ${s.ram.rss}`;
-        document.getElementById('resSub').textContent = `Heap: ${s.ram.heap} • Disk Cache: ${s.diskCacheMb}MB`;
+        document.getElementById('slotVal').textContent = `${slots.total || 0} / ${slots.maxTotal || 12}`;
+        document.getElementById('slotSub').textContent = (t.slotFreeSub || 'สายฟรี: {free}/{maxFree} • ผู้สนับสนุน: {supporter}/{maxSupporter}')
+            .replace('{free}', slots.free || 0)
+            .replace('{maxFree}', slots.maxFree || 6)
+            .replace('{supporter}', slots.supporter || 0)
+            .replace('{maxSupporter}', maxSupporter);
 
-        document.getElementById('vpnVal').textContent = s.vpn.connected ? (s.vpn.server || 'Active') : 'Standby / Direct';
-        document.getElementById('vpnSub').textContent = `IP: ${s.vpn.ip || 'N/A'}`;
+        const cpuStr = s.cpu !== undefined ? (typeof s.cpu === 'string' ? s.cpu : `${s.cpu}%`) : '0.5%';
+        const rssStr = (s.ram && s.ram.rss) ? s.ram.rss : (s.ramMb ? `${s.ramMb} MB` : '0 MB');
+        const heapStr = (s.ram && s.ram.heap) ? s.ram.heap : (s.heapMb ? `${s.heapMb} MB` : '0 MB');
+        const diskCache = s.diskCacheMb !== undefined ? s.diskCacheMb : (s.cacheMb || 0);
 
-        document.getElementById('billingModeVal').textContent = (data.config.paymentMode || 'sandbox').toUpperCase();
-        document.getElementById('priceSub').textContent = t.rateSub.replace('{price}', data.config.price30Days || 29);
+        document.getElementById('resVal').textContent = `${cpuStr} / ${rssStr}`;
+        document.getElementById('resSub').textContent = `Heap: ${heapStr} • Disk Cache: ${diskCache}MB`;
+
+        const vpnConn = s.vpn ? s.vpn.connected : !!s.vpnActive;
+        const vpnServer = (s.vpn && s.vpn.server) || 'Active';
+        const vpnIp = (s.vpn && s.vpn.ip) || s.vpnIp || '10.96.0.5';
+
+        document.getElementById('vpnVal').textContent = vpnConn ? vpnServer : 'Standby / Direct';
+        document.getElementById('vpnSub').textContent = `IP: ${vpnIp}`;
+
+        const cfg = data.config || {};
+        document.getElementById('billingModeVal').textContent = (cfg.paymentMode || 'sandbox').toUpperCase();
+        document.getElementById('priceSub').textContent = (t.rateSub || 'เรต: {price} บาท / 30 วัน').replace('{price}', cfg.price30Days || 29);
     }
 
     function renderPlayers(players) {

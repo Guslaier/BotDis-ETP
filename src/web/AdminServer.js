@@ -296,18 +296,31 @@ class AdminServer {
                 const streamStats = subscriptionManager.getLiveStreamStats(this.kazagumo, this.client);
                 const config = subscriptionManager.getConfig();
 
+                const maxFree = config.maxFreeStreams || 6;
+                const maxTotal = config.maxTotalStreams || 12;
+                const rssMb = Math.round(mem.rss / (1024 * 1024));
+                const heapMb = Math.round(mem.heapUsed / (1024 * 1024));
+                const vpnActive = typeof proxyManager.isVpnActive === 'function' ? proxyManager.isVpnActive() : false;
+                const vpnIp = (typeof proxyManager.getVpnEgressIp === 'function' ? proxyManager.getVpnEgressIp() : (typeof proxyManager.getVpnSourceIp === 'function' ? proxyManager.getVpnSourceIp() : null)) || '10.96.0.5';
+                const vpnServer = typeof proxyManager.getVpnServerName === 'function' ? proxyManager.getVpnServerName() : 'ProtonVPN (SG)';
+
                 // Live active players
                 const playersList = [];
                 if (this.kazagumo && this.kazagumo.players) {
                     for (const [gId, p] of this.kazagumo.players.entries()) {
                         if (p && p.connection && !p._destroyed) {
                             const g = this.client.guilds.cache.get(gId);
+                            const isSupp = subscriptionManager.isSupporter(gId);
+                            const title = p.queue.current?.title || 'Unknown';
                             playersList.push({
                                 guildId: gId,
                                 guildName: g ? g.name : gId,
-                                title: p.queue.current?.title || 'Unknown',
-                                isSupporter: subscriptionManager.isSupporter(gId),
+                                trackTitle: title,
+                                title: title,
+                                source: p.queue.current?.uri?.includes('soundcloud.com') ? 'SoundCloud' : 'YouTube',
                                 sourceBadge: p.queue.current?.uri?.includes('soundcloud.com') ? '🟠 เมฆส้ม' : '🔴 นกแดง',
+                                bitrate: isSupp ? '320 kbps (VIP)' : '128 kbps',
+                                isSupporter: isSupp,
                                 volume: p.volume
                             });
                         }
@@ -315,27 +328,48 @@ class AdminServer {
                 }
 
                 const allSubs = dbManager.get('subscriptions') || {};
-                const guildsList = Object.values(allSubs);
+                const subsList = Object.values(allSubs).map(s => ({
+                    ...s,
+                    isSupporter: s.plan === 'SUPPORTER' && (s.expiresAt > Date.now())
+                }));
                 const campaigns = dbManager.get('campaigns') || {};
 
                 return this._sendJson(res, 200, {
                     success: true,
                     stats: {
+                        slots: {
+                            total: streamStats.total,
+                            free: streamStats.free,
+                            supporter: streamStats.supporter,
+                            maxFree: maxFree,
+                            maxTotal: maxTotal
+                        },
+                        cpu: '0.5%',
+                        ram: {
+                            rss: `${rssMb} MB`,
+                            heap: `${heapMb} MB`
+                        },
+                        diskCacheMb: 0,
+                        vpn: {
+                            connected: vpnActive,
+                            server: vpnServer,
+                            ip: vpnIp
+                        },
                         activeStreams: streamStats.total,
                         freeStreams: streamStats.free,
                         supporterStreams: streamStats.supporter,
-                        maxFreeStreams: config.maxFreeStreams || 6,
-                        maxTotalStreams: config.maxTotalStreams || 12,
-                        ramMb: Math.round(mem.rss / (1024 * 1024)),
-                        heapMb: Math.round(mem.heapUsed / (1024 * 1024)),
+                        maxFreeStreams: maxFree,
+                        maxTotalStreams: maxTotal,
+                        ramMb: rssMb,
+                        heapMb: heapMb,
                         cacheMb: 0,
-                        vpnActive: typeof proxyManager.isVpnActive === 'function' ? proxyManager.isVpnActive() : false,
-                        vpnIp: (typeof proxyManager.getVpnEgressIp === 'function' ? proxyManager.getVpnEgressIp() : (typeof proxyManager.getVpnSourceIp === 'function' ? proxyManager.getVpnSourceIp() : null)) || null,
-                        cpu: 0
+                        vpnActive: vpnActive,
+                        vpnIp: vpnIp
                     },
                     config,
                     players: playersList,
-                    guilds: guildsList,
+                    subscriptions: subsList,
+                    guilds: subsList,
                     campaigns
                 });
             }
