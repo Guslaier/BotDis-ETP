@@ -255,7 +255,7 @@ class AdminServer {
             return this._sendHtml(res, path.join(__dirname, 'public/topup.html'));
         }
 
-        if (pathname === '/admin') {
+        if (pathname === '/admin' || pathname === '/dashboard' || pathname === '/dashboard.html' || pathname === '/admin.html') {
             return this._sendHtml(res, path.join(__dirname, 'public/dashboard.html'));
         }
 
