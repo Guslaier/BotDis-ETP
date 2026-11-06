@@ -201,7 +201,7 @@ class CacheManager {
         }
         ffmpegArgs.push('-f', 'opus', 'pipe:1');
 
-        const ffmpegProc = spawn(this.ffmpegPath, ffmpegArgs);
+        const ffmpegProc = spawn(this.ffmpegPath, ffmpegArgs, { windowsHide: true });
         ffmpegProc.on('error', (err) => console.error('[CacheManager] ffmpeg cached stream error:', err.message));
         ffmpegProc.stdout.kill = () => {
             try { ffmpegProc.kill('SIGKILL'); } catch {}
@@ -284,7 +284,7 @@ class CacheManager {
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
             const ytdlpArgs = this._buildYtDlpArgs(sourceUri, true);
-            const ytdlpProc = spawn(this.binPath, ytdlpArgs);
+            const ytdlpProc = spawn(this.binPath, ytdlpArgs, { windowsHide: true });
 
             const threadQueueSize = process.env.THREAD_QUEUE_SIZE || '1024';
             const opusBitrate = bitrate || process.env.OPUS_BITRATE || '64k';
@@ -316,7 +316,7 @@ class CacheManager {
                 'pipe:1'
             );
 
-            const ffmpegProc = spawn(this.ffmpegPath, ffmpegArgs);
+            const ffmpegProc = spawn(this.ffmpegPath, ffmpegArgs, { windowsHide: true });
 
             // Prevent unhandled EPIPE errors
             ytdlpProc.stdout.on('error', () => {});
@@ -590,7 +590,7 @@ class CacheManager {
                     const fbBin = (isBackground && process.platform === 'linux') ? '/usr/bin/nice' : this.binPath;
                     const fbFinalArgs = (isBackground && process.platform === 'linux') ? ['-n', '19', this.binPath, ...fbArgs] : fbArgs;
                     await new Promise((resolve, reject) => {
-                        const fbChild = execFile(fbBin, fbFinalArgs, { maxBuffer: 8 * 1024 * 1024, timeout: 35000 }, (fbErr) => {
+                        const fbChild = execFile(fbBin, fbFinalArgs, { maxBuffer: 8 * 1024 * 1024, timeout: 35000, windowsHide: true }, (fbErr) => {
                             if (fbErr) return reject(fbErr);
                             resolve();
                         });
@@ -619,7 +619,7 @@ class CacheManager {
 
             try {
                 await new Promise((resolve, reject) => {
-                    const child = execFile(execBin, execArgs, { maxBuffer: 8 * 1024 * 1024, timeout: downloadTimeout }, (err, stdout, stderr) => {
+                    const child = execFile(execBin, execArgs, { maxBuffer: 8 * 1024 * 1024, timeout: downloadTimeout, windowsHide: true }, (err, stdout, stderr) => {
                         if (err) {
                             const errMsg = (stderr || '') + (err.message || '');
                             return reject(new Error(errMsg));
@@ -652,7 +652,7 @@ class CacheManager {
                     const fbBin = (isBackground && process.platform === 'linux') ? '/usr/bin/nice' : this.binPath;
                     const fbFinalArgs = (isBackground && process.platform === 'linux') ? ['-n', '19', this.binPath, ...fbArgs] : fbArgs;
                     await new Promise((resolve, reject) => {
-                        const fbChild = execFile(fbBin, fbFinalArgs, { maxBuffer: 8 * 1024 * 1024, timeout: 35000 }, (fbErr) => {
+                        const fbChild = execFile(fbBin, fbFinalArgs, { maxBuffer: 8 * 1024 * 1024, timeout: 35000, windowsHide: true }, (fbErr) => {
                             if (fbErr) return reject(fbErr);
                             resolve();
                         });

@@ -126,7 +126,7 @@ class QueueManager extends EventEmitter {
 
                 const startTime = Date.now();
                 const timeoutMs = isPlaylist ? 25000 : 10000;
-                execFile(binPath, args, { maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs, killSignal: 'SIGKILL' }, (err, stdout, stderr) => {
+                execFile(binPath, args, { maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs, killSignal: 'SIGKILL', windowsHide: true }, (err, stdout, stderr) => {
                     this._activeSearches--;
                     this._processNextSearch();
 

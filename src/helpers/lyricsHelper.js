@@ -116,7 +116,7 @@ class LyricsHelper {
 
             args.push(uri);
 
-            execFile(this.binPath, args, { maxBuffer: 4 * 1024 * 1024, timeout: 12000 }, (err, stdout) => {
+            execFile(this.binPath, args, { maxBuffer: 4 * 1024 * 1024, timeout: 12000, windowsHide: true }, (err, stdout) => {
                 if (err || !stdout) return resolve(null);
                 try {
                     const j = JSON.parse(stdout);
