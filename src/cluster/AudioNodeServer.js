@@ -229,6 +229,33 @@ class AudioNodeServer {
                 return this._sendJson(res, 200, { success: true, result: switchRes, newExitIp });
             }
 
+            // Live update config (name, maxRooms) from Controller Web Admin
+            if (pathname === '/api/node/config' && req.method === 'POST') {
+                let bodyRaw = '';
+                req.on('data', chunk => bodyRaw += chunk);
+                req.on('end', () => {
+                    try {
+                        const body = JSON.parse(bodyRaw || '{}');
+                        if (body.name && typeof body.name === 'string') {
+                            this.name = body.name.trim();
+                        }
+                        if (body.maxRooms && !isNaN(parseInt(body.maxRooms, 10))) {
+                            this.maxRooms = Math.max(1, parseInt(body.maxRooms, 10));
+                        }
+                        console.log(`[AudioNode] Config updated live: Name="${this.name}", MaxRooms=${this.maxRooms}`);
+                        return this._sendJson(res, 200, {
+                            success: true,
+                            id: this.id,
+                            name: this.name,
+                            maxRooms: this.maxRooms
+                        });
+                    } catch (err) {
+                        return this._sendJson(res, 400, { success: false, error: err.message });
+                    }
+                });
+                return;
+            }
+
             return this._sendJson(res, 404, { success: false, error: 'Endpoint not found' });
         });
 

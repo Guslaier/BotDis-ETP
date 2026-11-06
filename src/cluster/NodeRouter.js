@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
 const http = require('http');
+const dbManager = require('../database/dbManager');
 
 class NodeRouter extends EventEmitter {
     constructor() {
@@ -12,14 +13,17 @@ class NodeRouter extends EventEmitter {
     }
 
     _initLocalNode() {
+        const overrides = dbManager.get('nodesConfig') || {};
+        const override = overrides['local-0'];
+
         this.nodes.set('local-0', {
             id: 'local-0',
-            name: 'LocalNode-0 (Controller Core)',
+            name: override?.name || 'LocalNode-0 (Controller Core)',
             type: 'local',
             host: '127.0.0.1',
             status: 'online',
             activeRooms: 0,
-            maxRooms: parseInt(process.env.MAX_TOTAL_STREAMS || '12', 10),
+            maxRooms: override?.maxRooms || parseInt(process.env.MAX_TOTAL_STREAMS || '12', 10),
             latency: 0,
             lastPing: Date.now(),
             vpn: null
@@ -39,17 +43,21 @@ class NodeRouter extends EventEmitter {
             }
             const list = JSON.parse(raw);
             if (Array.isArray(list)) {
+                const overrides = dbManager.get('nodesConfig') || {};
                 for (const node of list) {
-                    if (node.id && node.host) {
-                        this.nodes.set(node.id, {
-                            id: node.id,
-                            name: node.name || node.id,
+                    if (node.host) {
+                        const port = parseInt(node.port || '2333', 10);
+                        const id = node.id || `remote-${String(node.host).replace(/[^a-zA-Z0-9]/g, '-')}-${port}`;
+                        const override = overrides[id];
+                        this.nodes.set(id, {
+                            id: id,
+                            name: override?.name || node.name || id,
                             type: 'remote',
                             host: node.host,
-                            port: parseInt(node.port || '2333', 10),
+                            port: port,
                             status: 'offline',
                             activeRooms: 0,
-                            maxRooms: node.maxRooms || 15,
+                            maxRooms: override?.maxRooms || node.maxRooms || 15,
                             latency: 0,
                             lastPing: 0,
                             vpn: null
@@ -97,9 +105,25 @@ class NodeRouter extends EventEmitter {
                 if (res.statusCode === 200) {
                     try {
                         const parsed = JSON.parse(data);
+                        const overrides = dbManager.get('nodesConfig') || {};
+                        const override = overrides[node.id];
+
                         node.status = parsed.status || 'online';
                         node.activeRooms = parsed.activeRooms || 0;
-                        node.maxRooms = parsed.maxRooms || node.maxRooms;
+
+                        // Auto-adopt worker's reported name and maxRooms if not overridden by web admin
+                        if (override?.name) {
+                            node.name = override.name;
+                        } else if (parsed.name) {
+                            node.name = parsed.name;
+                        }
+
+                        if (override?.maxRooms) {
+                            node.maxRooms = override.maxRooms;
+                        } else if (parsed.maxRooms) {
+                            node.maxRooms = parsed.maxRooms;
+                        }
+
                         node.cpu = parsed.cpu || '-';
                         node.ram = parsed.ram || '-';
                         node.hostRam = parsed.hostRam || '-';
@@ -144,8 +168,11 @@ class NodeRouter extends EventEmitter {
     updateLocalStats(stats = {}) {
         const local = this.nodes.get('local-0');
         if (local) {
+            const overrides = dbManager.get('nodesConfig') || {};
+            const override = overrides['local-0'];
+
             if (stats.activeRooms !== undefined) local.activeRooms = stats.activeRooms;
-            if (stats.maxRooms !== undefined) local.maxRooms = stats.maxRooms;
+            local.maxRooms = override?.maxRooms || stats.maxRooms || local.maxRooms;
             if (stats.cpu !== undefined) local.cpu = stats.cpu;
             if (stats.ram !== undefined) local.ram = stats.ram;
             if (stats.hostRam !== undefined) local.hostRam = stats.hostRam;
@@ -168,6 +195,57 @@ class NodeRouter extends EventEmitter {
         });
 
         return availableNodes[0];
+    }
+
+    async updateNodeConfig(nodeId, config = {}) {
+        const node = this.nodes.get(nodeId);
+        if (!node) return { success: false, error: 'Node not found' };
+
+        if (config.name && typeof config.name === 'string') {
+            node.name = config.name.trim();
+        }
+        if (config.maxRooms !== undefined && !isNaN(parseInt(config.maxRooms, 10))) {
+            node.maxRooms = Math.max(1, parseInt(config.maxRooms, 10));
+        }
+
+        // Persist to database
+        const allOverrides = dbManager.get('nodesConfig') || {};
+        allOverrides[nodeId] = {
+            name: node.name,
+            maxRooms: node.maxRooms,
+            updatedAt: Date.now()
+        };
+        dbManager.save('nodesConfig');
+
+        // If remote worker, broadcast update live to worker node server
+        if (node.type === 'remote') {
+            try {
+                await new Promise((resolve) => {
+                    const payload = JSON.stringify({ name: node.name, maxRooms: node.maxRooms });
+                    const req = http.request({
+                        hostname: node.host,
+                        port: node.port || 2333,
+                        path: '/api/node/config',
+                        method: 'POST',
+                        timeout: 4000,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Content-Length': Buffer.byteLength(payload),
+                            'x-node-secret': process.env.NODE_AUTH_SECRET || ''
+                        }
+                    }, (res) => {
+                        let d = '';
+                        res.on('data', c => d += c);
+                        res.on('end', () => resolve({ ok: res.statusCode === 200 }));
+                    });
+                    req.on('error', () => resolve({ ok: false }));
+                    req.write(payload);
+                    req.end();
+                });
+            } catch {}
+        }
+
+        return { success: true, node };
     }
 
     async toggleDrain(nodeId) {

@@ -790,6 +790,15 @@ class AdminServer {
                 return this._sendJson(res, 200, resDrain);
             }
 
+            if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/config') && req.method === 'POST') {
+                const nodeId = pathname.split('/')[4];
+                const resConfig = await nodeRouter.updateNodeConfig(nodeId, {
+                    name: body.name,
+                    maxRooms: body.maxRooms
+                });
+                return this._sendJson(res, resConfig.success ? 200 : 400, resConfig);
+            }
+
             if (pathname === '/api/admin/circuit/reset' && req.method === 'POST') {
                 youtubeCircuit.reset();
                 return this._sendJson(res, 200, { success: true });
