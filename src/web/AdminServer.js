@@ -792,6 +792,7 @@ class AdminServer {
 
             if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/config') && req.method === 'POST') {
                 const nodeId = pathname.split('/')[4];
+                const body = await this._parseBody(req);
                 const resConfig = await nodeRouter.updateNodeConfig(nodeId, {
                     name: body.name,
                     maxRooms: body.maxRooms
