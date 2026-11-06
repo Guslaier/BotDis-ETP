@@ -215,6 +215,35 @@
     </div>
 </div>
 
+<!-- Ban Modal -->
+<div id="banModal" style="position: fixed; inset: 0; background: rgba(8, 11, 16, 0.94); display: none; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="login-box" style="max-width: 420px; text-align: left;">
+        <h2 style="font-size: 18px; margin-bottom: 6px; color: #EF4444;" id="banModalTitle">🔨 แบนเซิร์ฟเวอร์ (Guild Ban)</h2>
+        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 16px;" id="banModalSub">สั่งระงับการใช้งานบอทในเซิร์ฟเวอร์นี้ทันที</p>
+        
+        <input type="hidden" id="banGuildId">
+        <div style="margin-bottom: 12px;">
+            <label style="font-size: 11.5px; color: var(--text-sub); display: block; margin-bottom: 4px;" id="lblBanTargetGuild">เซิร์ฟเวอร์เป้าหมาย</label>
+            <input type="text" id="banGuildName" disabled style="opacity: 0.8; font-weight: 600;">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <label style="font-size: 11.5px; color: var(--text-sub); display: block; margin-bottom: 4px;" id="lblBanDays">จำนวนวัน (0 = ถาวร)</label>
+            <input type="number" id="banDays" value="7" min="0" max="3650" placeholder="จำนวนวัน">
+        </div>
+
+        <div style="margin-bottom: 18px;">
+            <label style="font-size: 11.5px; color: var(--text-sub); display: block; margin-bottom: 4px;" id="lblBanReason">เหตุผลการแบน</label>
+            <input type="text" id="banReason" value="Spam / Terms Violation" placeholder="ระบุเหตุผล เช่น Spam คำสั่ง, ก่อกวน">
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="btn" onclick="closeBanModal()" id="btnCancelBan">ยกเลิก</button>
+            <button class="btn btn-danger" onclick="confirmBanGuild()" id="btnConfirmBan" style="background: #DC2626;">ยืนยันการแบน</button>
+        </div>
+    </div>
+</div>
+
 <!-- Header -->
 <div class="header">
     <div class="header-brand">
@@ -442,7 +471,7 @@
             thExpiry: "วันหมดอายุ",
             thRefCode: "รหัสชวน & สถิติ",
             thDaysAdjust: "ชดเชย / เพิ่มวัน",
-            thActionSub: "รีเซ็ต",
+            thActionSub: "จัดการ / แบน",
             thTxTime: "วันเวลา",
             thTxGuild: "เซิร์ฟเวอร์",
             thTxAmount: "ยอดเงิน",
@@ -475,7 +504,14 @@
             loginTitle: "🔐 แดชบอร์ดผู้ดูแลระบบ",
             loginSub: "กรุณาเข้าสู่ระบบด้วยรหัสผ่านแอดมิน",
             btnLogin: "เข้าสู่ระบบ",
-            rateSub: "เรต: {price} บาท / 30 วัน"
+            rateSub: "เรต: {price} บาท / 30 วัน",
+            banModalTitle: "🔨 แบนเซิร์ฟเวอร์ (Guild Ban)",
+            banModalSub: "สั่งระงับการใช้งานบอทในเซิร์ฟเวอร์นี้ทันที",
+            lblBanTargetGuild: "เซิร์ฟเวอร์เป้าหมาย",
+            lblBanDays: "จำนวนวัน (0 = ถาวร)",
+            lblBanReason: "เหตุผลการแบน",
+            btnCancelBan: "ยกเลิก",
+            btnConfirmBan: "ยืนยันการแบน"
         },
         en: {
             title: "GOOLIX • Master Admin Dashboard",
@@ -502,7 +538,7 @@
             thExpiry: "Expires At",
             thRefCode: "Referral & Stats",
             thDaysAdjust: "Compensate / Add Days",
-            thActionSub: "Reset",
+            thActionSub: "Action / Ban",
             thTxTime: "Timestamp",
             thTxGuild: "Guild Server",
             thTxAmount: "Amount",
@@ -535,7 +571,14 @@
             loginTitle: "🔐 Master Admin Portal",
             loginSub: "Authenticate with administrative credentials",
             btnLogin: "Sign In",
-            rateSub: "Rate: {price} THB / 30 Days"
+            rateSub: "Rate: {price} THB / 30 Days",
+            banModalTitle: "🔨 Ban Guild Server",
+            banModalSub: "Immediately restrict this guild from bot usage",
+            lblBanTargetGuild: "Target Guild",
+            lblBanDays: "Duration Days (0 = Permanent)",
+            lblBanReason: "Ban Reason",
+            btnCancelBan: "Cancel",
+            btnConfirmBan: "Confirm Ban"
         }
     };
 
@@ -610,6 +653,14 @@
         document.getElementById('loginTitle').textContent = t.loginTitle;
         document.getElementById('loginSubtitle').textContent = t.loginSub;
         document.getElementById('btnLoginSubmit').textContent = t.btnLogin;
+
+        if (document.getElementById('banModalTitle')) document.getElementById('banModalTitle').textContent = t.banModalTitle;
+        if (document.getElementById('banModalSub')) document.getElementById('banModalSub').textContent = t.banModalSub;
+        if (document.getElementById('lblBanTargetGuild')) document.getElementById('lblBanTargetGuild').textContent = t.lblBanTargetGuild;
+        if (document.getElementById('lblBanDays')) document.getElementById('lblBanDays').textContent = t.lblBanDays;
+        if (document.getElementById('lblBanReason')) document.getElementById('lblBanReason').textContent = t.lblBanReason;
+        if (document.getElementById('btnCancelBan')) document.getElementById('btnCancelBan').textContent = t.btnCancelBan;
+        if (document.getElementById('btnConfirmBan')) document.getElementById('btnConfirmBan').textContent = t.btnConfirmBan;
 
         const optSandbox = document.querySelector('#cfgPaymentMode option[value="sandbox"]');
         if (optSandbox) optSandbox.textContent = t.optSandbox;
@@ -784,6 +835,16 @@
         return `<span style="color: var(--slime-green);">${yyyy}-${mm}-${dd} (เหลือ ${daysLeft} วัน)</span>`;
     }
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function renderGuilds(guilds) {
         const tbody = document.getElementById('guildTableBody');
         if (guilds.length === 0) {
@@ -796,23 +857,39 @@
             const refCode = g.referralCode || 'REF-N/A';
             const refCount = g.referralCount || 0;
             const refBaht = g.cumulativePaidBaht || 0;
+            const safeName = escapeHtml(g.guildName || g.guildId);
+
             return `
                 <tr>
-                    <td><strong>${g.guildName}</strong><br><span style="font-size: 11px; color: var(--text-sub);">${g.guildId}</span></td>
-                    <td><span class="badge-pill ${g.isSupporter ? 'badge-vip' : 'badge-free'}">${g.isSupporter ? 'VIP 320k' : 'FREE 128k'}</span></td>
-                    <td>${exp}</td>
+                    <td><strong>${safeName}</strong><br><span style="font-size: 11px; color: var(--text-sub);">${g.guildId}</span></td>
+                    <td>
+                        <span class="badge-pill ${g.isSupporter ? 'badge-vip' : 'badge-free'}">${g.isSupporter ? 'VIP 96k' : 'FREE 64k'}</span>
+                        ${g.isBanned ? '<br><span class="badge-pill" style="margin-top: 4px; background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid #EF4444;">⛔ BANNED</span>' : ''}
+                    </td>
+                    <td>
+                        ${g.isBanned 
+                            ? `<span style="color: #EF4444; font-size: 11.5px; font-weight: 500;">แบนถึง: ${g.banInfo?.expiresAt ? new Date(g.banInfo.expiresAt).toLocaleDateString('th-TH') : 'ถาวร'}<br><span style="color: var(--text-sub); font-size: 10.5px;">เหตุผล: ${escapeHtml(g.banInfo?.reason || '-')}</span></span>` 
+                            : exp}
+                    </td>
                     <td>
                         <code>${refCode}</code><br>
                         <span style="font-size: 11px; color: var(--text-sub);">ชวน: ${refCount} กิลด์ • ยอด: ${refBaht}฿</span>
                     </td>
                     <td>
                         <div style="display: flex; gap: 4px; align-items: center;">
-                            <input type="number" id="adj_${g.guildId}" value="30" style="width: 58px; padding: 4px 6px; font-size: 11px;">
-                            <button class="btn btn-primary btn-sm" onclick="customAddDays('${g.guildId}')">+วัน</button>
+                            <input type="number" id="adj_${g.guildId}" value="30" style="width: 58px; padding: 4px 6px; font-size: 11px;" ${g.isBanned ? 'disabled' : ''}>
+                            <button class="btn btn-primary btn-sm" onclick="customAddDays('${g.guildId}')" ${g.isBanned ? 'disabled' : ''}>+วัน</button>
                         </div>
                     </td>
                     <td>
-                        <button class="btn btn-danger btn-sm" onclick="resetSub('${g.guildId}')">Reset</button>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            ${g.isBanned ? `
+                                <button class="btn btn-sm" style="background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green); font-size: 11px;" onclick="unbanGuild('${g.guildId}')">🔓 ปลดแบน</button>
+                            ` : `
+                                <button class="btn btn-danger btn-sm" onclick="resetSub('${g.guildId}')" style="font-size: 11px;">Reset</button>
+                                <button class="btn btn-danger btn-sm" onclick="openBanModal('${g.guildId}', '${safeName.replace(/'/g, "\\'")}')" style="font-size: 11px; background: #7F1D1D; border-color: #991B1B;">🔨 แบน</button>
+                            `}
+                        </div>
                     </td>
                 </tr>
             `;
@@ -1114,6 +1191,64 @@
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         refreshDashboard();
+    }
+
+    function openBanModal(guildId, guildName) {
+        document.getElementById('banGuildId').value = guildId;
+        document.getElementById('banGuildName').value = `${guildName} (${guildId})`;
+        document.getElementById('banDays').value = '7';
+        document.getElementById('banReason').value = 'Spam / Terms Violation';
+        document.getElementById('banModal').style.display = 'flex';
+    }
+
+    function closeBanModal() {
+        document.getElementById('banModal').style.display = 'none';
+    }
+
+    async function confirmBanGuild() {
+        const guildId = document.getElementById('banGuildId').value;
+        const days = parseInt(document.getElementById('banDays').value, 10);
+        const reason = document.getElementById('banReason').value.trim() || 'No reason provided';
+
+        if (!guildId) return;
+
+        try {
+            const res = await fetch(`/api/admin/guilds/${guildId}/ban`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify({ days: isNaN(days) ? 0 : days, reason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`🔨 สั่งแบนเซิร์ฟเวอร์เรียบร้อย (${days === 0 ? 'ถาวร' : days + ' วัน'})`);
+                closeBanModal();
+                refreshDashboard();
+            } else {
+                alert(`❌ เกิดข้อผิดพลาด: ${data.error || 'Unknown error'}`);
+            }
+        } catch (err) {
+            alert(`❌ เชื่อมต่อ API ล้มเหลว: ${err.message}`);
+        }
+    }
+
+    async function unbanGuild(guildId) {
+        if (!confirm(`ยืนยันการปลดแบนเซิร์ฟเวอร์ ${guildId} หรือไม่?`)) return;
+
+        try {
+            const res = await fetch(`/api/admin/guilds/${guildId}/unban`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`🔓 ปลดแบนเซิร์ฟเวอร์ ${guildId} เรียบร้อย`);
+                refreshDashboard();
+            } else {
+                alert(`❌ เกิดข้อผิดพลาด: ${data.error || 'Unknown error'}`);
+            }
+        } catch (err) {
+            alert(`❌ เชื่อมต่อ API ล้มเหลว: ${err.message}`);
+        }
     }
 
     setDashboardLanguage(dashLang);

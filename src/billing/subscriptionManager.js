@@ -111,7 +111,7 @@ class SubscriptionManager extends EventEmitter {
             maxQueue: supporter ? 50 : 10,
             maxPlaylistTracks: supporter ? 25 : 5,
             maxSongDuration: supporter ? Infinity : 1800, // 30 minutes for free
-            bitrate: supporter ? '320k' : '128k',
+            bitrate: supporter ? '96k' : '64k',
             allowAutoplay: supporter,
             allowFilter: supporter
         };
@@ -186,6 +186,17 @@ class SubscriptionManager extends EventEmitter {
      * Checks if guild is allowed to start playing music based on slot quotas.
      */
     checkStreamSlot(guildId, kazagumo, client) {
+        const banManager = require('../moderation/banManager');
+        const banInfo = banManager.getBanInfo(guildId);
+        if (banInfo) {
+            const timeStr = banInfo.isPermanent ? 'ถาวร (Permanent)' : `เหลือ ${Math.max(1, Math.ceil((banInfo.expiresAt - Date.now()) / (24 * 3600 * 1000)))} วัน`;
+            return {
+                allowed: false,
+                reason: 'GUILD_BANNED',
+                message: `⛔ เซิร์ฟเวอร์นี้ถูกระงับการใช้งาน (${timeStr}) เนื่องจาก: ${banInfo.reason}`
+            };
+        }
+
         const config = this.getConfig();
         const maxFree = config.maxFreeStreams || 6;
         const maxTotal = config.maxTotalStreams || 12;
@@ -446,6 +457,13 @@ class SubscriptionManager extends EventEmitter {
                 if (!player) continue;
 
                 if (player._destroyed || !player.connection) {
+                    try { player.destroy(); } catch {}
+                    continue;
+                }
+
+                const banManager = require('../moderation/banManager');
+                if (banManager.isGuildBanned(guildId)) {
+                    console.log(`[HeartbeatSweep] Destroying player in BANNED guild: ${guildId}`);
                     try { player.destroy(); } catch {}
                     continue;
                 }

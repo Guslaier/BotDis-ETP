@@ -167,6 +167,20 @@ client.on('guildUnavailable', guild => {
 });
 
 client.on('interactionCreate', async interaction => {
+    // 0. Guild Ban Guard
+    if (interaction.guildId) {
+        const banManager = require('./src/moderation/banManager');
+        const banInfo = banManager.getBanInfo(interaction.guildId);
+        if (banInfo) {
+            const timeStr = banInfo.isPermanent ? 'ถาวร (Permanent)' : `<t:${Math.floor(banInfo.expiresAt / 1000)}:R> (<t:${Math.floor(banInfo.expiresAt / 1000)}:f>)`;
+            const banEmbed = new EmbedBuilder()
+                .setColor('#EF4444')
+                .setTitle('⛔ เซิร์ฟเวอร์นี้ถูกระงับการใช้งาน (BANNED)')
+                .setDescription(`เซิร์ฟเวอร์นี้ถูกแบนจากระบบ GOOLIX ชั่วคราวหรือถาวร\n\n**เหตุผล:** ${banInfo.reason || 'ละเมิดข้อกำหนดการใช้งาน'}\n**ระยะเวลา:** ${timeStr}\n\nหากคิดว่านี่คือข้อผิดพลาด กรุณาติดต่อผู้ดูแลระบบค่ะ`);
+            return interaction.reply({ embeds: [banEmbed], flags: MessageFlags.Ephemeral }).catch(() => {});
+        }
+    }
+
     // 1. Handle interactive music player buttons
     if (interaction.isButton()) {
         const customId = interaction.customId;

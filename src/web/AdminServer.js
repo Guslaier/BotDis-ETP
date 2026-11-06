@@ -11,6 +11,7 @@ const nodeRouter = require('../cluster/NodeRouter');
 const proxyManager = require('../helpers/proxyManager');
 const cacheManager = require('../CacheManager');
 const youtubeCircuit = require('../helpers/youtubeCircuit');
+const banManager = require('../moderation/banManager');
 
 class AdminServer {
     constructor(client, kazagumo) {
@@ -58,7 +59,12 @@ class AdminServer {
         try {
             if (fs.existsSync(filePath)) {
                 const content = fs.readFileSync(filePath, 'utf8');
-                res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+                res.writeHead(200, {
+                    'Content-Type': 'text/html; charset=utf-8',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate, proxy-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                });
                 return res.end(content);
             }
         } catch {}
@@ -481,7 +487,7 @@ class AdminServer {
                                 title: title,
                                 source: sourceLabel,
                                 sourceBadge: sourceLabel,
-                                bitrate: isSupp ? '320 kbps (VIP)' : '128 kbps',
+                                bitrate: isSupp ? '96 kbps (VIP)' : '64 kbps',
                                 isSupporter: isSupp,
                                 listeners,
                                 elapsed: `${this._formatDuration(currentPos)} / ${this._formatDuration(currentDuration)}`,
@@ -498,6 +504,7 @@ class AdminServer {
 
                 if (this.client && this.client.guilds && this.client.guilds.cache) {
                     for (const [id, g] of this.client.guilds.cache.entries()) {
+                        const banInfo = banManager.getBanInfo(id);
                         guildMap.set(id, {
                             guildId: id,
                             guildName: g.name,
@@ -507,7 +514,9 @@ class AdminServer {
                             referralCode: `REF-${id.slice(-6).toUpperCase()}`,
                             referralCount: 0,
                             cumulativePaidBaht: 0,
-                            isSupporter: false
+                            isSupporter: false,
+                            isBanned: !!banInfo,
+                            banInfo: banInfo || null
                         });
                     }
                 }
@@ -515,10 +524,13 @@ class AdminServer {
                 for (const [id, s] of Object.entries(allSubs)) {
                     const g = this.client?.guilds?.cache?.get(id);
                     const isSupp = s.plan === 'SUPPORTER' && (s.expiresAt > Date.now());
+                    const banInfo = banManager.getBanInfo(id);
                     guildMap.set(id, {
                         ...s,
                         guildName: g ? g.name : (s.guildName || id),
-                        isSupporter: isSupp
+                        isSupporter: isSupp,
+                        isBanned: !!banInfo,
+                        banInfo: banInfo || null
                     });
                 }
 
@@ -624,6 +636,7 @@ class AdminServer {
                     players: playersList,
                     subscriptions: subsList,
                     guilds: subsList,
+                    bannedGuilds: banManager.getAllBannedGuilds(),
                     campaigns,
                     transactions,
                     nodes
@@ -744,6 +757,27 @@ class AdminServer {
                 const nodeId = pathname.split('/')[4];
                 const resDrain = nodeRouter.toggleDrain(nodeId);
                 return this._sendJson(res, 200, resDrain);
+            }
+
+            if (pathname.startsWith('/api/admin/guilds/') && pathname.endsWith('/ban') && req.method === 'POST') {
+                const guildId = pathname.split('/')[4];
+                const body = await this._parseBody(req);
+                const guild = this.client?.guilds?.cache?.get(guildId);
+                const guildName = guild ? guild.name : (body.guildName || guildId);
+                const resBan = banManager.banGuild(guildId, {
+                    days: body.days,
+                    reason: body.reason,
+                    guildName,
+                    bannedBy: admin?.sub || 'admin',
+                    kazagumo: this.kazagumo
+                });
+                return this._sendJson(res, 200, resBan);
+            }
+
+            if (pathname.startsWith('/api/admin/guilds/') && pathname.endsWith('/unban') && req.method === 'POST') {
+                const guildId = pathname.split('/')[4];
+                const resUnban = banManager.unbanGuild(guildId);
+                return this._sendJson(res, 200, resUnban);
             }
 
             if (pathname === '/api/admin/circuit/reset' && req.method === 'POST') {
