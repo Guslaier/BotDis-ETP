@@ -1,0 +1,717 @@
+const { 
+    joinVoiceChannel, 
+    createAudioPlayer, 
+    createAudioResource, 
+    AudioPlayerStatus, 
+    VoiceConnectionStatus, 
+    NoSubscriberBehavior,
+    entersState, 
+    StreamType 
+} = require('@discordjs/voice');
+const prism = require('prism-media');
+const CacheManager = require('./CacheManager');
+const settingsManager = require('./helpers/settingsManager');
+
+class PlayerQueue extends Array {
+    static get [Symbol.species]() {
+        return Array;
+    }
+
+    constructor(player) {
+        super();
+        this.player = player;
+        this.current = null;
+        this.previous = null;
+    }
+
+    add(track) {
+        if (Array.isArray(track)) {
+            this.push(...track);
+        } else {
+            this.push(track);
+        }
+        this._triggerPreCache();
+    }
+
+    unshift(...items) {
+        const result = super.unshift(...items);
+        this._triggerPreCache();
+        return result;
+    }
+
+    shift() {
+        const result = super.shift();
+        this._triggerPreCache();
+        return result;
+    }
+
+    _triggerPreCache() {
+        if (this.player && this.player._preCacheNextTrack) {
+            this.player._preCacheNextTrack();
+        }
+    }
+
+    clear() {
+        this.length = 0;
+    }
+
+    shuffle() {
+        for (let i = this.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this[i], this[j]] = [this[j], this[i]];
+        }
+    }
+
+    remove(index) {
+        if (index >= 0 && index < this.length) {
+            return this.splice(index, 1)[0];
+        }
+        return null;
+    }
+
+    get totalSize() {
+        return this.length + (this.current ? 1 : 0);
+    }
+}
+
+class Player {
+    constructor(manager, options) {
+        this.manager = manager;
+        this.guildId = options.guildId;
+        this.voiceId = options.voiceId;
+        this.textId = options.textId;
+        this.volume = typeof options.volume === 'number' ? options.volume : settingsManager.getGuildVolume(this.guildId);
+        this.loop = 'none'; // 'none' | 'track' | 'queue'
+        this.autoplay = typeof options.autoplay === 'boolean' ? options.autoplay : settingsManager.getGuildAutoplay(this.guildId);
+        this.playedHistory = new Set();
+        this.recentArtists = [];
+        this._preloadedAutoplayTrack = null;
+        this._autoplayPreloadTimer = null;
+        this.paused = false;
+        this.playing = false;
+        this.nowPlayingMessage = null;
+        this._position = 0;
+        this.playbackStartTime = 0;
+
+        this.queue = new PlayerQueue(this);
+        const maxMissedFrames = parseInt(process.env.MAX_MISSED_FRAMES || '350', 10);
+        this.audioPlayer = createAudioPlayer({
+            behaviors: {
+                noSubscriber: NoSubscriberBehavior.Play,
+                maxMissedFrames: maxMissedFrames
+            }
+        });
+        this.connection = null;
+        this.currentResource = null;
+        this.currentProcess = null;
+        this._playToken = 0;
+        this._advancing = false;
+        this._starting = false; // in-flight guard
+        this._isSkipping = false;
+        this._destroyed = false;
+        this._isStopping = false;
+
+        this._setupVoiceConnection(options);
+        this._setupAudioPlayer();
+    }
+
+    _setupVoiceConnection(options) {
+        const guild = this.manager.client.guilds.cache.get(this.guildId);
+        if (!guild) return;
+
+        this.connection = joinVoiceChannel({
+            channelId: this.voiceId,
+            guildId: this.guildId,
+            adapterCreator: guild.voiceAdapterCreator,
+            selfDeaf: options.deaf !== false
+        });
+
+        this.connection.subscribe(this.audioPlayer);
+
+        this.connection.on('error', error => console.error(`[VoiceConnection ERROR] guild ${this.guildId}:`, error.message));
+
+        entersState(this.connection, VoiceConnectionStatus.Ready, 20_000)
+            .then(() => console.log(`[Player] Voice connection ready for guild ${this.guildId}`))
+            .catch(err => console.error(`[Player] Voice connection error:`, err.message));
+
+        this.connection.on(VoiceConnectionStatus.Disconnected, async () => {
+            try {
+                await Promise.race([
+                    entersState(this.connection, VoiceConnectionStatus.Signalling, 5_000),
+                    entersState(this.connection, VoiceConnectionStatus.Connecting, 5_000),
+                ]);
+            } catch {
+                this.destroy();
+            }
+        });
+    }
+
+    _setupAudioPlayer() {
+        this.audioPlayer.on('stateChange', (oldState, newState) => {
+            if (this._destroyed || this._isStopping) return;
+            if (newState.status === AudioPlayerStatus.Playing) {
+                this.playing = true;
+                this.paused = false;
+                this.playbackStartTime = Date.now();
+                console.log(`[Player] Audio playback started for: "${this.queue.current?.title}"`);
+            } else if (newState.status === AudioPlayerStatus.Idle) {
+                this.playing = false;
+            }
+        });
+
+        this.audioPlayer.on(AudioPlayerStatus.Idle, async () => {
+            if (this._destroyed || this._isStopping) return;
+            if (this._starting) return;
+            if (this._advancing) return;
+            await this._advanceQueue();
+        });
+
+        this.audioPlayer.on('error', (error) => {
+            if (this._destroyed || this._isStopping) return;
+            console.error(`AudioPlayer error in guild ${this.guildId}:`, error.message);
+            this.manager.emit('playerException', this, this.queue.current, error);
+            this.skip();
+        });
+    }
+
+    async _advanceQueue() {
+        if (this._destroyed || this._isStopping || this._advancing) return;
+        if (!this.connection) return;
+        this._advancing = true;
+        try {
+            if (this._destroyed || this._isStopping || !this.connection) return;
+            if (this.currentProcess) {
+                try { this.currentProcess.kill(); } catch {}
+                this.currentProcess = null;
+            }
+
+            const isSkip = this._isSkipping;
+            this._isSkipping = false;
+
+            const finishedTrack = this.queue.current;
+            this.playing = false;
+            this._position = 0;
+
+            if (finishedTrack) {
+                this.queue.previous = finishedTrack;
+                this.manager.emit('playerEnd', this, finishedTrack);
+
+                if (this._destroyed || this._isStopping || !this.connection) return;
+
+                if (this.loop === 'track' && !isSkip) {
+                    await this.playTrack(finishedTrack);
+                    return;
+                } else if (this.loop === 'queue' && !isSkip) {
+                    this.queue.add(finishedTrack);
+                }
+            }
+
+            if (this._destroyed || this._isStopping || !this.connection) return;
+
+            const referenceTrack = finishedTrack || this.queue.previous;
+            if (this.queue.length > 0) {
+                const nextTrack = this.queue.shift();
+                await this.playTrack(nextTrack);
+            } else if (this.autoplay && (this._preloadedAutoplayTrack || referenceTrack)) {
+                let nextTrack = this._preloadedAutoplayTrack;
+                this._preloadedAutoplayTrack = null;
+
+                if (!nextTrack && referenceTrack) {
+                    nextTrack = await this._findNextAutoplayTrack(referenceTrack);
+                }
+
+                if (this._destroyed || this._isStopping || !this.connection) return;
+
+                if (nextTrack) {
+                    console.log(`[Player] Autoplay playing next: "${nextTrack.title}" (${nextTrack.uri})`);
+                    await this.playTrack(nextTrack);
+                } else {
+                    this.queue.current = null;
+                    this.manager.emit('playerEmpty', this);
+                }
+            } else {
+                this.queue.current = null;
+                this.manager.emit('playerEmpty', this);
+            }
+        } catch (error) {
+            console.error('[Player] Advance error:', error);
+            this.manager.emit('playerException', this, this.queue.current, error);
+        } finally {
+            this._advancing = false;
+        }
+    }
+
+    get position() {
+        if (!this.playing || this.paused) return this._position || 0;
+        return (this._position || 0) + (Date.now() - this.playbackStartTime);
+    }
+
+    set position(val) {
+        this._position = val;
+    }
+
+    async play() {
+        if (this._destroyed || this._isStopping || !this.connection || this.playing || this._starting || this._advancing) return;
+        await this._advanceQueue();
+    }
+
+    _createBufferedResource(stream) {
+        // High-capacity Opus demuxer buffer: buffers up to 250 Opus frames (~5-7s) in RAM (~180 KB)
+        // Prevents audio stutter caused by the default tiny 16-frame buffer in @discordjs/voice
+        const demuxer = new prism.opus.OggDemuxer({ readableHighWaterMark: 250 });
+        stream.on('error', (err) => {
+            try { demuxer.destroy(err); } catch {}
+        });
+        demuxer.on('error', (err) => {
+            console.error('[AudioDemuxer] Demuxer stream error:', err.message);
+        });
+
+        const demuxed = stream.pipe(demuxer);
+        demuxed.kill = () => {
+            try {
+                if (stream.kill) stream.kill();
+                else if (stream.destroy) stream.destroy();
+            } catch {}
+            try { demuxer.destroy(); } catch {}
+        };
+
+        return {
+            resource: createAudioResource(demuxed, { inputType: StreamType.Opus }),
+            stream: demuxed
+        };
+    }
+
+    async playTrack(track) {
+        if (this._destroyed || this._isStopping || !this.connection) return;
+        const token = ++this._playToken;
+        this._starting = true;
+        try {
+            this.queue.current = track;
+            this._position = 0;
+            this.playbackStartTime = Date.now();
+            if (track) {
+                if (track.identifier) this.playedHistory.add(track.identifier);
+                if (track.uri) this.playedHistory.add(track.uri);
+                if (this.playedHistory.size > 50) {
+                    const first = this.playedHistory.values().next().value;
+                    this.playedHistory.delete(first);
+                }
+                const artistName = this._extractArtistName(track);
+                if (artistName) {
+                    this.recentArtists.push(artistName);
+                    if (this.recentArtists.length > 5) {
+                        this.recentArtists.shift();
+                    }
+                }
+            }
+
+            if (!this.connection) return;
+
+            if (this.connection.state.status !== VoiceConnectionStatus.Ready) {
+                await entersState(this.connection, VoiceConnectionStatus.Ready, 15_000);
+                if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) return;
+            }
+
+            const streamPrepStart = Date.now();
+            console.log(`[Player] Preparing stream: "${track.title}" (Guild: ${this.guildId})`);
+
+            if (this.currentProcess) {
+                try { this.currentProcess.kill(); } catch {}
+                this.currentProcess = null;
+            }
+
+            if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) return;
+
+            // Direct real-time streaming with early process tracker
+            const stream = await CacheManager.createTrackStream(track, 0, this.volume, (proc) => {
+                if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) {
+                    try { proc.kill(); } catch {}
+                    return;
+                }
+                this.currentProcess = proc;
+            });
+
+            if (this._destroyed || this._isStopping || token !== this._playToken || !this.connection) {
+                if (stream && stream.kill) {
+                    try { stream.kill(); } catch {}
+                }
+                return;
+            }
+
+            const buffered = this._createBufferedResource(stream);
+            this.currentProcess = buffered.stream;
+            const resource = buffered.resource;
+
+            this.currentResource = resource;
+            this.audioPlayer.play(resource);
+            console.log(`[Player] Audio resource dispatched to voice channel in ${Date.now() - streamPrepStart}ms: "${track.title}"`);
+            this.manager.emit('playerStart', this, track);
+            this._preCacheNextTrack();
+            this._scheduleAutoplayPreload(track);
+        } catch (error) {
+            if (this._destroyed || token !== this._playToken) return;
+            console.error(`Failed to play track ${track.title}:`, error.message);
+            this.manager.emit('playerException', this, track, error);
+            this.playing = false;
+            try { this.audioPlayer.stop(); } catch {}
+        } finally {
+            this._starting = false;
+            if (!this._destroyed && !this._isStopping && token !== this._playToken && this.audioPlayer.state.status === AudioPlayerStatus.Idle && this.queue.length > 0) {
+                this._advanceQueue().catch(() => {});
+            }
+        }
+    }
+
+    pause(pause = true) {
+        if (pause) {
+            this.audioPlayer.pause();
+            this._position = this.position;
+            this.paused = true;
+        } else {
+            this.audioPlayer.unpause();
+            this.playbackStartTime = Date.now();
+            this.paused = false;
+        }
+        return this.paused;
+    }
+
+    resume() {
+        return this.pause(false);
+    }
+
+    skip() {
+        if (this._destroyed || !this.connection) return;
+        this._isSkipping = true;
+        this._playToken++;
+        if (this.currentProcess) {
+            try { this.currentProcess.kill(); } catch {}
+            this.currentProcess = null;
+        }
+        try {
+            this.audioPlayer.stop(true);
+        } catch {}
+    }
+
+    stop() {
+        if (this._destroyed) return;
+        this._isStopping = true;
+        if (this._preCacheTimer) {
+            clearTimeout(this._preCacheTimer);
+            this._preCacheTimer = null;
+        }
+        if (this._autoplayPreloadTimer) {
+            clearTimeout(this._autoplayPreloadTimer);
+            this._autoplayPreloadTimer = null;
+        }
+        this._preloadedAutoplayTrack = null;
+        this._isSkipping = false;
+        this._playToken++;
+        this.playing = false;
+        this.paused = false;
+        if (this.currentProcess) {
+            try { this.currentProcess.kill(); } catch {}
+            this.currentProcess = null;
+        }
+        this.queue.clear();
+        this.queue.current = null;
+        try {
+            this.audioPlayer.stop(true);
+        } catch {}
+        setTimeout(() => {
+            if (!this._destroyed) {
+                this._isStopping = false;
+            }
+        }, 500);
+    }
+
+    setVolume(volume) {
+        this.volume = volume;
+        settingsManager.setGuildVolume(this.guildId, volume);
+        if (this.playing && this.queue.current) {
+            this.seek(this.position);
+        }
+    }
+
+    setLoop(mode) {
+        this.loop = mode;
+        return this.loop;
+    }
+
+    cycleLoop() {
+        if (this.loop === 'none') this.loop = 'track';
+        else if (this.loop === 'track') this.loop = 'queue';
+        else this.loop = 'none';
+        return this.loop;
+    }
+
+    async playPrevious() {
+        if (!this.queue.previous) return false;
+        const prev = this.queue.previous;
+        if (this.queue.current) {
+            this.queue.unshift(this.queue.current);
+        }
+        await this.playTrack(prev);
+        return true;
+    }
+
+    _scheduleAutoplayPreload(currentTrack) {
+        if (this._autoplayPreloadTimer) {
+            clearTimeout(this._autoplayPreloadTimer);
+            this._autoplayPreloadTimer = null;
+        }
+
+        if (this._destroyed || this._isStopping || !this.connection || !this.autoplay || this.queue.length > 0) return;
+
+        // Pre-fetch next autoplay song in background 3 seconds after playback starts
+        this._autoplayPreloadTimer = setTimeout(async () => {
+            if (this._destroyed || this._isStopping || !this.connection || !this.autoplay || this.queue.length > 0 || this._preloadedAutoplayTrack) return;
+            try {
+                console.log(`[Player:Autoplay] Pre-fetching next song in background for: "${currentTrack.title}"`);
+                const track = await this._findNextAutoplayTrack(currentTrack);
+                if (this._destroyed || this._isStopping || !this.connection) return;
+                if (track && this.autoplay && this.queue.length === 0) {
+                    this._preloadedAutoplayTrack = track;
+                    console.log(`[Player:Autoplay] Pre-cached candidate ready: "${track.title}" (${track.uri})`);
+                    const streamMode = (process.env.STREAM_MODE || 'auto').toLowerCase().trim();
+                    if (streamMode !== 'pipe') {
+                        const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
+                        if (!CacheManager.isCached(identifier)) {
+                            CacheManager.prepareTrack(track, true).catch(() => {});
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('[Player:Autoplay] Preload failed:', err.message);
+            }
+        }, 3000);
+    }
+
+    _extractArtistName(track) {
+        if (!track) return '';
+        const title = (track.title || '').replace(/\[.*?\]|\(.*?\)|【.*?】|「.*?」|MV|Official.*$/gi, '').trim();
+        const parts = title.split(/[-–—|]/).map(p => p.trim()).filter(Boolean);
+        if (parts.length > 1) {
+            if (parts[0].length <= 35 && !/^(เพลง|official|audio|mv|live|lyric)/i.test(parts[0])) {
+                return parts[0].toLowerCase();
+            }
+            if (parts[1].length <= 35) {
+                return parts[1].toLowerCase();
+            }
+        }
+        if (track.author) {
+            const clean = track.author.replace(/[-_]topic|official|channel|vevo|records?|music/gi, '').trim();
+            if (clean.length >= 2) return clean.toLowerCase();
+        }
+        return '';
+    }
+
+    async _findNextAutoplayTrack(lastTrack) {
+        try {
+            const ytMatch = (lastTrack.uri || '').match(/(?:v=|\/embed\/|\/17\/|\/v\/|https:\/\/youtu\.be\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
+            const videoId = lastTrack.identifier && lastTrack.identifier.length === 11 
+                ? lastTrack.identifier 
+                : (ytMatch ? ytMatch[1] : null);
+
+            let candidates = [];
+
+            // Tier 1: YouTube Official Radio Mix (list=RD<videoId>)
+            if (videoId) {
+                const radioUrl = `https://www.youtube.com/watch?v=${videoId}&list=RD${videoId}`;
+                console.log(`[Player:Autoplay] Fetching YouTube Radio Mix for: "${lastTrack.title}" (${videoId})`);
+                const res = await this.manager.search(radioUrl, {
+                    requester: lastTrack.requester || this.manager.client?.user,
+                    forcePlaylist: true,
+                    limit: 15
+                });
+                if (res && res.tracks && res.tracks.length > 0) {
+                    candidates = res.tracks;
+                }
+            }
+
+            // Tier 2: Keyword search fallback if Radio Mix failed or non-YouTube
+            if (candidates.length === 0) {
+                const cleanTitle = (lastTrack.title || '')
+                    .replace(/\[.*?\]|\(.*?\)|【.*?】|MV|Official|Music Video|Audio|Lyrics/gi, '')
+                    .replace(/[|/\\#~!?@$%^&*_+<>{}=]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                const cleanAuthor = (lastTrack.author || '')
+                    .replace(/- topic|official|channel|vevo/gi, '')
+                    .trim();
+
+                const query = cleanAuthor ? `${cleanAuthor} song` : `${cleanTitle} music`;
+                console.log(`[Player:Autoplay] Fallback keyword search: "${query}"`);
+                const res = await this.manager.search(query, {
+                    requester: lastTrack.requester || this.manager.client?.user
+                });
+                if (res && res.tracks) {
+                    candidates = res.tracks;
+                }
+            }
+
+            // Filter out: current track, recently played tracks, tracks already in queue
+            const isFresh = (t) => {
+                if (!t) return false;
+                if (t.identifier === lastTrack.identifier || t.uri === lastTrack.uri) return false;
+                if (t.identifier && this.playedHistory.has(t.identifier)) return false;
+                if (t.uri && this.playedHistory.has(t.uri)) return false;
+                if (this.queue.some(q => (q.identifier && q.identifier === t.identifier) || q.uri === t.uri)) return false;
+                return true;
+            };
+
+            const freshCandidates = candidates.filter(isFresh);
+            if (freshCandidates.length === 0) return null;
+
+            // Prioritize different artist to preserve musical tone while preventing same artist repetition
+            const lastArtist = this._extractArtistName(lastTrack);
+            const isDiverseArtist = (t) => {
+                const tArtist = this._extractArtistName(t);
+                const titleLower = (t.title || '').toLowerCase();
+                const authorLower = (t.author || '').toLowerCase();
+
+                // 1. Must not match current/last track artist
+                if (lastArtist && (titleLower.includes(lastArtist) || authorLower.includes(lastArtist))) {
+                    return false;
+                }
+                if (tArtist && lastArtist && (tArtist.includes(lastArtist) || lastArtist.includes(tArtist))) {
+                    return false;
+                }
+
+                // 2. Must not be in recent 3 artists
+                for (const recent of this.recentArtists.slice(-3)) {
+                    if (recent && (titleLower.includes(recent) || authorLower.includes(recent))) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+
+            const diverseCandidates = freshCandidates.filter(isDiverseArtist);
+
+            // Pick randomly from top 3 diverse candidates for natural radio flow
+            if (diverseCandidates.length > 0) {
+                const pool = diverseCandidates.slice(0, 3);
+                const selected = pool[Math.floor(Math.random() * pool.length)];
+                console.log(`[Player:Autoplay] Selected diverse artist track: "${selected.title}" (Genre matched, artist diversified)`);
+                return selected;
+            }
+
+            // Fallback: Pick top fresh candidate if diversity pool is empty
+            console.log(`[Player:Autoplay] Falling back to fresh candidate: "${freshCandidates[0].title}"`);
+            return freshCandidates[0];
+        } catch (err) {
+            console.warn('[Player] Autoplay search failed:', err.message);
+        }
+        return null;
+    }
+
+    async seek(positionMs) {
+        if (!this.queue.current) return;
+        try {
+            if (this.currentProcess) {
+                try { this.currentProcess.kill(); } catch {}
+                this.currentProcess = null;
+            }
+
+            const seekSeconds = Math.max(0, Math.floor(positionMs / 1000));
+            const stream = await CacheManager.createTrackStream(this.queue.current, seekSeconds, this.volume, (proc) => {
+                this.currentProcess = proc;
+            });
+
+            const buffered = this._createBufferedResource(stream);
+            this.currentProcess = buffered.stream;
+            const resource = buffered.resource;
+
+            this.currentResource = resource;
+            this.position = positionMs;
+            this.playbackStartTime = Date.now();
+            this.audioPlayer.play(resource);
+        } catch (error) {
+            console.error('[Player] Seek error:', error.message);
+        }
+    }
+
+    _preCacheNextTrack() {
+        if (this._destroyed || this._isStopping || !this.connection) return;
+        const streamMode = (process.env.STREAM_MODE || 'auto').toLowerCase().trim();
+        if (streamMode === 'pipe') return;
+
+        if (this._preCacheTimer) {
+            clearTimeout(this._preCacheTimer);
+            this._preCacheTimer = null;
+        }
+
+        // Delay pre-caching by 8s so current track playback stabilizes first
+        this._preCacheTimer = setTimeout(() => {
+            if (this._destroyed || this._isStopping || !this.connection) return;
+            // Pre-cache only if RAM usage is healthy (<150MB) and player is still active
+            const mem = process.memoryUsage();
+            if (mem.rss > 150 * 1024 * 1024) return;
+
+            if (this.queue.length > 0 && this.playing) {
+                const nextTrack = this.queue[0];
+                const identifier = nextTrack.identifier || Buffer.from(nextTrack.uri || '').toString('hex').slice(0, 20);
+                if (!CacheManager.isCached(identifier)) {
+                    CacheManager.prepareTrack(nextTrack, true).catch(() => {});
+                }
+            }
+        }, 8000);
+    }
+
+    destroy() {
+        if (this._destroyed) return;
+        this._destroyed = true;
+        this._isStopping = true;
+        this.playing = false;
+        this.paused = false;
+        this._playToken++;
+
+        if (this._preCacheTimer) {
+            clearTimeout(this._preCacheTimer);
+            this._preCacheTimer = null;
+        }
+        if (this._autoplayPreloadTimer) {
+            clearTimeout(this._autoplayPreloadTimer);
+            this._autoplayPreloadTimer = null;
+        }
+        this._preloadedAutoplayTrack = null;
+        this._isSkipping = false;
+
+        this.queue.clear();
+        this.queue.current = null;
+        this.queue.previous = null;
+
+        if (this.currentProcess) {
+            try { this.currentProcess.kill(); } catch {}
+            this.currentProcess = null;
+        }
+
+        if (this.audioPlayer) {
+            try {
+                this.audioPlayer.removeAllListeners();
+                this.audioPlayer.stop(true);
+            } catch {}
+        }
+
+        if (this.nowPlayingMessage) {
+            try { this.nowPlayingMessage.delete().catch(() => {}); } catch {}
+            this.nowPlayingMessage = null;
+        }
+
+        if (this.connection) {
+            try {
+                this.connection.removeAllListeners();
+                this.connection.destroy();
+            } catch {}
+            this.connection = null;
+        }
+
+        if (this.manager && this.manager.players) {
+            this.manager.players.delete(this.guildId);
+        }
+
+        if (global.gc) global.gc();
+    }
+}
+
+module.exports = Player;
