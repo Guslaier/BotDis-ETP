@@ -20,11 +20,12 @@ module.exports = {
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
-        if (player.queue.current) {
-            player.queue.unshift(player.queue.current);
+        const success = await player.playPrevious();
+        if (!success) {
+            embed.setDescription('❌ อ๊ะ! ไม่มีเพลงก่อนหน้านี้ในประวัติเลยค่ะ เพิ่งเริ่มปาร์ตี้เองน้า~ 😅');
+            return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
-        await player.playTrack(previousTrack);
         embed.setDescription(`⏪ จัดให้ตามคำเรียกร้อง! ย้อนกลับไปเล่นเพลง **${previousTrack.title}** อีกรอบค่ะ 💖`);
         return interaction.reply({ embeds: [embed] });
     }

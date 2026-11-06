@@ -197,7 +197,7 @@ class Player {
         });
 
         this.audioPlayer.on('error', (error) => {
-            if (this._destroyed || this._isStopping) return;
+            if (this._destroyed || this._isStopping || this._starting || this._advancing) return;
             console.error(`AudioPlayer error in guild ${this.guildId}:`, error.message);
             this.manager.emit('playerException', this, this.queue.current, error);
             this.skip();
@@ -210,6 +210,7 @@ class Player {
         this._advancing = true;
         try {
             if (this._destroyed || this._isStopping || !this.connection) return;
+            try { this.audioPlayer.stop(true); } catch {}
             if (this.currentProcess) {
                 try { this.currentProcess.kill(); } catch {}
                 this.currentProcess = null;
@@ -362,6 +363,7 @@ class Player {
             const streamPrepStart = Date.now();
             console.log(`[Player] Preparing stream: "${track.title}" (Guild: ${this.guildId})`);
 
+            try { this.audioPlayer.stop(true); } catch {}
             if (this.currentProcess) {
                 try { this.currentProcess.kill(); } catch {}
                 this.currentProcess = null;
@@ -691,6 +693,7 @@ class Player {
     async seek(positionMs) {
         if (!this.queue.current) return;
         try {
+            try { this.audioPlayer.stop(true); } catch {}
             if (this.currentProcess) {
                 try { this.currentProcess.kill(); } catch {}
                 this.currentProcess = null;
