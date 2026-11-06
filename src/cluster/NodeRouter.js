@@ -27,9 +27,16 @@ class NodeRouter extends EventEmitter {
     }
 
     _initRemoteNodes() {
-        const raw = process.env.REMOTE_NODES; // JSON or comma-separated
+        let raw = process.env.REMOTE_NODES; // JSON or comma-separated
         if (!raw) return;
         try {
+            raw = raw.trim();
+            if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"'))) {
+                raw = raw.slice(1, -1).trim();
+            }
+            if (raw.includes('\\"')) {
+                raw = raw.replace(/\\"/g, '"');
+            }
             const list = JSON.parse(raw);
             if (Array.isArray(list)) {
                 for (const node of list) {
@@ -39,7 +46,7 @@ class NodeRouter extends EventEmitter {
                             name: node.name || node.id,
                             type: 'remote',
                             host: node.host,
-                            port: node.port || 2333,
+                            port: parseInt(node.port || '2333', 10),
                             status: 'offline',
                             activeRooms: 0,
                             maxRooms: node.maxRooms || 15,
