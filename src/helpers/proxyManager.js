@@ -76,6 +76,10 @@ class ProxyManager {
         return null;
     }
 
+    getVpnEgressIp() {
+        return this.getVpnSourceIp();
+    }
+
     isVpnActive() {
         return this.vpnEnabled && this.vpnHealthy && !!this.getVpnSourceIp();
     }

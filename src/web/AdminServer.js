@@ -24,7 +24,12 @@ class AdminServer {
         }
 
         this.server = http.createServer((req, res) => {
-            this._handleRequest(req, res);
+            this._handleRequest(req, res).catch(err => {
+                console.error('[AdminServer] Request unhandled error:', err.message);
+                if (!res.headersSent) {
+                    this._sendJson(res, 500, { success: false, error: err.message });
+                }
+            });
         });
 
         this.server.listen(this.port, '0.0.0.0', () => {
@@ -324,8 +329,8 @@ class AdminServer {
                         ramMb: Math.round(mem.rss / (1024 * 1024)),
                         heapMb: Math.round(mem.heapUsed / (1024 * 1024)),
                         cacheMb: 0,
-                        vpnActive: proxyManager.isVpnActive(),
-                        vpnIp: proxyManager.getVpnEgressIp() || null,
+                        vpnActive: typeof proxyManager.isVpnActive === 'function' ? proxyManager.isVpnActive() : false,
+                        vpnIp: (typeof proxyManager.getVpnEgressIp === 'function' ? proxyManager.getVpnEgressIp() : (typeof proxyManager.getVpnSourceIp === 'function' ? proxyManager.getVpnSourceIp() : null)) || null,
                         cpu: 0
                     },
                     config,
@@ -335,26 +340,33 @@ class AdminServer {
                 });
             }
 
-            if (pathname.startsWith('/api/admin/players/') && req.method === 'POST') {
+            if (pathname.startsWith('/api/admin/players/')) {
                 const guildId = pathname.split('/')[4];
-                const body = await this._parseBody(req);
                 const player = this.kazagumo.players.get(guildId);
 
                 if (player) {
-                    if (body.action === 'skip') player.skip();
-                    else if (body.action === 'stop') player.destroy();
+                    if (req.method === 'DELETE') {
+                        player.destroy();
+                    } else if (req.method === 'POST') {
+                        const body = await this._parseBody(req);
+                        if (body.action === 'skip') player.skip();
+                        else if (body.action === 'stop') player.destroy();
+                    }
                 }
                 return this._sendJson(res, 200, { success: true });
             }
 
-            if (pathname.startsWith('/api/admin/guilds/') && req.method === 'POST') {
+            if ((pathname.startsWith('/api/admin/subscriptions/') || pathname.startsWith('/api/admin/guilds/')) && req.method === 'POST') {
                 const guildId = pathname.split('/')[4];
                 const body = await this._parseBody(req);
-                const days = parseInt(body.days, 10) || 0;
+                const days = parseInt(body.addDays !== undefined ? body.addDays : body.days, 10) || 0;
 
                 const sub = subscriptionManager.getGuildSubscription(guildId);
                 const now = Date.now();
-                if (days > 0) {
+                if (body.plan === 'FREE' || days < 0) {
+                    sub.expiresAt = 0;
+                    sub.plan = 'FREE';
+                } else if (days > 0) {
                     if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
                         sub.expiresAt += days * 24 * 3600 * 1000;
                     } else {
@@ -362,12 +374,17 @@ class AdminServer {
                     }
                     sub.plan = 'SUPPORTER';
                     sub.source = 'ADMIN_GRANT';
-                } else if (days < 0) {
-                    sub.expiresAt = 0;
-                    sub.plan = 'FREE';
                 }
                 dbManager.set('subscriptions', guildId, sub);
                 return this._sendJson(res, 200, { success: true, sub });
+            }
+
+            if (pathname.startsWith('/api/admin/campaigns/') && req.method === 'DELETE') {
+                const code = decodeURIComponent(pathname.split('/')[4] || '').toUpperCase();
+                if (code) {
+                    dbManager.delete('campaigns', code);
+                }
+                return this._sendJson(res, 200, { success: true });
             }
 
             if (pathname === '/api/admin/campaigns' && req.method === 'POST') {
@@ -397,7 +414,7 @@ class AdminServer {
                 return this._sendJson(res, 200, { success: true, config: updated });
             }
 
-            if (pathname === '/api/admin/sweep' && req.method === 'POST') {
+            if ((pathname === '/api/admin/sweep' || pathname === '/api/admin/force-sweep') && req.method === 'POST') {
                 await subscriptionManager._performSweep(this.client, this.kazagumo);
                 return this._sendJson(res, 200, { success: true });
             }
