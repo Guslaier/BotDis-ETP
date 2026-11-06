@@ -117,6 +117,7 @@ class Player {
         this._actionDebounceTimer = null;
         this._seekDebounceTimer = null;
         this._pendingSeekPosition = null;
+        this._intentionalStop = false;
 
         this._setupVoiceConnection(options);
         this._setupAudioPlayer();
@@ -187,6 +188,7 @@ class Player {
                 this.playing = true;
                 this.paused = false;
                 this.playbackStartTime = Date.now();
+                this._intentionalStop = false;
                 console.log(`[Player] Audio playback started for: "${this.queue.current?.title}"`);
             } else if (newState.status === AudioPlayerStatus.Idle) {
                 this.playing = false;
@@ -195,6 +197,10 @@ class Player {
 
         this.audioPlayer.on(AudioPlayerStatus.Idle, async () => {
             if (this._destroyed || this._isStopping) return;
+            if (this._intentionalStop) {
+                this._intentionalStop = false;
+                return;
+            }
             if (this._starting) return;
             if (this._advancing) return;
             if (this._actionDebounceTimer) return;
@@ -375,6 +381,7 @@ class Player {
             const streamPrepStart = Date.now();
             console.log(`[Player] Preparing stream: "${track.title}" (Guild: ${this.guildId})`);
 
+            this._intentionalStop = true;
             try { this.audioPlayer.stop(true); } catch {}
             if (this.currentProcess) {
                 try { this.currentProcess.kill(); } catch {}
@@ -457,6 +464,7 @@ class Player {
         if (this._destroyed || !this.connection) return false;
 
         // Stop current playing stream immediately to silence audio
+        this._intentionalStop = true;
         this._playToken++;
         this._advancing = false;
         if (this.currentProcess) {
@@ -530,6 +538,7 @@ class Player {
 
     stop() {
         if (this._destroyed) return;
+        this._intentionalStop = true;
         this._isStopping = true;
         if (this._actionDebounceTimer) {
             clearTimeout(this._actionDebounceTimer);
@@ -630,6 +639,7 @@ class Player {
         if (!hasHistory && !fallbackPrev) return false;
 
         // Stop current playing stream immediately to silence audio
+        this._intentionalStop = true;
         this._playToken++;
         this._advancing = false;
         if (this.currentProcess) {
@@ -855,6 +865,7 @@ class Player {
         if (!this.queue.current || this._destroyed || this._isStopping) return;
         const token = ++this._playToken;
         this._starting = true;
+        this._intentionalStop = true;
         try {
             try { this.audioPlayer.stop(true); } catch {}
             if (this.currentProcess) {

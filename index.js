@@ -236,12 +236,17 @@ client.on('interactionCreate', async interaction => {
                 return interaction.deferUpdate();
             }
             case 'music_previous': {
+                const now = Date.now();
+                if (player._lastPrevAction && now - player._lastPrevAction < 1000) {
+                    return interaction.deferUpdate();
+                }
+                player._lastPrevAction = now;
                 if (!player.queue.previous && (!player.previousTracks || player.previousTracks.length === 0)) {
                     return interaction.deferUpdate();
                 }
                 player.playPrevious();
                 if (player.queue.current) {
-                    const prepCard = createPreparingCard(player, player.queue.current, 'กำลังย้อนกลับไปเพลงก่อนหน้า...');
+                    const prepCard = createNowPlayingCard(player, player.queue.current, { isPreparing: true, statusText: 'กำลังย้อนกลับไปเพลงก่อนหน้า...' });
                     try {
                         return await interaction.update(prepCard);
                     } catch {}
@@ -296,9 +301,14 @@ client.on('interactionCreate', async interaction => {
                 }
             }
             case 'music_skip': {
+                const now = Date.now();
+                if (player._lastSkipAction && now - player._lastSkipAction < 1000) {
+                    return interaction.deferUpdate();
+                }
+                player._lastSkipAction = now;
                 player.skip();
                 if (player.queue.current) {
-                    const prepCard = createPreparingCard(player, player.queue.current, 'กำลังข้ามเพลง...');
+                    const prepCard = createNowPlayingCard(player, player.queue.current, { isPreparing: true, statusText: 'กำลังข้ามเพลง...' });
                     try {
                         return await interaction.update(prepCard);
                     } catch {}
