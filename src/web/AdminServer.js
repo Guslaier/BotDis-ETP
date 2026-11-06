@@ -659,6 +659,27 @@ class AdminServer {
                 return this._sendJson(res, 200, { success: true });
             }
 
+            if (pathname.startsWith('/api/admin/guilds/') && pathname.endsWith('/ban') && req.method === 'POST') {
+                const guildId = pathname.split('/')[4];
+                const body = await this._parseBody(req);
+                const guild = this.client?.guilds?.cache?.get(guildId);
+                const guildName = guild ? guild.name : (body.guildName || guildId);
+                const resBan = banManager.banGuild(guildId, {
+                    days: body.days,
+                    reason: body.reason,
+                    guildName,
+                    bannedBy: admin?.sub || 'admin',
+                    kazagumo: this.kazagumo
+                });
+                return this._sendJson(res, 200, resBan);
+            }
+
+            if (pathname.startsWith('/api/admin/guilds/') && pathname.endsWith('/unban') && req.method === 'POST') {
+                const guildId = pathname.split('/')[4];
+                const resUnban = banManager.unbanGuild(guildId);
+                return this._sendJson(res, 200, resUnban);
+            }
+
             if ((pathname.startsWith('/api/admin/subscriptions/') || pathname.startsWith('/api/admin/guilds/')) && req.method === 'POST') {
                 const guildId = pathname.split('/')[4];
                 const body = await this._parseBody(req);
@@ -757,27 +778,6 @@ class AdminServer {
                 const nodeId = pathname.split('/')[4];
                 const resDrain = nodeRouter.toggleDrain(nodeId);
                 return this._sendJson(res, 200, resDrain);
-            }
-
-            if (pathname.startsWith('/api/admin/guilds/') && pathname.endsWith('/ban') && req.method === 'POST') {
-                const guildId = pathname.split('/')[4];
-                const body = await this._parseBody(req);
-                const guild = this.client?.guilds?.cache?.get(guildId);
-                const guildName = guild ? guild.name : (body.guildName || guildId);
-                const resBan = banManager.banGuild(guildId, {
-                    days: body.days,
-                    reason: body.reason,
-                    guildName,
-                    bannedBy: admin?.sub || 'admin',
-                    kazagumo: this.kazagumo
-                });
-                return this._sendJson(res, 200, resBan);
-            }
-
-            if (pathname.startsWith('/api/admin/guilds/') && pathname.endsWith('/unban') && req.method === 'POST') {
-                const guildId = pathname.split('/')[4];
-                const resUnban = banManager.unbanGuild(guildId);
-                return this._sendJson(res, 200, resUnban);
             }
 
             if (pathname === '/api/admin/circuit/reset' && req.method === 'POST') {
