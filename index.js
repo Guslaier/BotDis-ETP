@@ -232,7 +232,7 @@ client.on('interactionCreate', async interaction => {
                 return interaction.deferUpdate();
             }
             case 'music_previous': {
-                if (!player.queue.previous) {
+                if (!player.queue.previous && (!player.previousTracks || player.previousTracks.length === 0)) {
                     return interaction.deferUpdate();
                 }
                 await interaction.deferUpdate();
@@ -241,16 +241,15 @@ client.on('interactionCreate', async interaction => {
             }
             case 'music_backward': {
                 const track = player.queue.current;
+                if (!track) return interaction.deferUpdate();
                 if (track.isStream) {
                     return interaction.reply({
                         content: i18n.t(interaction.guildId, 'CANNOT_SEEK_LIVE'),
                         flags: MessageFlags.Ephemeral
                     });
                 }
-                const currentPos = player.position || 0;
-                const newPos = Math.max(0, currentPos - 10000);
                 await interaction.deferUpdate();
-                await player.seek(newPos);
+                await player.seekBy(-10000);
                 if (player.nowPlayingMessage) {
                     try {
                         const cardData = createNowPlayingCard(player, track);
@@ -261,23 +260,15 @@ client.on('interactionCreate', async interaction => {
             }
             case 'music_forward': {
                 const track = player.queue.current;
+                if (!track) return interaction.deferUpdate();
                 if (track.isStream) {
                     return interaction.reply({
                         content: i18n.t(interaction.guildId, 'CANNOT_SEEK_LIVE'),
                         flags: MessageFlags.Ephemeral
                     });
                 }
-                const currentPos = player.position || 0;
-                const newPos = currentPos + 10000;
-                const maxDuration = track.length || 0;
-                if (maxDuration > 0 && newPos >= maxDuration) {
-                    return interaction.reply({
-                        content: i18n.t(interaction.guildId, 'SEEK_TOO_FAR'),
-                        flags: MessageFlags.Ephemeral
-                    });
-                }
                 await interaction.deferUpdate();
-                await player.seek(newPos);
+                await player.seekBy(10000);
                 if (player.nowPlayingMessage) {
                     try {
                         const cardData = createNowPlayingCard(player, track);
@@ -532,6 +523,9 @@ async function runStartupCheck() {
     // 2. Check yt-dlp
     const ytDlpPath = path.join(__dirname, 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
     if (fs.existsSync(ytDlpPath)) {
+        if (process.platform !== 'win32') {
+            try { fs.chmodSync(ytDlpPath, 0o755); } catch {}
+        }
         console.log('✅ [yt-dlp] Binary found.');
     } else {
         console.log('❌ [yt-dlp] Binary is missing at bin/yt-dlp!');

@@ -547,6 +547,9 @@ class SubscriptionManager extends EventEmitter {
                 console.warn('[AutoUpdater] yt-dlp update failed:', err.message);
             } else {
                 console.log('[AutoUpdater] yt-dlp update output:', (stdout || stderr || '').trim());
+                if (process.platform !== 'win32') {
+                    try { fs.chmodSync(binPath, 0o755); } catch {}
+                }
             }
         });
     }

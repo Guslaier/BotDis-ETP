@@ -113,6 +113,10 @@ class Player {
         this._isSkipping = false;
         this._destroyed = false;
         this._isStopping = false;
+        this.previousTracks = [];
+        this._actionDebounceTimer = null;
+        this._seekDebounceTimer = null;
+        this._pendingSeekPosition = null;
 
         this._setupVoiceConnection(options);
         this._setupAudioPlayer();
@@ -193,11 +197,16 @@ class Player {
             if (this._destroyed || this._isStopping) return;
             if (this._starting) return;
             if (this._advancing) return;
+            if (this._actionDebounceTimer) return;
             await this._advanceQueue();
         });
 
         this.audioPlayer.on('error', (error) => {
             if (this._destroyed || this._isStopping || this._starting || this._advancing) return;
+            const msg = (error && error.message) ? error.message.toLowerCase() : '';
+            if (msg.includes('aborted') || msg.includes('premature close') || msg.includes('destroyed')) {
+                return;
+            }
             console.error(`AudioPlayer error in guild ${this.guildId}:`, error.message);
             this.manager.emit('playerException', this, this.queue.current, error);
             this.skip();
@@ -225,6 +234,8 @@ class Player {
 
             if (finishedTrack) {
                 this.queue.previous = finishedTrack;
+                this.previousTracks.push(finishedTrack);
+                if (this.previousTracks.length > 25) this.previousTracks.shift();
                 this.manager.emit('playerEnd', this, finishedTrack);
 
                 if (this._destroyed || this._isStopping || !this.connection) return;
@@ -445,21 +456,102 @@ class Player {
     }
 
     skip() {
-        if (this._destroyed || !this.connection) return;
-        this._isSkipping = true;
+        if (this._destroyed || !this.connection) return false;
+
+        // Stop current playing stream immediately to silence audio
         this._playToken++;
+        this._advancing = false;
         if (this.currentProcess) {
             try { this.currentProcess.kill(); } catch {}
             this.currentProcess = null;
         }
-        try {
-            this.audioPlayer.stop(true);
-        } catch {}
+        try { this.audioPlayer.stop(true); } catch {}
+        this.playing = false;
+
+        // Archive current track into previousTracks stack
+        if (this.queue.current) {
+            this.previousTracks.push(this.queue.current);
+            if (this.previousTracks.length > 30) this.previousTracks.shift();
+            this.queue.previous = this.queue.current;
+        }
+
+        // Shift next track in memory immediately
+        const isSupp = subscriptionManager.isSupporter(this.guildId);
+        let nextTrack = null;
+        while (this.queue.length > 0) {
+            const candidate = this.queue.shift();
+            if (!isSupp && (candidate.duration > 1800 || candidate.isStream)) {
+                console.log(`[Player] Skipping over-30min track "${candidate.title}" for Free tier.`);
+                continue;
+            }
+            nextTrack = candidate;
+            break;
+        }
+
+        this.queue.current = nextTrack;
+
+        // Debounce actual playback start across 250ms to handle rapid clicking/spamming
+        if (this._actionDebounceTimer) {
+            clearTimeout(this._actionDebounceTimer);
+        }
+
+        return new Promise((resolve) => {
+            this._actionDebounceTimer = setTimeout(async () => {
+                this._actionDebounceTimer = null;
+                if (this._destroyed || this._isStopping || !this.connection) {
+                    return resolve(false);
+                }
+
+                if (this.queue.current) {
+                    await this.playTrack(this.queue.current);
+                    resolve(true);
+                } else if (this.autoplay && isSupp) {
+                    const refTrack = this.queue.previous;
+                    let autoTrack = this._preloadedAutoplayTrack;
+                    this._preloadedAutoplayTrack = null;
+                    if (!autoTrack && refTrack) {
+                        autoTrack = await this._findNextAutoplayTrack(refTrack);
+                    }
+                    if (autoTrack && !this._destroyed && !this._isStopping) {
+                        console.log(`[Player] Autoplay playing next: "${autoTrack.title}" (${autoTrack.uri})`);
+                        await this.playTrack(autoTrack);
+                        resolve(true);
+                    } else {
+                        this.queue.current = null;
+                        this.manager.emit('playerEmpty', this);
+                        resolve(false);
+                    }
+                } else {
+                    this.queue.current = null;
+                    this.manager.emit('playerEmpty', this);
+                    resolve(false);
+                }
+            }, 250);
+        });
     }
 
     stop() {
         if (this._destroyed) return;
         this._isStopping = true;
+        if (this._actionDebounceTimer) {
+            clearTimeout(this._actionDebounceTimer);
+            this._actionDebounceTimer = null;
+        }
+        if (this._seekDebounceTimer) {
+            clearTimeout(this._seekDebounceTimer);
+            this._seekDebounceTimer = null;
+        }
+        this._pendingSeekPosition = null;
+        if (this._actionDebounceTimer) {
+            clearTimeout(this._actionDebounceTimer);
+            this._actionDebounceTimer = null;
+        }
+        if (this._seekDebounceTimer) {
+            clearTimeout(this._seekDebounceTimer);
+            this._seekDebounceTimer = null;
+        }
+        this._pendingSeekPosition = null;
+
         if (this._preCacheTimer) {
             clearTimeout(this._preCacheTimer);
             this._preCacheTimer = null;
@@ -532,14 +624,53 @@ class Player {
         return this.loop;
     }
 
-    async playPrevious() {
-        if (!this.queue.previous) return false;
-        const prev = this.queue.previous;
+    playPrevious() {
+        if (this._destroyed || !this.connection) return false;
+
+        const hasHistory = this.previousTracks && this.previousTracks.length > 0;
+        const fallbackPrev = this.queue.previous;
+        if (!hasHistory && !fallbackPrev) return false;
+
+        // Stop current playing stream immediately to silence audio
+        this._playToken++;
+        this._advancing = false;
+        if (this.currentProcess) {
+            try { this.currentProcess.kill(); } catch {}
+            this.currentProcess = null;
+        }
+        try { this.audioPlayer.stop(true); } catch {}
+        this.playing = false;
+
+        // Push current track back to the front of queue so user can skip forward again
         if (this.queue.current) {
             this.queue.unshift(this.queue.current);
         }
-        await this.playTrack(prev);
-        return true;
+
+        // Pop the previous track from history stack
+        const prevTrack = hasHistory ? this.previousTracks.pop() : fallbackPrev;
+        this.queue.current = prevTrack;
+        this.queue.previous = this.previousTracks.length > 0 ? this.previousTracks[this.previousTracks.length - 1] : null;
+
+        // Debounce actual playback start across 250ms to handle rapid clicking/spamming
+        if (this._actionDebounceTimer) {
+            clearTimeout(this._actionDebounceTimer);
+        }
+
+        return new Promise((resolve) => {
+            this._actionDebounceTimer = setTimeout(async () => {
+                this._actionDebounceTimer = null;
+                if (this._destroyed || this._isStopping || !this.connection) {
+                    return resolve(false);
+                }
+
+                if (this.queue.current) {
+                    await this.playTrack(this.queue.current);
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            }, 250);
+        });
     }
 
     _scheduleAutoplayPreload(currentTrack) {
@@ -690,7 +821,39 @@ class Player {
         return null;
     }
 
-    async seek(positionMs) {
+    seekBy(deltaMs) {
+        if (!this.queue.current || this._destroyed || this._isStopping) return;
+        const currentBase = this._pendingSeekPosition !== null ? this._pendingSeekPosition : this.position;
+        const maxDuration = this.queue.current.length || (this.queue.current.duration ? this.queue.current.duration * 1000 : Infinity);
+        const targetPos = Math.max(0, Math.min(currentBase + deltaMs, maxDuration > 0 && maxDuration !== Infinity ? maxDuration - 1000 : Infinity));
+        return this.seek(targetPos);
+    }
+
+    seek(positionMs) {
+        if (!this.queue.current || this._destroyed || this._isStopping) return;
+        this._pendingSeekPosition = Math.max(0, positionMs);
+        this.position = this._pendingSeekPosition;
+
+        if (this._seekDebounceTimer) {
+            clearTimeout(this._seekDebounceTimer);
+        }
+
+        return new Promise((resolve) => {
+            this._seekDebounceTimer = setTimeout(async () => {
+                this._seekDebounceTimer = null;
+                const finalPos = this._pendingSeekPosition;
+                this._pendingSeekPosition = null;
+                try {
+                    await this._executeSeek(finalPos !== null ? finalPos : positionMs);
+                } catch (err) {
+                    console.error('[Player] Seek error:', err.message);
+                }
+                resolve();
+            }, 300);
+        });
+    }
+
+    async _executeSeek(positionMs) {
         if (!this.queue.current || this._destroyed || this._isStopping) return;
         const token = ++this._playToken;
         this._starting = true;
@@ -798,6 +961,16 @@ class Player {
         this.playing = false;
         this.paused = false;
         this._playToken++;
+
+        if (this._actionDebounceTimer) {
+            clearTimeout(this._actionDebounceTimer);
+            this._actionDebounceTimer = null;
+        }
+        if (this._seekDebounceTimer) {
+            clearTimeout(this._seekDebounceTimer);
+            this._seekDebounceTimer = null;
+        }
+        this._pendingSeekPosition = null;
 
         if (this._preCacheTimer) {
             clearTimeout(this._preCacheTimer);

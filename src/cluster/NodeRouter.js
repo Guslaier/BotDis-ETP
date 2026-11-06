@@ -187,11 +187,21 @@ class NodeRouter extends EventEmitter {
             return this.nodes.get('local-0');
         }
 
-        // Sort by least load ratio (activeRooms / maxRooms)
+        // Prioritize online remote residential nodes over datacenter local-0 to avoid IP rate limits
         availableNodes.sort((a, b) => {
+            const aHasCapacity = a.activeRooms < a.maxRooms;
+            const bHasCapacity = b.activeRooms < b.maxRooms;
+            if (aHasCapacity && !bHasCapacity) return -1;
+            if (!aHasCapacity && bHasCapacity) return 1;
+
+            if (a.type !== b.type) {
+                return a.type === 'remote' ? -1 : 1;
+            }
+
             const loadA = a.activeRooms / Math.max(1, a.maxRooms);
             const loadB = b.activeRooms / Math.max(1, b.maxRooms);
-            return loadA - loadB;
+            if (loadA !== loadB) return loadA - loadB;
+            return (a.latency || 0) - (b.latency || 0);
         });
 
         return availableNodes[0];

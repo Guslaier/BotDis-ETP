@@ -513,7 +513,7 @@ class CacheManager {
                 port: node.port || 2333,
                 path: `/api/node/stream?${queryParams.toString()}`,
                 method: 'GET',
-                timeout: 7000,
+                timeout: 12000,
                 headers: {
                     'x-node-secret': process.env.NODE_AUTH_SECRET || ''
                 }
