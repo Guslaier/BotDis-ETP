@@ -18,7 +18,8 @@ class NodeRouter extends EventEmitter {
             activeRooms: 0,
             maxRooms: parseInt(process.env.MAX_TOTAL_STREAMS || '12', 10),
             latency: 0,
-            lastPing: Date.now()
+            lastPing: Date.now(),
+            vpn: null
         });
     }
 
@@ -70,6 +71,7 @@ class NodeRouter extends EventEmitter {
             if (stats.cpu !== undefined) local.cpu = stats.cpu;
             if (stats.ram !== undefined) local.ram = stats.ram;
             if (stats.hostRam !== undefined) local.hostRam = stats.hostRam;
+            if (stats.vpn !== undefined) local.vpn = stats.vpn;
             local.lastPing = Date.now();
         }
     }

@@ -123,6 +123,124 @@ All bot behavior, network egress, and VPN options are controlled via `.env`:
 
 ---
 
+## 🌐 Audio Nodes Architecture & VPN per Node Setup Guide
+
+### 1. Architecture: Standalone Core vs Distributed Audio Nodes
+
+GOOLIX MusicBot supports two operational topologies:
+
+```
+[ Single Node Topology (Default / Current Setup) ]
++-------------------------------------------------------------+
+| VPS Host (15.235.164.106)                                   |
+| +---------------------------------------------------------+ |
+| | Controller Core (LocalNode-0)                           | |
+| | - Discord Gateway & Slash Commands                      | |
+| | - Web Admin Dashboard (Port 11901)                      | |
+| | - Database & Billing Engine                             | |
+| | - Audio Pipeline: yt-dlp + FFmpeg + @discordjs/voice    | |
+| +---------------------------------------------------------+ |
+| | Isolated VPN Egress (tun0: 10.96.0.9 -> Exit: SG-FREE)  | |
+| +---------------------------------------------------------+ |
++-------------------------------------------------------------+
+
+[ Multi-Node Cluster Topology (Scale-Out) ]
++---------------------------+
+| Main Controller VPS       |
+| - Discord.js Gateway      |
+| - Admin & Subscription    |
+| - NodeRouter Load Balancer|
++-------------+-------------+
+              |
+     +--------+--------+
+     |                 |
++----+--------+   +----+--------+
+| AudioNode 1 |   | AudioNode 2 |
+| SG VPS      |   | JP VPS      |
+| OpenVPN SG  |   | OpenVPN JP  |
+| Exit: SG IP |   | Exit: JP IP |
++-------------+   +-------------+
+```
+
+- **LocalNode-0 (Controller Core):** In the default standalone mode, the bot acts as its own audio node. The Discord connection, web admin, and music decoding happen in the same process.
+- **Why VPN is per-Node:** YouTube applies rate limits (HTTP 429) based on the **egress IP of the audio-fetching engine (`yt-dlp`)**. In a cluster, each audio processing node must maintain its own independent VPN connection and Public Exit IP. This ensures that a rate limit on Node 1 never affects streams routed to Node 2.
+
+---
+
+### 2. Step-by-Step: Setting Up an Audio Node & Configuring VPN
+
+To prepare an Audio Node (whether on the local host or an external VPS worker):
+
+#### Step A: System Prerequisites (Debian / Ubuntu VPS)
+```bash
+sudo apt update && sudo apt install -y openvpn curl git ffmpeg
+```
+
+#### Step B: Install Isolated VPN Routing
+Run the automated policy-routing setup script:
+```bash
+sudo bash scripts/setup-vpn.sh
+```
+This script:
+1. Installs OpenVPN.
+2. Configures `/root/vpn/vpn-up.sh` to route traffic via Linux Routing **Table 100** without replacing the default gateway.
+3. Sets up systemd service `protonvpn-isolated.service`.
+4. Installs `vpn-watchdog.timer` to monitor egress every 60 seconds and auto-heal if disconnected.
+
+#### Step C: Add VPN Profiles & Credentials
+1. Download OpenVPN configuration files (`.ovpn`) from ProtonVPN (or your VPN provider).
+2. Ensure the `.ovpn` file contains:
+   ```
+   route-nopull
+   auth-user-pass auth.txt
+   ```
+   > ⚠️ **CRITICAL:** `route-nopull` is mandatory! Without it, OpenVPN will overwrite the VPS default gateway and terminate your SSH session.
+3. Put the config and credentials into `/root/vpn/`:
+   ```bash
+   cp your-profile.ovpn /root/vpn/proton.ovpn
+   echo -e "YOUR_OPENVPN_USERNAME\nYOUR_OPENVPN_PASSWORD" > /root/vpn/auth.txt
+   chmod 600 /root/vpn/auth.txt
+   ```
+4. Start the isolated VPN service:
+   ```bash
+   systemctl restart protonvpn-isolated
+   ```
+
+#### Step D: Verify Node VPN Egress
+Confirm the VPN tunnel has an IP and is exiting through the VPN provider:
+```bash
+# Check interface IP
+cat /root/vpn/vpn_ip.txt
+
+# Test egress IP through VPN interface
+curl -s --interface $(cat /root/vpn/vpn_ip.txt) https://api.ipify.org
+```
+The output IP must be the VPN's public IP, NOT the VPS host IP!
+
+#### Step E: Configure Bot Node Egress (.env)
+In `.env`:
+```env
+ENABLE_VPN=true
+VPN_SOURCE_IP=              # Leave blank to auto-detect from /root/vpn/vpn_ip.txt
+MAX_TOTAL_STREAMS=12        # Maximum concurrent rooms allowed on this node
+MAX_FREE_STREAMS=6          # Allocation cap for non-VIP servers
+```
+
+---
+
+### 3. Cluster Scaling with `REMOTE_NODES`
+
+To register additional audio processing nodes in the cluster router, define `REMOTE_NODES` in `.env` as a JSON array:
+
+```env
+REMOTE_NODES='[{"id":"sg-worker-1","name":"SG Worker (Proton SG)","host":"103.20.10.15","port":2333,"maxRooms":15},{"id":"jp-worker-1","name":"JP Worker (Proton JP)","host":"133.15.20.30","port":2333,"maxRooms":15}]'
+```
+
+- **NodeRouter (`src/cluster/NodeRouter.js`):** Continuously balances incoming playback requests to the online node with the lowest ratio of `activeRooms / maxRooms`.
+- **Drain Mode (`⏳ Drain`):** In the Web Admin Dashboard, clicking **Drain** on a node flags it as draining: existing songs finish playing, but new streams are routed to other nodes. This allows zero-downtime maintenance or VPN rotation.
+
+---
+
 ## Running the Bot
 
 ### Normal Start

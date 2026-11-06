@@ -543,16 +543,26 @@ class AdminServer {
                     .slice(0, 50);
 
                 const cpuUsage = this._getCpuUsage();
+                const vpnPublicIp = proxyManager.lastExitIp || null;
+                const vpnSourceIp = proxyManager.getVpnSourceIp();
+                const vpnServerName = typeof proxyManager.getVpnServerName === 'function' ? proxyManager.getVpnServerName() : 'Direct';
+                const isVpnActive = proxyManager.vpnEnabled && !!vpnSourceIp;
+
                 nodeRouter.updateLocalStats({
                     activeRooms: streamStats.total,
                     maxRooms: maxTotal,
                     cpu: cpuUsage.display,
                     ram: `${rssMb} MB (Node)`,
-                    hostRam: `${sysMem.usedMb}/${sysMem.totalMb} MB (${sysMem.percent}%)`
+                    hostRam: `${sysMem.usedMb}/${sysMem.totalMb} MB (${sysMem.percent}%)`,
+                    vpn: {
+                        enabled: isVpnActive,
+                        server: isVpnActive ? vpnServerName : 'DIRECT',
+                        exitIp: vpnPublicIp,
+                        interfaceIp: vpnSourceIp
+                    }
                 });
 
                 const nodes = nodeRouter.getNodes();
-                const vpnPublicIp = proxyManager.lastExitIp || null;
 
                 return this._sendJson(res, 200, {
                     success: true,

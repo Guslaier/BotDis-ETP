@@ -1147,11 +1147,18 @@
             const cpuDisplay = n.cpu || '0%';
             const ramDisplay = n.ram ? `${n.ram}${n.hostRam ? ' • ' + n.hostRam : ''}` : (n.hostRam || '-');
 
+            let vpnInfoHtml = '';
+            if (n.vpn && n.vpn.enabled) {
+                vpnInfoHtml = `<div style="font-size: 10px; color: var(--slime-green); margin-top: 3px;">🔒 ${n.vpn.server} &bull; ${n.vpn.exitIp || n.vpn.interfaceIp || 'VPN'}</div>`;
+            } else if (n.vpn && !n.vpn.enabled) {
+                vpnInfoHtml = `<div style="font-size: 10px; color: var(--text-sub); margin-top: 3px;">🌐 Direct / No VPN</div>`;
+            }
+
             return `
                 <tr>
                     <td><strong>${n.name || n.id}</strong></td>
                     <td><span style="font-size: 11px; text-transform: uppercase;">${n.type || 'local'}</span></td>
-                    <td><code>${n.host || '127.0.0.1'}</code></td>
+                    <td><code>${n.host || '127.0.0.1'}</code>${vpnInfoHtml}</td>
                     <td><span class="badge-pill ${statusBadge}">${statusText}</span></td>
                     <td><strong style="color: var(--slime-green);">${cpuDisplay}</strong></td>
                     <td><span style="font-size: 11.5px; color: var(--text-sub);">${ramDisplay}</span></td>
