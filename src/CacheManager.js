@@ -670,6 +670,35 @@ class CacheManager {
             console.error('[CacheManager] Cache cleanup error:', err.message);
         }
     }
+
+    getCacheStats() {
+        try {
+            if (!fs.existsSync(this.cacheDir)) {
+                return { usedBytes: 0, usedMb: 0, maxMb: parseInt(process.env.CACHE_MAX_SIZE_MB || '350', 10), files: 0 };
+            }
+            const files = fs.readdirSync(this.cacheDir);
+            let totalSizeBytes = 0;
+            let fileCount = 0;
+            for (const file of files) {
+                if (file.endsWith('.opus') || file.endsWith('.m4a') || file.endsWith('.mp3')) {
+                    try {
+                        const stats = fs.statSync(path.join(this.cacheDir, file));
+                        totalSizeBytes += stats.size;
+                        fileCount++;
+                    } catch {}
+                }
+            }
+            const maxMb = parseInt(process.env.CACHE_MAX_SIZE_MB || '350', 10);
+            return {
+                usedBytes: totalSizeBytes,
+                usedMb: Math.round(totalSizeBytes / (1024 * 1024)),
+                maxMb,
+                files: fileCount
+            };
+        } catch {
+            return { usedBytes: 0, usedMb: 0, maxMb: 350, files: 0 };
+        }
+    }
 }
 
 module.exports = new CacheManager();

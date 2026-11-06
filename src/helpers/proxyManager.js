@@ -14,6 +14,7 @@ class ProxyManager {
         this.consecutiveVpnFailures = 0;
         this.isRepairingVpn = false;
         this.lastVpnEgressTest = 0;
+        this.lastExitIp = null;
     }
 
     /**
@@ -78,6 +79,10 @@ class ProxyManager {
 
     getVpnEgressIp() {
         return this.getVpnSourceIp();
+    }
+
+    getExitIp() {
+        return this.lastExitIp || this.getVpnSourceIp();
     }
 
     isVpnActive() {
@@ -151,6 +156,7 @@ class ProxyManager {
             execFile('curl', ['-s', '-m', '3', '--interface', vpnIp, 'https://api.ipify.org'], (err, stdout) => {
                 const ip = (stdout || '').trim();
                 if (!err && ip && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
+                    this.lastExitIp = ip;
                     if (!this.vpnHealthy) {
                         console.log(`[ProxyManager:SelfHealing] VPN tunnel online! (Server: ${this.getVpnServerName()}, Exit IP: ${ip})`);
                     }

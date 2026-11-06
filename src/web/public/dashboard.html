@@ -47,8 +47,8 @@
         }
 
         .slime-logo {
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             border: 2px solid var(--slime-green);
             box-shadow: 0 0 16px var(--slime-glow);
@@ -62,6 +62,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .lang-switch {
@@ -102,16 +103,21 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
         .btn:hover { background: #263346; }
         .btn-primary { background: var(--slime-green); border-color: var(--slime-green); color: #080B10; font-weight: 700; }
         .btn-primary:hover { opacity: 0.9; }
         .btn-danger { background: rgba(239, 68, 68, 0.18); border-color: #EF4444; color: #FCA5A5; }
         .btn-danger:hover { background: #EF4444; color: #FFF; }
+        .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 6px; }
 
         .grid-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -122,11 +128,12 @@
             border-radius: 16px;
             padding: 16px;
             transition: border 0.2s;
+            position: relative;
         }
         .stat-card:hover { border-color: var(--slime-green); }
-        .stat-card h4 { font-size: 11.5px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.3px; }
-        .stat-card .val { font-size: 22px; font-weight: 800; color: #FFF; }
-        .stat-card .sub { font-size: 11px; color: var(--slime-green); margin-top: 4px; }
+        .stat-card h4 { font-size: 11.5px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.3px; display: flex; justify-content: space-between; align-items: center; }
+        .stat-card .val { font-size: 20px; font-weight: 800; color: #FFF; line-height: 1.3; }
+        .stat-card .sub { font-size: 11px; color: var(--slime-green); margin-top: 4px; word-break: break-word; }
 
         .grid-sections {
             display: grid;
@@ -135,7 +142,7 @@
             margin-bottom: 24px;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 960px) {
             .grid-sections { grid-template-columns: 1fr; }
         }
 
@@ -148,9 +155,14 @@
         }
         .panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; padding: 10px; color: var(--text-sub); border-bottom: 1px solid var(--card-border); font-size: 11.5px; text-transform: uppercase; }
-        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        th { text-align: left; padding: 10px; color: var(--text-sub); border-bottom: 1px solid var(--card-border); font-size: 11.5px; text-transform: uppercase; white-space: nowrap; }
+        td { padding: 11px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
         tr:hover td { background: rgba(255,255,255,0.015); }
 
         .form-row { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -165,6 +177,16 @@
             width: 100%;
         }
         input:focus, select:focus { border-color: var(--slime-green); }
+
+        .badge-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .badge-vip { background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green); }
+        .badge-free { background: rgba(148, 163, 184, 0.12); color: var(--text-sub); border: 1px solid rgba(148, 163, 184, 0.25); }
 
         /* Login Modal */
         #loginModal {
@@ -193,12 +215,13 @@
     </div>
 </div>
 
+<!-- Header -->
 <div class="header">
     <div class="header-brand">
         <img src="/assets/goolix-avatar.jpg" alt="GOOLIX Slime DJ" class="slime-logo">
         <div>
             <h1>GOOLIX CONTROL CENTER <span class="badge">COSMIC SLIME</span></h1>
-            <p style="font-size: 11.5px; color: var(--text-sub); margin-top: 2px;" id="adminTagline">Master Management & Streaming Telemetry</p>
+            <p style="font-size: 11.5px; color: var(--text-sub); margin-top: 2px;" id="adminTagline">Cluster Control & Streaming Telemetry</p>
         </div>
     </div>
     <div class="header-actions">
@@ -211,23 +234,39 @@
     </div>
 </div>
 
-<!-- Stats Overview -->
+<!-- Stats Overview Grid (6 Cards) -->
 <div class="grid-stats">
+    <!-- 1. Stream Slots -->
     <div class="stat-card">
         <h4 id="lblStatSlots">ช่องสัญญาณสตรีม (Slots)</h4>
         <div class="val" id="slotVal">0 / 12</div>
-        <div class="sub" id="slotSub">สายฟรี: 0/6 • ผู้สนับสนุน: 0/6</div>
+        <div class="sub" id="slotSub">สายฟรี: 0/6 • VIP ใช้ได้สูงสุด: 12 ห้อง</div>
     </div>
+    <!-- 2. Host RAM -->
     <div class="stat-card">
-        <h4 id="lblStatRes">ทรัพยากรระบบ (CPU / RAM)</h4>
-        <div class="val" id="resVal">0% / 0 MB</div>
-        <div class="sub" id="resSub">Heap: 0MB • Disk Cache: 0MB</div>
+        <h4 id="lblStatRes">แรมทั้งระบบ (Host RAM)</h4>
+        <div class="val" id="resVal">0 MB / 0 MB (0%)</div>
+        <div class="sub" id="resSub">Node RSS: 0 MB • Heap: 0 MB</div>
     </div>
+    <!-- 3. NVMe Disk & Cache -->
     <div class="stat-card">
-        <h4 id="lblStatVpn">เครือข่าย & VPN EGRESS</h4>
-        <div class="val" id="vpnVal" style="font-size: 18px; line-height: 28px;">Active</div>
-        <div class="sub" id="vpnSub">IP: Checking...</div>
+        <h4 id="lblStatDisk">ดิสก์ & แคชเพลง (Storage)</h4>
+        <div class="val" id="diskVal">0 / 350 MB (Cache)</div>
+        <div class="sub" id="diskSub">Disk รวม: 0 GB / 0 GB</div>
     </div>
+    <!-- 4. Bandwidth 800 GB -->
+    <div class="stat-card">
+        <h4 id="lblStatNet">แบนด์วิธ (Monthly Quota)</h4>
+        <div class="val" id="netVal">0.0 GB / 800 GB (0%)</div>
+        <div class="sub" id="netSub">Tx: 0.0 GB • Rx: 0.0 GB</div>
+    </div>
+    <!-- 5. Network & VPN -->
+    <div class="stat-card">
+        <h4><span id="lblStatVpn">เครือข่าย & VPN</span> <button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="switchVpn()">🔄 สลับ</button></h4>
+        <div class="val" id="vpnVal" style="font-size: 17px; line-height: 24px;">Active</div>
+        <div class="sub" id="vpnSub">Exit IP: Checking...</div>
+    </div>
+    <!-- 6. Billing Mode -->
     <div class="stat-card">
         <h4 id="lblStatBilling">โหมดชำระเงิน (BILLING)</h4>
         <div class="val" id="billingModeVal" style="color: var(--accent-yellow);">SANDBOX</div>
@@ -236,84 +275,139 @@
 </div>
 
 <div class="grid-sections">
-    <!-- Left Column -->
+    <!-- Left Column: Live Streams & Subscriptions & Audit Log -->
     <div>
-        <!-- Live Players -->
+        <!-- Live Players Panel -->
         <div class="panel">
             <h3><span id="lblLiveStreamsTitle">🎵 ห้องที่กำลังเล่นเพลง (Live Streams)</span> <span id="playerCount" style="font-size: 13px; color: var(--slime-green);">0 ห้อง</span></h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th id="thServer">เซิร์ฟเวอร์</th>
-                        <th id="thNowPlaying">เพลงที่เล่นอยู่</th>
-                        <th id="thTier">ระดับ</th>
-                        <th id="thAction">จัดการ</th>
-                    </tr>
-                </thead>
-                <tbody id="playerTableBody">
-                    <tr><td colspan="4" style="text-align: center; color: var(--text-sub);">ไม่มีห้องที่กำลังเล่นเพลงอยู่</td></tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th id="thServer">เซิร์ฟเวอร์</th>
+                            <th id="thNowPlaying">เพลงที่เล่นอยู่</th>
+                            <th id="thProgress">ความยาว & ผู้ฟัง</th>
+                            <th id="thNode">โหนด</th>
+                            <th id="thAction">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playerTableBody">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-sub);">ไม่มีห้องที่กำลังเล่นเพลงอยู่</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Guild Subscriptions -->
+        <!-- Guild Subscriptions Panel -->
         <div class="panel">
             <h3 id="lblGuildSubTitle">🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)</h3>
             <div class="form-row">
                 <input type="text" id="guildSearchInput" placeholder="พิมพ์ชื่อเซิร์ฟเวอร์ หรือ Guild ID เพื่อค้นหา..." oninput="filterGuilds()">
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th id="thGuildName">ชื่อเซิร์ฟเวอร์</th>
-                        <th id="thStatus">สถานะ</th>
-                        <th id="thExpiry">วันหมดอายุ</th>
-                        <th id="thRefCode">รหัสชวน</th>
-                        <th id="thCmd">คำสั่ง</th>
-                    </tr>
-                </thead>
-                <tbody id="guildTableBody">
-                    <tr><td colspan="5" style="text-align: center; color: var(--text-sub);">กำลังโหลดข้อมูล...</td></tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th id="thGuildName">ชื่อเซิร์ฟเวอร์</th>
+                            <th id="thStatus">สถานะ</th>
+                            <th id="thExpiry">วันหมดอายุ</th>
+                            <th id="thRefCode">รหัสชวน & สถิติ</th>
+                            <th id="thDaysAdjust">ชดเชย / เพิ่มวัน</th>
+                            <th id="thActionSub">รีเซ็ต</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guildTableBody">
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-sub);">กำลังโหลดข้อมูล...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Transaction & Audit Log Panel -->
+        <div class="panel">
+            <h3 id="lblTxTitle">📋 ประวัติธุรกรรมและการเงินล่าสุด (Transactions & Audit Log)</h3>
+            <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th id="thTxTime">วันเวลา</th>
+                            <th id="thTxGuild">เซิร์ฟเวอร์</th>
+                            <th id="thTxAmount">ยอดเงิน</th>
+                            <th id="thTxCode">รหัสซอง / โค้ด</th>
+                            <th id="thTxUser">ผู้ทำรายการ</th>
+                            <th id="thTxStatus">สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txTableBody">
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-sub);">ยังไม่มีประวัติธุรกรรม</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Audio Nodes Cluster Panel -->
+        <div class="panel">
+            <h3 id="lblNodesTitle">🌐 โหนดประมวลผลเสียง (Audio Nodes & Cluster)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th id="thNodeName">ชื่อโหนด</th>
+                            <th id="thNodeType">ชนิด</th>
+                            <th id="thNodeHost">Host</th>
+                            <th id="thNodeStatus">สถานะ</th>
+                            <th id="thNodeLoad">ภาระสตรีม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nodeTableBody">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-sub);">กำลังโหลดข้อมูลโหนด...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- Right Column -->
+    <!-- Right Column: Settings & Early-Bird Drop -->
     <div>
-        <!-- Settings & Config -->
+        <!-- Settings & Config Panel -->
         <div class="panel">
             <h3 id="lblConfigTitle">⚙️ ตั้งค่าระบบด่วน (Live Config)</h3>
+            <div id="configAlert" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12px;"></div>
+            
             <div style="font-size: 12px; margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblPaymentMode">โหมดการชำระเงิน (Payment Mode)</label>
-                <select id="cfgPaymentMode" onchange="saveConfig()">
+                <select id="cfgPaymentMode">
                     <option value="sandbox">โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)</option>
                     <option value="production">โหมดใช้งานจริง (PRODUCTION - รับซอง TrueMoney จริง)</option>
                 </select>
             </div>
             <div style="font-size: 12px; margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblPrice">ราคาผู้สนับสนุน (บาท / 30 วัน)</label>
-                <input type="number" id="cfgPrice" onchange="saveConfig()">
+                <input type="number" id="cfgPrice" min="0">
             </div>
             <div style="font-size: 12px; margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblFreeSlots">โควต้าสตรีมสายฟรีสูงสุด (Max Free Streams)</label>
-                <input type="number" id="cfgFreeSlots" onchange="saveConfig()">
+                <input type="number" id="cfgFreeSlots" min="0">
             </div>
-            <div style="font-size: 12px; margin-bottom: 12px;">
+            <div style="font-size: 12px; margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblTotalSlots">โควต้าสตรีมรวมสูงสุด (Max Total Streams)</label>
-                <input type="number" id="cfgTotalSlots" onchange="saveConfig()">
+                <input type="number" id="cfgTotalSlots" min="1">
             </div>
+            <button class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="saveConfig()" id="btnSaveConfig">💾 บันทึกการตั้งค่า (Save Settings)</button>
         </div>
 
-        <!-- Campaigns & Early-Bird Drop -->
+        <!-- Campaigns & Early-Bird Drop Panel -->
         <div class="panel">
             <h3 id="lblEarlyBirdTitle">🎁 แคมเปญ Early-Bird Drop</h3>
-            <div class="form-row">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                 <input type="text" id="newCampCode" placeholder="รหัสโค้ด เช่น DROP1">
-                <input type="number" id="newCampLimit" placeholder="จำนวนสิทธิ์ (เช่น 50)" style="max-width: 100px;">
-                <button class="btn btn-primary" onclick="createCampaign()" id="btnCreateCamp">สร้างรอบ</button>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="newCampLimit" placeholder="จำนวนสิทธิ์ (เช่น 50)" min="1">
+                    <input type="number" id="newCampDays" placeholder="จำนวนวัน (เช่น 30)" value="30" min="1">
+                </div>
+                <button class="btn btn-primary" onclick="createCampaign()" id="btnCreateCamp">สร้างรอบแคมเปญ</button>
             </div>
-            <div id="campaignList" style="font-size: 13px;"></div>
+            <div id="campaignList" style="font-size: 12.5px;"></div>
         </div>
     </div>
 </div>
@@ -326,22 +420,39 @@
             forceSweep: "🧹 Force Sweep ห้องค้าง",
             logout: "ออกจากระบบ",
             statSlots: "ช่องสัญญาณสตรีม (Slots)",
-            statRes: "ทรัพยากรระบบ (CPU / RAM)",
-            statVpn: "เครือข่าย & VPN EGRESS",
+            statRes: "แรมทั้งระบบ (Host RAM)",
+            statDisk: "ดิสก์ & แคชเพลง (Storage)",
+            statNet: "แบนด์วิธ (Monthly Quota)",
+            statVpn: "เครือข่าย & VPN",
             statBilling: "โหมดชำระเงิน (BILLING)",
             liveStreams: "🎵 ห้องที่กำลังเล่นเพลง (Live Streams)",
             noLiveStreams: "ไม่มีห้องที่กำลังเล่นเพลงอยู่",
             thServer: "เซิร์ฟเวอร์",
             thNowPlaying: "เพลงที่เล่นอยู่",
-            thTier: "ระดับ",
+            thProgress: "ความยาว & ผู้ฟัง",
+            thNode: "โหนด",
             thAction: "จัดการ",
             guildSubs: "🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)",
             guildSearchPlaceholder: "พิมพ์ชื่อเซิร์ฟเวอร์ หรือ Guild ID เพื่อค้นหา...",
             thGuildName: "ชื่อเซิร์ฟเวอร์",
             thStatus: "สถานะ",
             thExpiry: "วันหมดอายุ",
-            thRefCode: "รหัสชวน",
-            thCmd: "คำสั่ง",
+            thRefCode: "รหัสชวน & สถิติ",
+            thDaysAdjust: "ชดเชย / เพิ่มวัน",
+            thActionSub: "รีเซ็ต",
+            thTxTime: "วันเวลา",
+            thTxGuild: "เซิร์ฟเวอร์",
+            thTxAmount: "ยอดเงิน",
+            thTxCode: "รหัสซอง / โค้ด",
+            thTxUser: "ผู้ทำรายการ",
+            thTxStatus: "สถานะ",
+            lblTxTitle: "📋 ประวัติธุรกรรมและการเงินล่าสุด (Transactions & Audit Log)",
+            lblNodesTitle: "🌐 โหนดประมวลผลเสียง (Audio Nodes & Cluster)",
+            thNodeName: "ชื่อโหนด",
+            thNodeType: "ชนิด",
+            thNodeHost: "Host",
+            thNodeStatus: "สถานะ",
+            thNodeLoad: "ภาระสตรีม",
             liveConfig: "⚙️ ตั้งค่าระบบด่วน (Live Config)",
             paymentMode: "โหมดการชำระเงิน (Payment Mode)",
             optSandbox: "โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)",
@@ -349,38 +460,56 @@
             price30d: "ราคาผู้สนับสนุน (บาท / 30 วัน)",
             freeSlots: "โควต้าสตรีมสายฟรีสูงสุด (Max Free Streams)",
             totalSlots: "โควต้าสตรีมรวมสูงสุด (Max Total Streams)",
+            btnSaveConfig: "💾 บันทึกการตั้งค่า (Save Settings)",
             earlyBirdTitle: "🎁 แคมเปญ Early-Bird Drop",
-            btnCreateCamp: "สร้างรอบ",
+            btnCreateCamp: "สร้างรอบแคมเปญ",
             campPlaceholderCode: "รหัสโค้ด เช่น DROP1",
             campPlaceholderLimit: "จำนวนสิทธิ์ (เช่น 50)",
+            campPlaceholderDays: "จำนวนวัน (เช่น 30)",
             loginTitle: "🔐 แดชบอร์ดผู้ดูแลระบบ",
             loginSub: "กรุณาเข้าสู่ระบบด้วยรหัสผ่านแอดมิน",
             btnLogin: "เข้าสู่ระบบ",
-            rateSub: "เรต: {price} บาท / 30 วัน",
-            slotFreeSub: "สายฟรี: {free}/{maxFree} • VIP: {supporter}/{maxSupporter}"
+            rateSub: "เรต: {price} บาท / 30 วัน"
         },
         en: {
             title: "GOOLIX • Master Admin Dashboard",
             tagline: "Cluster Control & Streaming Telemetry",
             forceSweep: "🧹 Force Sweep Idle Rooms",
             logout: "Sign Out",
-            statSlots: "Stream Slots (Bandwidth)",
-            statRes: "System Metrics (CPU / RAM)",
+            statSlots: "Stream Slots (Dynamic Quota)",
+            statRes: "Host System RAM",
+            statDisk: "NVMe Disk & Cache",
+            statNet: "Monthly Bandwidth (800 GB)",
             statVpn: "Egress Network & VPN",
             statBilling: "Billing Economics",
             liveStreams: "🎵 Active Music Streams",
             noLiveStreams: "No active voice channels streaming right now",
             thServer: "Guild Server",
             thNowPlaying: "Current Track",
-            thTier: "Tier",
+            thProgress: "Duration & Listeners",
+            thNode: "Node",
             thAction: "Action",
             guildSubs: "🏰 Guild Subscriptions & Quotas",
             guildSearchPlaceholder: "Type server name or Guild ID to search...",
             thGuildName: "Server Name",
             thStatus: "Tier Status",
             thExpiry: "Expires At",
-            thRefCode: "Referral Code",
-            thCmd: "Commands",
+            thRefCode: "Referral & Stats",
+            thDaysAdjust: "Compensate / Add Days",
+            thActionSub: "Reset",
+            thTxTime: "Timestamp",
+            thTxGuild: "Guild Server",
+            thTxAmount: "Amount",
+            thTxCode: "Voucher / Code",
+            thTxUser: "Initiator",
+            thTxStatus: "Status",
+            lblTxTitle: "📋 Transactions & Audit Log (Last 50)",
+            lblNodesTitle: "🌐 Audio Processing Nodes (Cluster)",
+            thNodeName: "Node Name",
+            thNodeType: "Type",
+            thNodeHost: "Host",
+            thNodeStatus: "Status",
+            thNodeLoad: "Stream Load",
             liveConfig: "⚙️ Live Cluster Configuration",
             paymentMode: "Billing Mode",
             optSandbox: "Sandbox Simulation (Safe, No real funds charged)",
@@ -388,15 +517,16 @@
             price30d: "Supporter Price (THB / 30 Days)",
             freeSlots: "Max Free Concurrent Streams",
             totalSlots: "Max Total Concurrent Streams",
+            btnSaveConfig: "💾 Save Configuration",
             earlyBirdTitle: "🎁 Early-Bird Promotional Drops",
             btnCreateCamp: "Create Batch",
             campPlaceholderCode: "Code e.g. DROP1",
             campPlaceholderLimit: "Max claims (e.g. 50)",
+            campPlaceholderDays: "Days granted (e.g. 30)",
             loginTitle: "🔐 Master Admin Portal",
             loginSub: "Authenticate with administrative credentials",
             btnLogin: "Sign In",
-            rateSub: "Rate: {price} THB / 30 Days",
-            slotFreeSub: "Free: {free}/{maxFree} • VIP: {supporter}/{maxSupporter}"
+            rateSub: "Rate: {price} THB / 30 Days"
         }
     };
 
@@ -423,12 +553,15 @@
         document.getElementById('btnLogout').textContent = t.logout;
         document.getElementById('lblStatSlots').textContent = t.statSlots;
         document.getElementById('lblStatRes').textContent = t.statRes;
+        document.getElementById('lblStatDisk').textContent = t.statDisk;
+        document.getElementById('lblStatNet').textContent = t.statNet;
         document.getElementById('lblStatVpn').textContent = t.statVpn;
         document.getElementById('lblStatBilling').textContent = t.statBilling;
         document.getElementById('lblLiveStreamsTitle').textContent = t.liveStreams;
         document.getElementById('thServer').textContent = t.thServer;
         document.getElementById('thNowPlaying').textContent = t.thNowPlaying;
-        document.getElementById('thTier').textContent = t.thTier;
+        document.getElementById('thProgress').textContent = t.thProgress;
+        document.getElementById('thNode').textContent = t.thNode;
         document.getElementById('thAction').textContent = t.thAction;
         document.getElementById('lblGuildSubTitle').textContent = t.guildSubs;
         document.getElementById('guildSearchInput').placeholder = t.guildSearchPlaceholder;
@@ -436,16 +569,32 @@
         document.getElementById('thStatus').textContent = t.thStatus;
         document.getElementById('thExpiry').textContent = t.thExpiry;
         document.getElementById('thRefCode').textContent = t.thRefCode;
-        document.getElementById('thCmd').textContent = t.thCmd;
+        document.getElementById('thDaysAdjust').textContent = t.thDaysAdjust;
+        document.getElementById('thActionSub').textContent = t.thActionSub;
+        document.getElementById('lblTxTitle').textContent = t.lblTxTitle;
+        document.getElementById('thTxTime').textContent = t.thTxTime;
+        document.getElementById('thTxGuild').textContent = t.thTxGuild;
+        document.getElementById('thTxAmount').textContent = t.thTxAmount;
+        document.getElementById('thTxCode').textContent = t.thTxCode;
+        document.getElementById('thTxUser').textContent = t.thTxUser;
+        document.getElementById('thTxStatus').textContent = t.thTxStatus;
+        document.getElementById('lblNodesTitle').textContent = t.lblNodesTitle;
+        document.getElementById('thNodeName').textContent = t.thNodeName;
+        document.getElementById('thNodeType').textContent = t.thNodeType;
+        document.getElementById('thNodeHost').textContent = t.thNodeHost;
+        document.getElementById('thNodeStatus').textContent = t.thNodeStatus;
+        document.getElementById('thNodeLoad').textContent = t.thNodeLoad;
         document.getElementById('lblConfigTitle').textContent = t.liveConfig;
         document.getElementById('lblPaymentMode').textContent = t.paymentMode;
         document.getElementById('lblPrice').textContent = t.price30d;
         document.getElementById('lblFreeSlots').textContent = t.freeSlots;
         document.getElementById('lblTotalSlots').textContent = t.totalSlots;
+        document.getElementById('btnSaveConfig').textContent = t.btnSaveConfig;
         document.getElementById('lblEarlyBirdTitle').textContent = t.earlyBirdTitle;
         document.getElementById('btnCreateCamp').textContent = t.btnCreateCamp;
         document.getElementById('newCampCode').placeholder = t.campPlaceholderCode;
         document.getElementById('newCampLimit').placeholder = t.campPlaceholderLimit;
+        document.getElementById('newCampDays').placeholder = t.campPlaceholderDays;
         document.getElementById('loginTitle').textContent = t.loginTitle;
         document.getElementById('loginSubtitle').textContent = t.loginSub;
         document.getElementById('btnLoginSubmit').textContent = t.btnLogin;
@@ -513,6 +662,8 @@
                 renderGuilds(allGuildsCache);
                 renderConfig(data.config || {});
                 renderCampaigns(data.campaigns || {});
+                renderTransactions(data.transactions || []);
+                renderNodes(data.nodes || []);
             }
         } catch (err) {
             console.error('Refresh error:', err);
@@ -527,31 +678,46 @@
             maxTotal: s.maxTotalStreams || 12,
             free: s.freeStreams || 0,
             maxFree: s.maxFreeStreams || 6,
-            supporter: s.supporterStreams || 0
+            supporter: s.supporterStreams || 0,
+            dynamicVipMax: 12
         };
-        const maxSupporter = (slots.maxTotal || 12) - (slots.maxFree || 6);
 
+        const dynamicVip = slots.dynamicVipMax !== undefined ? slots.dynamicVipMax : Math.max(0, (slots.maxTotal || 12) - (slots.free || 0));
         document.getElementById('slotVal').textContent = `${slots.total || 0} / ${slots.maxTotal || 12}`;
-        document.getElementById('slotSub').textContent = (t.slotFreeSub || 'สายฟรี: {free}/{maxFree} • ผู้สนับสนุน: {supporter}/{maxSupporter}')
-            .replace('{free}', slots.free || 0)
-            .replace('{maxFree}', slots.maxFree || 6)
-            .replace('{supporter}', slots.supporter || 0)
-            .replace('{maxSupporter}', maxSupporter);
+        document.getElementById('slotSub').textContent = `สายฟรี: ${slots.free || 0}/${slots.maxFree || 6} • VIP เข้าได้สูงสุด: ${dynamicVip} ห้อง (Dynamic)`;
 
-        const cpuStr = s.cpu !== undefined ? (typeof s.cpu === 'string' ? s.cpu : `${s.cpu}%`) : '0.5%';
-        const rssStr = (s.ram && s.ram.rss) ? s.ram.rss : (s.ramMb ? `${s.ramMb} MB` : '0 MB');
-        const heapStr = (s.ram && s.ram.heap) ? s.ram.heap : (s.heapMb ? `${s.heapMb} MB` : '0 MB');
-        const diskCache = s.diskCacheMb !== undefined ? s.diskCacheMb : (s.cacheMb || 0);
+        if (s.hostRam) {
+            document.getElementById('resVal').textContent = `${s.hostRam.usedMb} MB / ${s.hostRam.totalMb} MB (${s.hostRam.percent}%)`;
+            document.getElementById('resSub').textContent = s.nodeRam ? s.nodeRam.display : `Node RSS: ${s.ramMb || 0} MB`;
+        } else {
+            document.getElementById('resVal').textContent = `${s.ramMb || 0} MB`;
+            document.getElementById('resSub').textContent = `Heap: ${s.heapMb || 0} MB`;
+        }
 
-        document.getElementById('resVal').textContent = `${cpuStr} / ${rssStr}`;
-        document.getElementById('resSub').textContent = `Heap: ${heapStr} • Disk Cache: ${diskCache}MB`;
+        if (s.cache) {
+            document.getElementById('diskVal').textContent = `${s.cache.usedMb} / ${s.cache.maxMb} MB (Cache)`;
+        } else {
+            document.getElementById('diskVal').textContent = `${s.diskCacheMb || 0} / 350 MB`;
+        }
+        if (s.disk) {
+            document.getElementById('diskSub').textContent = `Disk รวม: ${s.disk.usedGb}G / ${s.disk.totalGb}G (ว่าง ${s.disk.freeMb}M)`;
+        }
+
+        if (s.bandwidth) {
+            document.getElementById('netVal').textContent = `${s.bandwidth.usedGb} GB / ${s.bandwidth.quotaGb} GB (${s.bandwidth.percent}%)`;
+            document.getElementById('netSub').textContent = `Tx: ${s.bandwidth.txGb} GB • Rx: ${s.bandwidth.rxGb} GB`;
+        } else {
+            document.getElementById('netVal').textContent = `0.0 GB / 800 GB`;
+            document.getElementById('netSub').textContent = `โควต้าเน็ตเครื่อง VPS`;
+        }
 
         const vpnConn = s.vpn ? s.vpn.connected : !!s.vpnActive;
-        const vpnServer = (s.vpn && s.vpn.server) || 'Active';
-        const vpnIp = (s.vpn && s.vpn.ip) || s.vpnIp || '10.96.0.5';
+        const vpnServer = (s.vpn && s.vpn.server) || 'SG-FREE';
+        const exitIp = (s.vpn && s.vpn.exitIp) || s.vpnIp || '10.96.0.5';
+        const circuit = s.circuit ? (s.circuit.isOpen ? '⚠️ OPEN' : '✅ CLOSED') : 'CLOSED';
 
-        document.getElementById('vpnVal').textContent = vpnConn ? vpnServer : 'Standby / Direct';
-        document.getElementById('vpnSub').textContent = `IP: ${vpnIp}`;
+        document.getElementById('vpnVal').textContent = vpnConn ? `${vpnServer} (Online)` : 'Standby / Direct';
+        document.getElementById('vpnSub').textContent = `Exit IP: ${exitIp} • Circuit: ${circuit}`;
 
         const cfg = data.config || {};
         document.getElementById('billingModeVal').textContent = (cfg.paymentMode || 'sandbox').toUpperCase();
@@ -560,40 +726,68 @@
 
     function renderPlayers(players) {
         const tbody = document.getElementById('playerTableBody');
-        document.getElementById('playerCount').textContent = `${players.length} rooms`;
+        document.getElementById('playerCount').textContent = `${players.length} ห้อง`;
         if (players.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-sub);">${dashTranslations[dashLang].noLiveStreams}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">${dashTranslations[dashLang].noLiveStreams}</td></tr>`;
             return;
         }
 
         tbody.innerHTML = players.map(p => `
             <tr>
                 <td><strong>${p.guildName}</strong><br><span style="font-size: 11px; color: var(--text-sub);">${p.guildId}</span></td>
-                <td><span style="color: var(--slime-green);">▶</span> ${p.trackTitle}<br><span style="font-size: 11px; color: var(--text-sub);">${p.source} • ${p.bitrate}</span></td>
-                <td><span class="badge" style="${p.isSupporter ? 'background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green);' : 'background: rgba(148, 163, 184, 0.12); color: var(--text-sub);'}">${p.isSupporter ? 'VIP' : 'FREE'}</span></td>
-                <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="stopPlayer('${p.guildId}')">⏹ Stop</button></td>
+                <td>
+                    <span style="color: var(--slime-green);">▶</span> <strong>${p.trackTitle}</strong><br>
+                    <span style="font-size: 11px; color: var(--text-sub);">${p.source} • ${p.bitrate}</span>
+                </td>
+                <td>
+                    <span>⏱ ${p.elapsed || '00:00'}</span><br>
+                    <span style="font-size: 11px; color: var(--text-sub);">🎧 ${p.listeners || 0} คน • คิว: ${p.queueLength || 0} เพลง</span>
+                </td>
+                <td><span style="font-size: 11px; color: var(--accent-blue);">${p.nodeName || 'LocalNode-0'}</span></td>
+                <td><button class="btn btn-danger btn-sm" onclick="stopPlayer('${p.guildId}')">⏹ Stop</button></td>
             </tr>
         `).join('');
+    }
+
+    function formatExpiry(timestamp) {
+        if (!timestamp || timestamp <= Date.now()) return '<span style="color: #EF4444;">หมดอายุแล้ว (Free)</span>';
+        const d = new Date(timestamp);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const daysLeft = Math.ceil((timestamp - Date.now()) / (24 * 3600 * 1000));
+        return `<span style="color: var(--slime-green);">${yyyy}-${mm}-${dd} (เหลือ ${daysLeft} วัน)</span>`;
     }
 
     function renderGuilds(guilds) {
         const tbody = document.getElementById('guildTableBody');
         if (guilds.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">No guilds found</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-sub);">ไม่พบข้อมูลเซิร์ฟเวอร์</td></tr>`;
             return;
         }
 
         tbody.innerHTML = guilds.map(g => {
-            const exp = g.expiresAt > Date.now() ? new Date(g.expiresAt).toLocaleDateString() : 'Expired / Free';
+            const exp = formatExpiry(g.expiresAt);
+            const refCode = g.referralCode || 'REF-N/A';
+            const refCount = g.referralCount || 0;
+            const refBaht = g.cumulativePaidBaht || 0;
             return `
                 <tr>
                     <td><strong>${g.guildName}</strong><br><span style="font-size: 11px; color: var(--text-sub);">${g.guildId}</span></td>
-                    <td><span class="badge" style="${g.isSupporter ? 'background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green);' : 'background: rgba(148, 163, 184, 0.12); color: var(--text-sub);'}">${g.isSupporter ? 'VIP' : 'FREE'}</span></td>
+                    <td><span class="badge-pill ${g.isSupporter ? 'badge-vip' : 'badge-free'}">${g.isSupporter ? 'VIP 320k' : 'FREE 128k'}</span></td>
                     <td>${exp}</td>
-                    <td><code>${g.referralCode}</code></td>
                     <td>
-                        <button class="btn" style="padding: 3px 6px; font-size: 11px;" onclick="addDays('${g.guildId}', 30)">+30d</button>
-                        <button class="btn btn-danger" style="padding: 3px 6px; font-size: 11px;" onclick="resetSub('${g.guildId}')">Reset</button>
+                        <code>${refCode}</code><br>
+                        <span style="font-size: 11px; color: var(--text-sub);">ชวน: ${refCount} กิลด์ • ยอด: ${refBaht}฿</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <input type="number" id="adj_${g.guildId}" value="30" style="width: 58px; padding: 4px 6px; font-size: 11px;">
+                            <button class="btn btn-primary btn-sm" onclick="customAddDays('${g.guildId}')">+วัน</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="resetSub('${g.guildId}')">Reset</button>
                     </td>
                 </tr>
             `;
@@ -602,7 +796,7 @@
 
     function filterGuilds() {
         const q = document.getElementById('guildSearchInput').value.toLowerCase();
-        const filtered = allGuildsCache.filter(g => g.guildName.toLowerCase().includes(q) || g.guildId.includes(q));
+        const filtered = allGuildsCache.filter(g => (g.guildName || '').toLowerCase().includes(q) || (g.guildId || '').includes(q));
         renderGuilds(filtered);
     }
 
@@ -617,48 +811,172 @@
         const el = document.getElementById('campaignList');
         const list = Object.values(campaigns || {});
         if (list.length === 0) {
-            el.innerHTML = '<span style="color: var(--text-sub);">No active campaigns</span>';
+            el.innerHTML = '<span style="color: var(--text-sub);">ยังไม่มีแคมเปญ</span>';
             return;
         }
 
-        el.innerHTML = list.map(c => `
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <strong><code>${c.code}</code></strong> (${c.name})<br>
-                    <span style="font-size: 11px; color: var(--text-sub);">Days: +${c.days} • Claimed: ${c.claimedCount}/${c.maxClaims}</span>
+        el.innerHTML = list.map(c => {
+            const claimedList = Array.isArray(c.claimedGuilds) ? c.claimedGuilds : [];
+            const claimedNames = claimedList.map(x => x.guildName).join(', ') || 'ยังไม่มีใครรับ';
+            return `
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <div>
+                            <strong><code>${c.code}</code></strong> <span style="font-size: 11px; color: var(--slime-green);">(+${c.days || 30} วัน)</span><br>
+                            <span style="font-size: 11px; color: var(--text-sub);">สิทธิ์: ${c.claimedCount}/${c.maxClaims}</span>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteCampaign('${c.code}')">Delete</button>
+                    </div>
+                    <div style="font-size: 10.5px; color: var(--text-sub); word-break: break-all;">
+                        รับสิทธิ์แล้ว: ${claimedNames}
+                    </div>
                 </div>
-                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteCampaign('${c.code}')">Delete</button>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    function renderTransactions(txs) {
+        const tbody = document.getElementById('txTableBody');
+        if (!txs || txs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-sub);">ยังไม่มีประวัติธุรกรรม</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = txs.map(t => {
+            const timeStr = new Date(t.timestamp).toLocaleString('th-TH');
+            let badgeClass = 'badge-vip';
+            let statusText = '🟢 SUCCESS';
+            if (t.isSandbox) {
+                badgeClass = 'badge-free';
+                statusText = '🟡 SANDBOX';
+            } else if (t.isRedeem) {
+                badgeClass = 'badge-vip';
+                statusText = '🟣 REDEEM';
+            }
+
+            return `
+                <tr>
+                    <td><span style="font-size: 11px; color: var(--text-sub);">${timeStr}</span></td>
+                    <td><strong>${t.guildName || t.guildId}</strong></td>
+                    <td><strong>${t.amountBaht ? t.amountBaht + '฿' : 'Free (+' + t.addedDays + 'd)'}</strong></td>
+                    <td><code>${t.voucherCode || 'N/A'}</code></td>
+                    <td><span style="font-size: 11px; color: var(--text-sub);">${t.userId}</span></td>
+                    <td><span class="badge-pill ${badgeClass}">${statusText}</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderNodes(nodes) {
+        const tbody = document.getElementById('nodeTableBody');
+        if (!nodes || nodes.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">ไม่มีโหนดในระบบ</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = nodes.map(n => {
+            const isOnline = n.status === 'online';
+            return `
+                <tr>
+                    <td><strong>${n.name || n.id}</strong></td>
+                    <td><span style="font-size: 11px; text-transform: uppercase;">${n.type || 'local'}</span></td>
+                    <td><code>${n.host || '127.0.0.1'}</code></td>
+                    <td><span class="badge-pill ${isOnline ? 'badge-vip' : 'badge-free'}">${isOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}</span></td>
+                    <td>${n.activeRooms || 0} / ${n.maxRooms || 12}</td>
+                </tr>
+            `;
+        }).join('');
     }
 
     async function saveConfig() {
+        const freeSlots = parseInt(document.getElementById('cfgFreeSlots').value, 10);
+        const totalSlots = parseInt(document.getElementById('cfgTotalSlots').value, 10);
+        const price = parseInt(document.getElementById('cfgPrice').value, 10);
+        const alertEl = document.getElementById('configAlert');
+
+        if (isNaN(freeSlots) || isNaN(totalSlots) || freeSlots < 0 || totalSlots < 1) {
+            alertEl.style.display = 'block';
+            alertEl.style.background = 'rgba(239, 68, 68, 0.2)';
+            alertEl.style.border = '1px solid #EF4444';
+            alertEl.style.color = '#FCA5A5';
+            alertEl.textContent = '❌ กรุณากรอกตัวเลขโควต้าสตรีมให้ถูกต้อง';
+            return;
+        }
+
+        if (freeSlots > totalSlots) {
+            alertEl.style.display = 'block';
+            alertEl.style.background = 'rgba(239, 68, 68, 0.2)';
+            alertEl.style.border = '1px solid #EF4444';
+            alertEl.style.color = '#FCA5A5';
+            alertEl.textContent = '❌ โควตาสตรีมสายฟรี (Max Free Streams) ต้องไม่มากกว่าโควตาสตรีมรวม (Max Total Streams)';
+            return;
+        }
+
         const body = {
             paymentMode: document.getElementById('cfgPaymentMode').value,
-            price30Days: parseInt(document.getElementById('cfgPrice').value, 10),
-            maxFreeStreams: parseInt(document.getElementById('cfgFreeSlots').value, 10),
-            maxTotalStreams: parseInt(document.getElementById('cfgTotalSlots').value, 10)
+            price30Days: isNaN(price) ? 29 : price,
+            maxFreeStreams: freeSlots,
+            maxTotalStreams: totalSlots
         };
-        await fetch('/api/admin/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify(body)
-        });
-        refreshDashboard();
+
+        try {
+            const res = await fetch('/api/admin/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (data.success) {
+                alertEl.style.display = 'block';
+                alertEl.style.background = 'rgba(0, 255, 136, 0.15)';
+                alertEl.style.border = '1px solid var(--slime-green)';
+                alertEl.style.color = 'var(--slime-green)';
+                alertEl.textContent = '✅ บันทึกการตั้งค่าระบบสำเร็จแล้ว!';
+                setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
+                refreshDashboard();
+            } else {
+                alertEl.style.display = 'block';
+                alertEl.style.background = 'rgba(239, 68, 68, 0.2)';
+                alertEl.style.border = '1px solid #EF4444';
+                alertEl.style.color = '#FCA5A5';
+                alertEl.textContent = `❌ ${data.error || 'เกิดข้อผิดพลาดในการบันทึก'}`;
+            }
+        } catch {
+            alertEl.style.display = 'block';
+            alertEl.style.background = 'rgba(239, 68, 68, 0.2)';
+            alertEl.style.border = '1px solid #EF4444';
+            alertEl.style.color = '#FCA5A5';
+            alertEl.textContent = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+        }
+    }
+
+    async function switchVpn() {
+        if (!confirm('สลับโปรไฟล์เซิร์ฟเวอร์ VPN ทันที?')) return;
+        try {
+            const res = await fetch('/api/admin/vpn/switch', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const d = await res.json();
+            alert(d.success ? 'สั่งสลับเซิร์ฟเวอร์ VPN เรียบร้อยแล้ว' : 'ไม่สามารถสลับได้: ' + d.error);
+            refreshDashboard();
+        } catch (err) {
+            alert('เกิดข้อผิดพลาด: ' + err.message);
+        }
     }
 
     async function triggerSweep() {
-        if (!confirm('Run Heartbeat sweep to clean idle voice channels?')) return;
+        if (!confirm('สั่ง Heartbeat sweep เพื่อตัดการเชื่อมต่อห้องเสียงที่ไม่มีคนฟัง?')) return;
         await fetch('/api/admin/force-sweep', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        alert('Sweep initiated successfully.');
+        alert('ส่งคำสั่ง Sweep เรียบร้อย');
         refreshDashboard();
     }
 
     async function stopPlayer(guildId) {
-        if (!confirm(`Stop music stream for guild ${guildId}?`)) return;
+        if (!confirm(`ต้องการหยุดเพลงในเซิร์ฟเวอร์ ${guildId} หรือไม่?`)) return;
         await fetch(`/api/admin/players/${guildId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }
@@ -666,17 +984,22 @@
         refreshDashboard();
     }
 
-    async function addDays(guildId, days) {
+    async function customAddDays(guildId) {
+        const input = document.getElementById(`adj_${guildId}`);
+        const days = parseInt(input ? input.value : '30', 10);
+        if (isNaN(days) || days === 0) return alert('กรุณากรอกจำนวนวัน');
+
         await fetch(`/api/admin/subscriptions/${guildId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
             body: JSON.stringify({ addDays: days })
         });
+        alert(`ปรับเพิ่ม/ลด ${days} วันให้เซิร์ฟเวอร์เรียบร้อย`);
         refreshDashboard();
     }
 
     async function resetSub(guildId) {
-        if (!confirm(`Reset subscription for guild ${guildId}?`)) return;
+        if (!confirm(`⚠️ ยืนยันการรีเซ็ตแพ็กเกจเซิร์ฟเวอร์ ${guildId} กลับเป็นสายฟรี (Free Tier)?`)) return;
         await fetch(`/api/admin/subscriptions/${guildId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
@@ -688,19 +1011,23 @@
     async function createCampaign() {
         const code = document.getElementById('newCampCode').value.trim();
         const maxClaims = parseInt(document.getElementById('newCampLimit').value, 10) || 50;
-        if (!code) return alert('Please enter code');
+        const days = parseInt(document.getElementById('newCampDays').value, 10) || 30;
+        if (!code) return alert('กรุณาระบุรหัสโค้ด');
+
         await fetch('/api/admin/campaigns', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ code, name: code, days: 30, maxClaims })
+            body: JSON.stringify({ code, name: code, days, maxClaims })
         });
         document.getElementById('newCampCode').value = '';
         document.getElementById('newCampLimit').value = '';
+        document.getElementById('newCampDays').value = '30';
+        alert('สร้างรอบแคมเปญสำเร็จ');
         refreshDashboard();
     }
 
     async function deleteCampaign(code) {
-        if (!confirm(`Delete campaign ${code}?`)) return;
+        if (!confirm(`ยืนยันการลบแคมเปญ ${code}?`)) return;
         await fetch(`/api/admin/campaigns/${encodeURIComponent(code)}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }

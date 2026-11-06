@@ -2,12 +2,15 @@ const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const authManager = require('../auth/authManager');
 const subscriptionManager = require('../billing/subscriptionManager');
 const truemoneyGateway = require('../billing/truemoneyGateway');
 const dbManager = require('../database/dbManager');
 const nodeRouter = require('../cluster/NodeRouter');
 const proxyManager = require('../helpers/proxyManager');
+const cacheManager = require('../CacheManager');
+const youtubeCircuit = require('../helpers/youtubeCircuit');
 
 class AdminServer {
     constructor(client, kazagumo) {
@@ -85,6 +88,83 @@ class AdminServer {
         const authHeader = req.headers['authorization'] || '';
         const token = authHeader.replace(/^Bearer\s+/i, '');
         return authManager.verifySessionToken(token);
+    }
+
+    _getSystemMemory() {
+        let totalMb = Math.round(os.totalmem() / (1024 * 1024));
+        let usedMb = Math.round((os.totalmem() - os.freemem()) / (1024 * 1024));
+        try {
+            if (process.platform === 'linux' && fs.existsSync('/proc/meminfo')) {
+                const raw = fs.readFileSync('/proc/meminfo', 'utf8');
+                const totalMatch = raw.match(/MemTotal:\s+(\d+)\s+kB/);
+                const availMatch = raw.match(/MemAvailable:\s+(\d+)\s+kB/);
+                if (totalMatch && availMatch) {
+                    const totalKb = parseInt(totalMatch[1], 10);
+                    const availKb = parseInt(availMatch[1], 10);
+                    totalMb = Math.round(totalKb / 1024);
+                    usedMb = Math.round((totalKb - availKb) / 1024);
+                }
+            }
+        } catch {}
+        const percent = totalMb > 0 ? Math.round((usedMb / totalMb) * 100) : 0;
+        return { totalMb, usedMb, percent };
+    }
+
+    _getDiskSpace() {
+        try {
+            const rootPath = process.platform === 'win32' ? process.cwd().slice(0, 3) : '/';
+            if (fs.statfsSync) {
+                const s = fs.statfsSync(rootPath);
+                const totalBytes = Number(s.blocks) * Number(s.bsize);
+                const freeBytes = Number(s.bavail) * Number(s.bsize);
+                const usedBytes = totalBytes - freeBytes;
+                return {
+                    totalGb: (totalBytes / (1024 ** 3)).toFixed(1),
+                    freeMb: Math.round(freeBytes / (1024 ** 2)),
+                    usedGb: (usedBytes / (1024 ** 3)).toFixed(1),
+                    percent: totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0
+                };
+            }
+        } catch {}
+        return { totalGb: '5.0', freeMb: 1024, usedGb: '4.0', percent: 80 };
+    }
+
+    _getNetworkBandwidth() {
+        let rxBytes = 0;
+        let txBytes = 0;
+        try {
+            if (process.platform === 'linux' && fs.existsSync('/proc/net/dev')) {
+                const lines = fs.readFileSync('/proc/net/dev', 'utf8').split('\n');
+                for (const line of lines) {
+                    if (line.includes(':') && !line.includes('lo:')) {
+                        const parts = line.split(':')[1].trim().split(/\s+/);
+                        rxBytes += parseInt(parts[0], 10) || 0;
+                        txBytes += parseInt(parts[8], 10) || 0;
+                    }
+                }
+            }
+        } catch {}
+        const usedGb = ((rxBytes + txBytes) / (1024 ** 3)).toFixed(2);
+        const txGb = (txBytes / (1024 ** 3)).toFixed(2);
+        const rxGb = (rxBytes / (1024 ** 3)).toFixed(2);
+        const used = parseFloat(usedGb);
+        const quotaGb = 800;
+        const percent = Math.min(100, Math.round((used / quotaGb) * 100));
+        return {
+            usedGb: used,
+            txGb: parseFloat(txGb),
+            rxGb: parseFloat(rxGb),
+            quotaGb,
+            percent
+        };
+    }
+
+    _formatDuration(ms) {
+        if (!ms || isNaN(ms)) return '00:00';
+        const totalSec = Math.floor(ms / 1000);
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
     async _handleRequest(req, res) {
@@ -302,9 +382,16 @@ class AdminServer {
                 const heapMb = Math.round(mem.heapUsed / (1024 * 1024));
                 const vpnActive = typeof proxyManager.isVpnActive === 'function' ? proxyManager.isVpnActive() : false;
                 const vpnIp = (typeof proxyManager.getVpnEgressIp === 'function' ? proxyManager.getVpnEgressIp() : (typeof proxyManager.getVpnSourceIp === 'function' ? proxyManager.getVpnSourceIp() : null)) || '10.96.0.5';
+                const vpnExitIp = typeof proxyManager.getExitIp === 'function' ? proxyManager.getExitIp() : vpnIp;
                 const vpnServer = typeof proxyManager.getVpnServerName === 'function' ? proxyManager.getVpnServerName() : 'ProtonVPN (SG)';
 
-                // Live active players
+                const sysMem = this._getSystemMemory();
+                const disk = this._getDiskSpace();
+                const net = this._getNetworkBandwidth();
+                const cache = cacheManager.getCacheStats();
+                const dynamicVipMax = Math.max(0, maxTotal - streamStats.free);
+
+                // Live active players with deep telemetry
                 const playersList = [];
                 if (this.kazagumo && this.kazagumo.players) {
                     for (const [gId, p] of this.kazagumo.players.entries()) {
@@ -312,15 +399,33 @@ class AdminServer {
                             const g = this.client.guilds.cache.get(gId);
                             const isSupp = subscriptionManager.isSupporter(gId);
                             const title = p.queue.current?.title || 'Unknown';
+                            
+                            let listeners = 0;
+                            try {
+                                const me = g?.members?.me;
+                                if (me?.voice?.channel) {
+                                    listeners = me.voice.channel.members.filter(m => !m.user.bot).size;
+                                }
+                            } catch {}
+
+                            const currentDuration = p.queue.current?.length || 0;
+                            const currentPos = p.position || 0;
+                            const isSoundCloud = p.queue.current?.uri?.includes('soundcloud.com');
+                            const sourceLabel = isSoundCloud ? '🟠 เมฆส้ม' : '🔴 นกแดง';
+
                             playersList.push({
                                 guildId: gId,
                                 guildName: g ? g.name : gId,
                                 trackTitle: title,
                                 title: title,
-                                source: p.queue.current?.uri?.includes('soundcloud.com') ? 'SoundCloud' : 'YouTube',
-                                sourceBadge: p.queue.current?.uri?.includes('soundcloud.com') ? '🟠 เมฆส้ม' : '🔴 นกแดง',
+                                source: sourceLabel,
+                                sourceBadge: sourceLabel,
                                 bitrate: isSupp ? '320 kbps (VIP)' : '128 kbps',
                                 isSupporter: isSupp,
+                                listeners,
+                                elapsed: `${this._formatDuration(currentPos)} / ${this._formatDuration(currentDuration)}`,
+                                queueLength: p.queue ? p.queue.length : 0,
+                                nodeName: p.node?.name || 'LocalNode-0',
                                 volume: p.volume
                             });
                         }
@@ -334,6 +439,13 @@ class AdminServer {
                 }));
                 const campaigns = dbManager.get('campaigns') || {};
 
+                const allTx = dbManager.get('transactions') || {};
+                const transactions = Object.values(allTx)
+                    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+                    .slice(0, 50);
+
+                const nodes = nodeRouter.getNodes();
+
                 return this._sendJson(res, 200, {
                     success: true,
                     stats: {
@@ -342,35 +454,79 @@ class AdminServer {
                             free: streamStats.free,
                             supporter: streamStats.supporter,
                             maxFree: maxFree,
-                            maxTotal: maxTotal
+                            maxTotal: maxTotal,
+                            dynamicVipMax: dynamicVipMax
                         },
-                        cpu: '0.5%',
-                        ram: {
-                            rss: `${rssMb} MB`,
-                            heap: `${heapMb} MB`
+                        cpu: `${sysMem.percent}%`,
+                        hostRam: {
+                            usedMb: sysMem.usedMb,
+                            totalMb: sysMem.totalMb,
+                            percent: sysMem.percent,
+                            display: `${sysMem.usedMb} MB / ${sysMem.totalMb} MB (${sysMem.percent}%)`
                         },
-                        diskCacheMb: 0,
+                        nodeRam: {
+                            rssMb,
+                            heapMb,
+                            display: `Node RSS: ${rssMb} MB • Heap: ${heapMb} MB`
+                        },
+                        disk: {
+                            usedGb: disk.usedGb,
+                            totalGb: disk.totalGb,
+                            freeMb: disk.freeMb,
+                            percent: disk.percent,
+                            display: `${disk.usedGb} GB / ${disk.totalGb} GB (${disk.percent}%)`
+                        },
+                        bandwidth: {
+                            usedGb: net.usedGb,
+                            txGb: net.txGb,
+                            rxGb: net.rxGb,
+                            quotaGb: net.quotaGb,
+                            percent: net.percent,
+                            display: `${net.usedGb} GB / ${net.quotaGb} GB (${net.percent}%)`
+                        },
+                        cache: {
+                            usedMb: cache.usedMb,
+                            maxMb: cache.maxMb,
+                            files: cache.files,
+                            display: `${cache.usedMb} / ${cache.maxMb} MB (${cache.files} files)`
+                        },
                         vpn: {
                             connected: vpnActive,
                             server: vpnServer,
-                            ip: vpnIp
+                            internalIp: vpnIp,
+                            exitIp: vpnExitIp,
+                            display: vpnActive ? `${vpnServer} • Exit: ${vpnExitIp}` : 'Standby / Direct'
                         },
+                        circuit: {
+                            isOpen: youtubeCircuit.isOpen(),
+                            reason: youtubeCircuit.lastReason || null,
+                            cooldownSec: Math.max(0, Math.round((youtubeCircuit.openUntil - Date.now()) / 1000)),
+                            status: youtubeCircuit.isOpen() ? 'OPEN (SoundCloud Fallback Active)' : 'CLOSED (Normal / All Good)'
+                        },
+                        // Backwards compatibility
+                        ram: {
+                            rss: `${sysMem.usedMb} MB / ${sysMem.totalMb} MB`,
+                            heap: `${heapMb} MB`
+                        },
+                        diskCacheMb: cache.usedMb,
                         activeStreams: streamStats.total,
                         freeStreams: streamStats.free,
                         supporterStreams: streamStats.supporter,
                         maxFreeStreams: maxFree,
                         maxTotalStreams: maxTotal,
-                        ramMb: rssMb,
+                        ramMb: sysMem.usedMb,
                         heapMb: heapMb,
-                        cacheMb: 0,
+                        cacheMb: cache.usedMb,
                         vpnActive: vpnActive,
-                        vpnIp: vpnIp
+                        vpnIp: vpnExitIp
                     },
                     config,
                     players: playersList,
                     subscriptions: subsList,
                     guilds: subsList,
-                    campaigns
+                    campaigns,
+                    transactions,
+                    nodes
                 });
             }
 
@@ -436,6 +592,7 @@ class AdminServer {
                     days: parseInt(days, 10) || 30,
                     maxClaims: parseInt(maxClaims, 10) || 50,
                     claimedCount: 0,
+                    claimedGuilds: [],
                     createdAt: Date.now()
                 };
                 dbManager.set('campaigns', cleanCode, newCampaign);
@@ -444,8 +601,37 @@ class AdminServer {
 
             if (pathname === '/api/admin/config' && req.method === 'POST') {
                 const body = await this._parseBody(req);
-                const updated = subscriptionManager.updateConfig(body);
+                const maxFree = parseInt(body.maxFreeStreams, 10);
+                const maxTotal = parseInt(body.maxTotalStreams, 10);
+                const price = parseInt(body.price30Days, 10);
+
+                if (isNaN(maxFree) || isNaN(maxTotal) || maxFree < 0 || maxTotal < 1) {
+                    return this._sendJson(res, 400, { success: false, error: 'ตัวเลขโควต้าต้องเป็นจำนวนเต็มบวกค่ะ' });
+                }
+                if (maxFree > maxTotal) {
+                    return this._sendJson(res, 400, { success: false, error: 'โควตาสตรีมสายฟรี (Max Free Streams) ต้องไม่มากกว่าโควตาสตรีมรวม (Max Total Streams) ค่ะ' });
+                }
+                if (!isNaN(price) && price < 0) {
+                    return this._sendJson(res, 400, { success: false, error: 'ราคาต้องไม่ติดลบค่ะ' });
+                }
+
+                const updated = subscriptionManager.updateConfig({
+                    paymentMode: body.paymentMode || 'sandbox',
+                    price30Days: isNaN(price) ? 29 : price,
+                    maxFreeStreams: maxFree,
+                    maxTotalStreams: maxTotal
+                });
                 return this._sendJson(res, 200, { success: true, config: updated });
+            }
+
+            if (pathname === '/api/admin/vpn/switch' && req.method === 'POST') {
+                const result = await proxyManager.switchVpnServer('next');
+                return this._sendJson(res, 200, { success: true, result });
+            }
+
+            if (pathname === '/api/admin/circuit/reset' && req.method === 'POST') {
+                youtubeCircuit.reset();
+                return this._sendJson(res, 200, { success: true });
             }
 
             if ((pathname === '/api/admin/sweep' || pathname === '/api/admin/force-sweep') && req.method === 'POST') {

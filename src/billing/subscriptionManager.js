@@ -352,6 +352,12 @@ class SubscriptionManager extends EventEmitter {
             sub.updatedAt = now;
 
             campaign.claimedCount++;
+            if (!Array.isArray(campaign.claimedGuilds)) campaign.claimedGuilds = [];
+            campaign.claimedGuilds.push({
+                guildId,
+                guildName: sub.guildName,
+                claimedAt: now
+            });
             campaign.updatedAt = now;
             dbManager.set('campaigns', cleanCode, campaign);
             dbManager.set('subscriptions', guildId, sub);
