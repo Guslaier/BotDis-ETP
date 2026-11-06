@@ -4,23 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GOOLIX • Master Admin Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0B0E14;
-            --card-bg: #151A23;
-            --card-border: #242C3D;
-            --primary: #FF2E93;
-            --primary-hover: #E01A7C;
-            --accent-green: #00E676;
-            --accent-blue: #00B0FF;
+            --bg-dark: #080B10;
+            --card-bg: #111620;
+            --card-border: #1E2838;
+            --slime-green: #00FF88;
+            --slime-glow: rgba(0, 255, 136, 0.35);
+            --cyber-pink: #FF2E93;
+            --cyber-glow: rgba(255, 46, 147, 0.35);
+            --accent-blue: #00D2FF;
             --accent-yellow: #FFD600;
             --text-main: #FFFFFF;
             --text-sub: #94A3B8;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; padding: 24px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', 'Plus Jakarta Sans', sans-serif; }
+        body { 
+            background-color: var(--bg-dark); 
+            background-image: radial-gradient(circle at 50% 0%, rgba(0, 255, 136, 0.08) 0%, transparent 60%);
+            color: var(--text-main); 
+            min-height: 100vh; 
+            padding: 24px; 
+        }
 
         .header {
             display: flex;
@@ -29,24 +36,77 @@
             margin-bottom: 24px;
             padding-bottom: 16px;
             border-bottom: 1px solid var(--card-border);
+            gap: 16px;
+            flex-wrap: wrap;
         }
-        .header h1 { font-size: 22px; font-weight: 700; color: #FFF; display: flex; align-items: center; gap: 8px; }
-        .header .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; background: rgba(255, 46, 147, 0.2); color: var(--primary); border: 1px solid var(--primary); }
+        
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slime-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid var(--slime-green);
+            box-shadow: 0 0 16px var(--slime-glow);
+            object-fit: cover;
+        }
+
+        .header h1 { font-size: 20px; font-weight: 800; color: #FFF; display: flex; align-items: center; gap: 8px; letter-spacing: -0.3px; }
+        .header .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green); font-weight: 700; }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lang-switch {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--slime-green);
+            color: #080B10;
+            font-weight: 700;
+            box-shadow: 0 0 10px var(--slime-glow);
+        }
 
         .btn {
-            background: #1E293B;
+            background: #1A2230;
             border: 1px solid var(--card-border);
             color: #FFF;
             padding: 8px 14px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12.5px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .btn:hover { background: #334155; }
-        .btn-primary { background: var(--primary); border-color: var(--primary); }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-danger { background: rgba(239, 68, 68, 0.2); border-color: #EF4444; color: #FCA5A5; }
+        .btn:hover { background: #263346; }
+        .btn-primary { background: var(--slime-green); border-color: var(--slime-green); color: #080B10; font-weight: 700; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-danger { background: rgba(239, 68, 68, 0.18); border-color: #EF4444; color: #FCA5A5; }
         .btn-danger:hover { background: #EF4444; color: #FFF; }
 
         .grid-stats {
@@ -59,12 +119,14 @@
         .stat-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 16px;
+            transition: border 0.2s;
         }
-        .stat-card h4 { font-size: 12px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 6px; }
-        .stat-card .val { font-size: 24px; font-weight: 700; color: #FFF; }
-        .stat-card .sub { font-size: 11px; color: var(--accent-green); margin-top: 4px; }
+        .stat-card:hover { border-color: var(--slime-green); }
+        .stat-card h4 { font-size: 11.5px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.3px; }
+        .stat-card .val { font-size: 22px; font-weight: 800; color: #FFF; }
+        .stat-card .sub { font-size: 11px; color: var(--slime-green); margin-top: 4px; }
 
         .grid-sections {
             display: grid;
@@ -84,31 +146,35 @@
             padding: 20px;
             margin-bottom: 24px;
         }
-        .panel h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; padding: 10px; color: var(--text-sub); border-bottom: 1px solid var(--card-border); }
-        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { text-align: left; padding: 10px; color: var(--text-sub); border-bottom: 1px solid var(--card-border); font-size: 11.5px; text-transform: uppercase; }
+        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+        tr:hover td { background: rgba(255,255,255,0.015); }
 
-        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
-        .form-row input, .form-row select {
-            flex: 1;
-            background: #0B0E14;
+        .form-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        input, select {
+            background: #080B10;
             border: 1px solid var(--card-border);
-            padding: 10px 12px;
-            border-radius: 8px;
             color: #FFF;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-size: 13px;
+            outline: none;
+            width: 100%;
         }
+        input:focus, select:focus { border-color: var(--slime-green); }
 
         /* Login Modal */
         #loginModal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            display: flex; align-items: center; justify-content: center; z-index: 999;
+            position: fixed; inset: 0; background: rgba(8, 11, 16, 0.94);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
         }
         .login-box {
             background: var(--card-bg); border: 1px solid var(--card-border);
-            padding: 28px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center;
+            padding: 28px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 20px var(--slime-glow);
         }
     </style>
 </head>
@@ -117,42 +183,53 @@
 <!-- Login Modal -->
 <div id="loginModal">
     <div class="login-box">
-        <h2 style="font-size: 20px; margin-bottom: 6px;">🔐 แดชบอร์ดผู้ดูแลระบบ</h2>
-        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 20px;">กรุณาเข้าสู่ระบบด้วยรหัสผ่านแอดมิน</p>
+        <img src="/assets/goolix-avatar.jpg" class="slime-logo" style="width: 54px; height: 54px; margin-bottom: 12px;">
+        <h2 style="font-size: 18px; margin-bottom: 6px;" id="loginTitle">🔐 แดชบอร์ดผู้ดูแลระบบ</h2>
+        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 18px;" id="loginSubtitle">กรุณาเข้าสู่ระบบด้วยรหัสผ่านแอดมิน</p>
         <div id="loginError" style="font-size: 12px; color: #EF4444; margin-bottom: 12px; display: none;"></div>
-        <input type="text" id="adminUser" placeholder="ชื่อผู้ใช้งาน" style="width: 100%; padding: 10px; margin-bottom: 10px; background: #0B0E14; border: 1px solid var(--card-border); border-radius: 8px; color: #FFF;">
-        <input type="password" id="adminPass" placeholder="รหัสผ่าน" style="width: 100%; padding: 10px; margin-bottom: 16px; background: #0B0E14; border: 1px solid var(--card-border); border-radius: 8px; color: #FFF;">
-        <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="doLogin()">เข้าสู่ระบบ</button>
+        <input type="text" id="adminUser" placeholder="Username" style="margin-bottom: 10px;">
+        <input type="password" id="adminPass" placeholder="Password" style="margin-bottom: 16px;">
+        <button class="btn btn-primary" style="width: 100%; padding: 11px;" onclick="doLogin()" id="btnLoginSubmit">เข้าสู่ระบบ</button>
     </div>
 </div>
 
 <div class="header">
-    <h1>GOOLIX CONTROL CENTER <span class="badge">ENTERPRISE CLUSTER</span></h1>
-    <div>
-        <button class="btn btn-danger" onclick="triggerSweep()">🧹 Force Sweep ห้องค้าง</button>
-        <button class="btn" onclick="logout()">ออกจากระบบ</button>
+    <div class="header-brand">
+        <img src="/assets/goolix-avatar.jpg" alt="GOOLIX Slime DJ" class="slime-logo">
+        <div>
+            <h1>GOOLIX CONTROL CENTER <span class="badge">COSMIC SLIME</span></h1>
+            <p style="font-size: 11.5px; color: var(--text-sub); margin-top: 2px;" id="adminTagline">Master Management & Streaming Telemetry</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <div class="lang-switch">
+            <button class="lang-btn active" id="btnDashTh" onclick="setDashboardLanguage('th')">🇹🇭 TH</button>
+            <button class="lang-btn" id="btnDashEn" onclick="setDashboardLanguage('en')">🇬🇧 EN</button>
+        </div>
+        <button class="btn btn-danger" onclick="triggerSweep()" id="btnForceSweep">🧹 Force Sweep</button>
+        <button class="btn" onclick="logout()" id="btnLogout">ออกจากระบบ</button>
     </div>
 </div>
 
 <!-- Stats Overview -->
 <div class="grid-stats">
     <div class="stat-card">
-        <h4>ช่องสัญญาณสตรีม (Slots)</h4>
+        <h4 id="lblStatSlots">ช่องสัญญาณสตรีม (Slots)</h4>
         <div class="val" id="slotVal">0 / 12</div>
         <div class="sub" id="slotSub">สายฟรี: 0/6 • ผู้สนับสนุน: 0/6</div>
     </div>
     <div class="stat-card">
-        <h4>ทรัพยากรระบบ (CPU / RAM)</h4>
+        <h4 id="lblStatRes">ทรัพยากรระบบ (CPU / RAM)</h4>
         <div class="val" id="resVal">0% / 0 MB</div>
         <div class="sub" id="resSub">Heap: 0MB • Disk Cache: 0MB</div>
     </div>
     <div class="stat-card">
-        <h4>เครือข่าย & VPN EGRESS</h4>
+        <h4 id="lblStatVpn">เครือข่าย & VPN EGRESS</h4>
         <div class="val" id="vpnVal" style="font-size: 18px; line-height: 28px;">Active</div>
         <div class="sub" id="vpnSub">IP: Checking...</div>
     </div>
     <div class="stat-card">
-        <h4>โหมดชำระเงิน (BILLING)</h4>
+        <h4 id="lblStatBilling">โหมดชำระเงิน (BILLING)</h4>
         <div class="val" id="billingModeVal" style="color: var(--accent-yellow);">SANDBOX</div>
         <div class="sub" id="priceSub">เรต: 29 บาท / 30 วัน</div>
     </div>
@@ -163,14 +240,14 @@
     <div>
         <!-- Live Players -->
         <div class="panel">
-            <h3>🎵 ห้องที่กำลังเล่นเพลง (Live Streams) <span id="playerCount" style="font-size: 13px; color: var(--accent-green);">0 ห้อง</span></h3>
+            <h3><span id="lblLiveStreamsTitle">🎵 ห้องที่กำลังเล่นเพลง (Live Streams)</span> <span id="playerCount" style="font-size: 13px; color: var(--slime-green);">0 ห้อง</span></h3>
             <table>
                 <thead>
                     <tr>
-                        <th>เซิร์ฟเวอร์</th>
-                        <th>เพลงที่เล่นอยู่</th>
-                        <th>ระดับ</th>
-                        <th>จัดการ</th>
+                        <th id="thServer">เซิร์ฟเวอร์</th>
+                        <th id="thNowPlaying">เพลงที่เล่นอยู่</th>
+                        <th id="thTier">ระดับ</th>
+                        <th id="thAction">จัดการ</th>
                     </tr>
                 </thead>
                 <tbody id="playerTableBody">
@@ -181,18 +258,18 @@
 
         <!-- Guild Subscriptions -->
         <div class="panel">
-            <h3>🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)</h3>
+            <h3 id="lblGuildSubTitle">🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)</h3>
             <div class="form-row">
                 <input type="text" id="guildSearchInput" placeholder="พิมพ์ชื่อเซิร์ฟเวอร์ หรือ Guild ID เพื่อค้นหา..." oninput="filterGuilds()">
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>ชื่อเซิร์ฟเวอร์</th>
-                        <th>สถานะ</th>
-                        <th>วันหมดอายุ</th>
-                        <th>รหัสชวน</th>
-                        <th>คำสั่ง</th>
+                        <th id="thGuildName">ชื่อเซิร์ฟเวอร์</th>
+                        <th id="thStatus">สถานะ</th>
+                        <th id="thExpiry">วันหมดอายุ</th>
+                        <th id="thRefCode">รหัสชวน</th>
+                        <th id="thCmd">คำสั่ง</th>
                     </tr>
                 </thead>
                 <tbody id="guildTableBody">
@@ -206,36 +283,35 @@
     <div>
         <!-- Settings & Config -->
         <div class="panel">
-            <h3>⚙️ ตั้งค่าระบบด่วน (Live Config)</h3>
+            <h3 id="lblConfigTitle">⚙️ ตั้งค่าระบบด่วน (Live Config)</h3>
             <div style="font-size: 12px; margin-bottom: 12px;">
-                <label style="display: block; margin-bottom: 4px; color: var(--text-sub);">โหมดการชำระเงิน (Payment Mode)</label>
-                <select id="cfgPaymentMode" onchange="saveConfig()" style="width: 100%; padding: 8px; background: #0B0E14; border: 1px solid var(--card-border); border-radius: 8px; color: #FFF;">
+                <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblPaymentMode">โหมดการชำระเงิน (Payment Mode)</label>
+                <select id="cfgPaymentMode" onchange="saveConfig()">
                     <option value="sandbox">โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)</option>
                     <option value="production">โหมดใช้งานจริง (PRODUCTION - รับซอง TrueMoney จริง)</option>
                 </select>
             </div>
             <div style="font-size: 12px; margin-bottom: 12px;">
-                <label style="display: block; margin-bottom: 4px; color: var(--text-sub);">ราคาผู้สนับสนุน (บาท / 30 วัน)</label>
-                <input type="number" id="cfgPrice" onchange="saveConfig()" style="width: 100%; padding: 8px; background: #0B0E14; border: 1px solid var(--card-border); border-radius: 8px; color: #FFF;">
+                <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblPrice">ราคาผู้สนับสนุน (บาท / 30 วัน)</label>
+                <input type="number" id="cfgPrice" onchange="saveConfig()">
             </div>
             <div style="font-size: 12px; margin-bottom: 12px;">
-                <label style="display: block; margin-bottom: 4px; color: var(--text-sub);">โควต้าสายฟรีสูงสุด (Max Free Streams)</label>
-                <input type="number" id="cfgFreeSlots" onchange="saveConfig()" style="width: 100%; padding: 8px; background: #0B0E14; border: 1px solid var(--card-border); border-radius: 8px; color: #FFF;">
+                <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblFreeSlots">โควต้าสตรีมสายฟรีสูงสุด (Max Free Streams)</label>
+                <input type="number" id="cfgFreeSlots" onchange="saveConfig()">
             </div>
-            <div style="font-size: 12px; margin-bottom: 16px;">
-                <label style="display: block; margin-bottom: 4px; color: var(--text-sub);">เบอร์ TrueMoney รับเงิน</label>
-                <input type="text" id="cfgPhone" onchange="saveConfig()" placeholder="08xxxxxxxx" style="width: 100%; padding: 8px; background: #0B0E14; border: 1px solid var(--card-border); border-radius: 8px; color: #FFF;">
+            <div style="font-size: 12px; margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblTotalSlots">โควต้าสตรีมรวมสูงสุด (Max Total Streams)</label>
+                <input type="number" id="cfgTotalSlots" onchange="saveConfig()">
             </div>
-            <div style="font-size: 11px; color: var(--accent-green);" id="cfgSavedMsg"></div>
         </div>
 
         <!-- Campaigns & Early-Bird Drop -->
         <div class="panel">
-            <h3>🎁 แคมเปญ Early-Bird Drop</h3>
+            <h3 id="lblEarlyBirdTitle">🎁 แคมเปญ Early-Bird Drop</h3>
             <div class="form-row">
                 <input type="text" id="newCampCode" placeholder="รหัสโค้ด เช่น DROP1">
                 <input type="number" id="newCampLimit" placeholder="จำนวนสิทธิ์ (เช่น 50)" style="max-width: 100px;">
-                <button class="btn btn-primary" onclick="createCampaign()">สร้างรอบ</button>
+                <button class="btn btn-primary" onclick="createCampaign()" id="btnCreateCamp">สร้างรอบ</button>
             </div>
             <div id="campaignList" style="font-size: 13px;"></div>
         </div>
@@ -243,8 +319,142 @@
 </div>
 
 <script>
+    const dashTranslations = {
+        th: {
+            title: "GOOLIX • Master Admin Dashboard",
+            tagline: "ระบบควบคุมและโทรมาตรสตรีมมิ่งบอทเพลง",
+            forceSweep: "🧹 Force Sweep ห้องค้าง",
+            logout: "ออกจากระบบ",
+            statSlots: "ช่องสัญญาณสตรีม (Slots)",
+            statRes: "ทรัพยากรระบบ (CPU / RAM)",
+            statVpn: "เครือข่าย & VPN EGRESS",
+            statBilling: "โหมดชำระเงิน (BILLING)",
+            liveStreams: "🎵 ห้องที่กำลังเล่นเพลง (Live Streams)",
+            noLiveStreams: "ไม่มีห้องที่กำลังเล่นเพลงอยู่",
+            thServer: "เซิร์ฟเวอร์",
+            thNowPlaying: "เพลงที่เล่นอยู่",
+            thTier: "ระดับ",
+            thAction: "จัดการ",
+            guildSubs: "🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)",
+            guildSearchPlaceholder: "พิมพ์ชื่อเซิร์ฟเวอร์ หรือ Guild ID เพื่อค้นหา...",
+            thGuildName: "ชื่อเซิร์ฟเวอร์",
+            thStatus: "สถานะ",
+            thExpiry: "วันหมดอายุ",
+            thRefCode: "รหัสชวน",
+            thCmd: "คำสั่ง",
+            liveConfig: "⚙️ ตั้งค่าระบบด่วน (Live Config)",
+            paymentMode: "โหมดการชำระเงิน (Payment Mode)",
+            optSandbox: "โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)",
+            optProd: "โหมดใช้งานจริง (PRODUCTION - รับซอง TrueMoney จริง)",
+            price30d: "ราคาผู้สนับสนุน (บาท / 30 วัน)",
+            freeSlots: "โควต้าสตรีมสายฟรีสูงสุด (Max Free Streams)",
+            totalSlots: "โควต้าสตรีมรวมสูงสุด (Max Total Streams)",
+            earlyBirdTitle: "🎁 แคมเปญ Early-Bird Drop",
+            btnCreateCamp: "สร้างรอบ",
+            campPlaceholderCode: "รหัสโค้ด เช่น DROP1",
+            campPlaceholderLimit: "จำนวนสิทธิ์ (เช่น 50)",
+            loginTitle: "🔐 แดชบอร์ดผู้ดูแลระบบ",
+            loginSub: "กรุณาเข้าสู่ระบบด้วยรหัสผ่านแอดมิน",
+            btnLogin: "เข้าสู่ระบบ",
+            rateSub: "เรต: {price} บาท / 30 วัน",
+            slotFreeSub: "สายฟรี: {free}/{maxFree} • VIP: {supporter}/{maxSupporter}"
+        },
+        en: {
+            title: "GOOLIX • Master Admin Dashboard",
+            tagline: "Cluster Control & Streaming Telemetry",
+            forceSweep: "🧹 Force Sweep Idle Rooms",
+            logout: "Sign Out",
+            statSlots: "Stream Slots (Bandwidth)",
+            statRes: "System Metrics (CPU / RAM)",
+            statVpn: "Egress Network & VPN",
+            statBilling: "Billing Economics",
+            liveStreams: "🎵 Active Music Streams",
+            noLiveStreams: "No active voice channels streaming right now",
+            thServer: "Guild Server",
+            thNowPlaying: "Current Track",
+            thTier: "Tier",
+            thAction: "Action",
+            guildSubs: "🏰 Guild Subscriptions & Quotas",
+            guildSearchPlaceholder: "Type server name or Guild ID to search...",
+            thGuildName: "Server Name",
+            thStatus: "Tier Status",
+            thExpiry: "Expires At",
+            thRefCode: "Referral Code",
+            thCmd: "Commands",
+            liveConfig: "⚙️ Live Cluster Configuration",
+            paymentMode: "Billing Mode",
+            optSandbox: "Sandbox Simulation (Safe, No real funds charged)",
+            optProd: "Production (Real TrueMoney Vouchers processed)",
+            price30d: "Supporter Price (THB / 30 Days)",
+            freeSlots: "Max Free Concurrent Streams",
+            totalSlots: "Max Total Concurrent Streams",
+            earlyBirdTitle: "🎁 Early-Bird Promotional Drops",
+            btnCreateCamp: "Create Batch",
+            campPlaceholderCode: "Code e.g. DROP1",
+            campPlaceholderLimit: "Max claims (e.g. 50)",
+            loginTitle: "🔐 Master Admin Portal",
+            loginSub: "Authenticate with administrative credentials",
+            btnLogin: "Sign In",
+            rateSub: "Rate: {price} THB / 30 Days",
+            slotFreeSub: "Free: {free}/{maxFree} • VIP: {supporter}/{maxSupporter}"
+        }
+    };
+
+    let dashLang = localStorage.getItem('goolix_dash_lang') || 'th';
     let authToken = localStorage.getItem('goolix_admin_token') || '';
     let allGuildsCache = [];
+
+    function setDashboardLanguage(lang) {
+        dashLang = (lang === 'en' || lang === 'th') ? lang : 'th';
+        localStorage.setItem('goolix_dash_lang', dashLang);
+
+        document.getElementById('btnDashTh').classList.toggle('active', dashLang === 'th');
+        document.getElementById('btnDashEn').classList.toggle('active', dashLang === 'en');
+        document.documentElement.lang = dashLang;
+
+        applyDashboardTranslations();
+    }
+
+    function applyDashboardTranslations() {
+        const t = dashTranslations[dashLang];
+        document.title = t.title;
+        document.getElementById('adminTagline').textContent = t.tagline;
+        document.getElementById('btnForceSweep').textContent = t.forceSweep;
+        document.getElementById('btnLogout').textContent = t.logout;
+        document.getElementById('lblStatSlots').textContent = t.statSlots;
+        document.getElementById('lblStatRes').textContent = t.statRes;
+        document.getElementById('lblStatVpn').textContent = t.statVpn;
+        document.getElementById('lblStatBilling').textContent = t.statBilling;
+        document.getElementById('lblLiveStreamsTitle').textContent = t.liveStreams;
+        document.getElementById('thServer').textContent = t.thServer;
+        document.getElementById('thNowPlaying').textContent = t.thNowPlaying;
+        document.getElementById('thTier').textContent = t.thTier;
+        document.getElementById('thAction').textContent = t.thAction;
+        document.getElementById('lblGuildSubTitle').textContent = t.guildSubs;
+        document.getElementById('guildSearchInput').placeholder = t.guildSearchPlaceholder;
+        document.getElementById('thGuildName').textContent = t.thGuildName;
+        document.getElementById('thStatus').textContent = t.thStatus;
+        document.getElementById('thExpiry').textContent = t.thExpiry;
+        document.getElementById('thRefCode').textContent = t.thRefCode;
+        document.getElementById('thCmd').textContent = t.thCmd;
+        document.getElementById('lblConfigTitle').textContent = t.liveConfig;
+        document.getElementById('lblPaymentMode').textContent = t.paymentMode;
+        document.getElementById('lblPrice').textContent = t.price30d;
+        document.getElementById('lblFreeSlots').textContent = t.freeSlots;
+        document.getElementById('lblTotalSlots').textContent = t.totalSlots;
+        document.getElementById('lblEarlyBirdTitle').textContent = t.earlyBirdTitle;
+        document.getElementById('btnCreateCamp').textContent = t.btnCreateCamp;
+        document.getElementById('newCampCode').placeholder = t.campPlaceholderCode;
+        document.getElementById('newCampLimit').placeholder = t.campPlaceholderLimit;
+        document.getElementById('loginTitle').textContent = t.loginTitle;
+        document.getElementById('loginSubtitle').textContent = t.loginSub;
+        document.getElementById('btnLoginSubmit').textContent = t.btnLogin;
+
+        const optSandbox = document.querySelector('#cfgPaymentMode option[value="sandbox"]');
+        if (optSandbox) optSandbox.textContent = t.optSandbox;
+        const optProd = document.querySelector('#cfgPaymentMode option[value="production"]');
+        if (optProd) optProd.textContent = t.optProd;
+    }
 
     function checkAuth() {
         if (!authToken) {
@@ -298,169 +508,188 @@
             const data = await res.json();
             if (data.success) {
                 renderStats(data);
-                renderPlayers(data.players || []);
-                renderCampaigns(data.campaigns || {});
-                allGuildsCache = data.guilds || [];
+                renderPlayers(data.players);
+                allGuildsCache = data.subscriptions || [];
                 renderGuilds(allGuildsCache);
-
-                if (data.config) {
-                    document.getElementById('cfgPaymentMode').value = data.config.paymentMode || 'sandbox';
-                    document.getElementById('cfgPrice').value = data.config.price30Days || 29;
-                    document.getElementById('cfgFreeSlots').value = data.config.maxFreeStreams || 6;
-                    document.getElementById('cfgPhone').value = data.config.phoneNumber || '';
-                }
+                renderConfig(data.config);
+                renderCampaigns(data.campaigns);
             }
-        } catch (err) {}
+        } catch (err) {
+            console.error('Refresh error:', err);
+        }
     }
 
     function renderStats(data) {
-        const s = data.stats || {};
-        document.getElementById('slotVal').textContent = `${s.activeStreams || 0} / ${s.maxTotalStreams || 12}`;
-        document.getElementById('slotSub').textContent = `สายฟรี: ${s.freeStreams || 0}/${s.maxFreeStreams || 6} • ผู้สนับสนุน: ${s.supporterStreams || 0}`;
+        const t = dashTranslations[dashLang];
+        const s = data.stats;
+        document.getElementById('slotVal').textContent = `${s.slots.total} / ${s.slots.maxTotal}`;
+        document.getElementById('slotSub').textContent = t.slotFreeSub
+            .replace('{free}', s.slots.free)
+            .replace('{maxFree}', s.slots.maxFree)
+            .replace('{supporter}', s.slots.supporter)
+            .replace('{maxSupporter}', s.slots.maxTotal - s.slots.maxFree);
 
-        document.getElementById('resVal').textContent = `${s.cpu || 0}% / ${s.ramMb || 0} MB`;
-        document.getElementById('resSub').textContent = `Heap: ${s.heapMb || 0} MB • Cache: ${s.cacheMb || 0} MB`;
+        document.getElementById('resVal').textContent = `${s.cpu} / ${s.ram.rss}`;
+        document.getElementById('resSub').textContent = `Heap: ${s.ram.heap} • Disk Cache: ${s.diskCacheMb}MB`;
 
-        document.getElementById('vpnVal').textContent = s.vpnActive ? 'VPN Active' : 'Direct Egress';
-        document.getElementById('vpnSub').textContent = `IP: ${s.vpnIp || '15.235.164.106'}`;
+        document.getElementById('vpnVal').textContent = s.vpn.connected ? (s.vpn.server || 'Active') : 'Standby / Direct';
+        document.getElementById('vpnSub').textContent = `IP: ${s.vpn.ip || 'N/A'}`;
 
-        const mode = data.config?.paymentMode || 'sandbox';
-        document.getElementById('billingModeVal').textContent = mode.toUpperCase();
-        document.getElementById('billingModeVal').style.color = (mode === 'production') ? '#00E676' : '#FFD600';
-        document.getElementById('priceSub').textContent = `เรต: ${data.config?.price30Days || 29} บาท / 30 วัน`;
+        document.getElementById('billingModeVal').textContent = (data.config.paymentMode || 'sandbox').toUpperCase();
+        document.getElementById('priceSub').textContent = t.rateSub.replace('{price}', data.config.price30Days || 29);
     }
 
     function renderPlayers(players) {
-        document.getElementById('playerCount').textContent = `${players.length} ห้อง`;
         const tbody = document.getElementById('playerTableBody');
-        if (!players.length) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-sub);">ไม่มีห้องที่กำลังเล่นเพลงอยู่</td></tr>';
+        document.getElementById('playerCount').textContent = `${players.length} rooms`;
+        if (players.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-sub);">${dashTranslations[dashLang].noLiveStreams}</td></tr>`;
             return;
         }
 
         tbody.innerHTML = players.map(p => `
             <tr>
-                <td><strong>${p.guildName}</strong><br><span style="font-size:11px;color:var(--text-sub);">${p.guildId}</span></td>
-                <td>${p.title || '-'}<br><span style="font-size:11px;color:var(--text-sub);">${p.sourceBadge || '🔴 นกแดง'}</span></td>
-                <td><span style="font-size:11px;padding:2px 6px;border-radius:4px;${p.isSupporter ? 'background:rgba(255,46,147,0.2);color:#FF2E93;' : 'background:#334155;color:#94A3B8;'}">${p.isSupporter ? '💖 Supporter' : '🆓 Free'}</span></td>
-                <td>
-                    <button class="btn" style="padding:4px 8px;font-size:11px;" onclick="playerAction('${p.guildId}', 'skip')">⏭️ Skip</button>
-                    <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="playerAction('${p.guildId}', 'stop')">⏹️ Stop</button>
-                </td>
+                <td><strong>${p.guildName}</strong><br><span style="font-size: 11px; color: var(--text-sub);">${p.guildId}</span></td>
+                <td><span style="color: var(--slime-green);">▶</span> ${p.trackTitle}<br><span style="font-size: 11px; color: var(--text-sub);">${p.source} • ${p.bitrate}</span></td>
+                <td><span class="badge" style="${p.isSupporter ? 'background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green);' : 'background: rgba(148, 163, 184, 0.12); color: var(--text-sub);'}">${p.isSupporter ? 'VIP' : 'FREE'}</span></td>
+                <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="stopPlayer('${p.guildId}')">⏹ Stop</button></td>
             </tr>
         `).join('');
     }
 
     function renderGuilds(guilds) {
         const tbody = document.getElementById('guildTableBody');
-        if (!guilds.length) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">ไม่พบข้อมูลเซิร์ฟเวอร์</td></tr>';
+        if (guilds.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">No guilds found</td></tr>`;
             return;
         }
 
-        tbody.innerHTML = guilds.slice(0, 30).map(g => `
-            <tr>
-                <td><strong>${g.guildName}</strong><br><span style="font-size:11px;color:var(--text-sub);">${g.guildId}</span></td>
-                <td><span style="font-size:11px;padding:2px 6px;border-radius:4px;${g.plan === 'SUPPORTER' ? 'background:rgba(255,46,147,0.2);color:#FF2E93;' : 'background:#334155;color:#94A3B8;'}">${g.plan}</span></td>
-                <td>${g.expiresAt ? new Date(g.expiresAt).toLocaleDateString('th-TH') : '-'}</td>
-                <td><code>${g.referralCode || '-'}</code></td>
-                <td>
-                    <button class="btn" style="padding:4px 8px;font-size:11px;" onclick="grantDays('${g.guildId}', 30)">+30 วัน</button>
-                    <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="grantDays('${g.guildId}', -30)">ลบสิทธิ์</button>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = guilds.map(g => {
+            const exp = g.expiresAt > Date.now() ? new Date(g.expiresAt).toLocaleDateString() : 'Expired / Free';
+            return `
+                <tr>
+                    <td><strong>${g.guildName}</strong><br><span style="font-size: 11px; color: var(--text-sub);">${g.guildId}</span></td>
+                    <td><span class="badge" style="${g.isSupporter ? 'background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green);' : 'background: rgba(148, 163, 184, 0.12); color: var(--text-sub);'}">${g.isSupporter ? 'VIP' : 'FREE'}</span></td>
+                    <td>${exp}</td>
+                    <td><code>${g.referralCode}</code></td>
+                    <td>
+                        <button class="btn" style="padding: 3px 6px; font-size: 11px;" onclick="addDays('${g.guildId}', 30)">+30d</button>
+                        <button class="btn btn-danger" style="padding: 3px 6px; font-size: 11px;" onclick="resetSub('${g.guildId}')">Reset</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function filterGuilds() {
+        const q = document.getElementById('guildSearchInput').value.toLowerCase();
+        const filtered = allGuildsCache.filter(g => g.guildName.toLowerCase().includes(q) || g.guildId.includes(q));
+        renderGuilds(filtered);
+    }
+
+    function renderConfig(cfg) {
+        document.getElementById('cfgPaymentMode').value = cfg.paymentMode || 'sandbox';
+        document.getElementById('cfgPrice').value = cfg.price30Days || 29;
+        document.getElementById('cfgFreeSlots').value = cfg.maxFreeStreams || 6;
+        document.getElementById('cfgTotalSlots').value = cfg.maxTotalStreams || 12;
     }
 
     function renderCampaigns(campaigns) {
-        const list = document.getElementById('campaignList');
-        const entries = Object.entries(campaigns);
-        if (!entries.length) {
-            list.innerHTML = '<p style="color:var(--text-sub);">ยังไม่มีแคมเปญ Early-Bird ที่สร้างไว้</p>';
+        const el = document.getElementById('campaignList');
+        const list = Object.values(campaigns || {});
+        if (list.length === 0) {
+            el.innerHTML = '<span style="color: var(--text-sub);">No active campaigns</span>';
             return;
         }
 
-        list.innerHTML = entries.map(([code, c]) => `
-            <div style="background:#0B0E14;padding:10px;border-radius:8px;margin-bottom:8px;border:1px solid var(--card-border);">
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                    <strong>${c.name} (<code>${code}</code>)</strong>
-                    <span style="color:var(--accent-green);">${c.claimedCount}/${c.maxClaims} สิทธิ์</span>
+        el.innerHTML = list.map(c => `
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong><code>${c.code}</code></strong> (${c.name})<br>
+                    <span style="font-size: 11px; color: var(--text-sub);">Days: +${c.days} • Claimed: ${c.claimedCount}/${c.maxClaims}</span>
                 </div>
-                <div style="background:#1E293B;height:6px;border-radius:3px;overflow:hidden;">
-                    <div style="background:var(--primary);width:${(c.claimedCount/c.maxClaims)*100}%;height:100%;"></div>
-                </div>
+                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteCampaign('${c.code}')">Delete</button>
             </div>
         `).join('');
     }
 
-    async function playerAction(guildId, action) {
-        await fetch(`/api/admin/players/${guildId}/action`, {
+    async function saveConfig() {
+        const body = {
+            paymentMode: document.getElementById('cfgPaymentMode').value,
+            price30Days: parseInt(document.getElementById('cfgPrice').value, 10),
+            maxFreeStreams: parseInt(document.getElementById('cfgFreeSlots').value, 10),
+            maxTotalStreams: parseInt(document.getElementById('cfgTotalSlots').value, 10)
+        };
+        await fetch('/api/admin/config', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action })
-        });
-        refreshDashboard();
-    }
-
-    async function grantDays(guildId, days) {
-        await fetch(`/api/admin/guilds/${guildId}`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ days })
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify(body)
         });
         refreshDashboard();
     }
 
     async function triggerSweep() {
-        await fetch('/api/admin/sweep', {
+        if (!confirm('Run Heartbeat sweep to clean idle voice channels?')) return;
+        await fetch('/api/admin/force-sweep', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        alert('🧹 สั่ง Force Sweep กวาดล้างห้องค้างเรียบร้อยค่ะ!');
+        alert('Sweep initiated successfully.');
+        refreshDashboard();
+    }
+
+    async function stopPlayer(guildId) {
+        if (!confirm(`Stop music stream for guild ${guildId}?`)) return;
+        await fetch(`/api/admin/players/${guildId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        refreshDashboard();
+    }
+
+    async function addDays(guildId, days) {
+        await fetch(`/api/admin/subscriptions/${guildId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ addDays: days })
+        });
+        refreshDashboard();
+    }
+
+    async function resetSub(guildId) {
+        if (!confirm(`Reset subscription for guild ${guildId}?`)) return;
+        await fetch(`/api/admin/subscriptions/${guildId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ plan: 'FREE', expiresAt: 0 })
+        });
         refreshDashboard();
     }
 
     async function createCampaign() {
         const code = document.getElementById('newCampCode').value.trim();
-        const limit = parseInt(document.getElementById('newCampLimit').value, 10);
-        if (!code || isNaN(limit)) return alert('กรุณากรอกรหัสและจำนวนสิทธิ์ค่ะ');
-
+        const maxClaims = parseInt(document.getElementById('newCampLimit').value, 10) || 50;
+        if (!code) return alert('Please enter code');
         await fetch('/api/admin/campaigns', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, name: `Early-Bird Drop (${code})`, maxClaims: limit, days: 30 })
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ code, name: code, days: 30, maxClaims })
         });
         document.getElementById('newCampCode').value = '';
         document.getElementById('newCampLimit').value = '';
         refreshDashboard();
     }
 
-    async function saveConfig() {
-        const paymentMode = document.getElementById('cfgPaymentMode').value;
-        const price30Days = parseInt(document.getElementById('cfgPrice').value, 10);
-        const maxFreeStreams = parseInt(document.getElementById('cfgFreeSlots').value, 10);
-        const phoneNumber = document.getElementById('cfgPhone').value.trim();
-
-        await fetch('/api/admin/config', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentMode, price30Days, maxFreeStreams, phoneNumber })
+    async function deleteCampaign(code) {
+        if (!confirm(`Delete campaign ${code}?`)) return;
+        await fetch(`/api/admin/campaigns/${encodeURIComponent(code)}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` }
         });
-
-        const msg = document.getElementById('cfgSavedMsg');
-        msg.textContent = '✅ บันทึกการตั้งค่าเรียบร้อย!';
-        setTimeout(() => msg.textContent = '', 3000);
         refreshDashboard();
     }
 
-    function filterGuilds() {
-        const query = document.getElementById('guildSearchInput').value.toLowerCase();
-        const filtered = allGuildsCache.filter(g =>
-            g.guildName.toLowerCase().includes(query) || g.guildId.includes(query)
-        );
-        renderGuilds(filtered);
-    }
-
+    setDashboardLanguage(dashLang);
     checkAuth();
 </script>
 

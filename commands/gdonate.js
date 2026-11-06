@@ -90,7 +90,7 @@ module.exports = {
                         inline: false
                     }
                 )
-                .setFooter({ text: 'ขอบคุณที่ร่วมสนับสนุนค่าเซิร์ฟเวอร์และท่อสัญญาณ GOOLIX ค่ะ 💖' });
+                .setFooter({ text: 'ขอบคุณที่ร่วมสนับสนุนค่าเซิร์ฟเวอร์ GOOLIX พลังเบสสไลม์เขียว 🟢⚡' });
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
@@ -158,7 +158,7 @@ module.exports = {
             embed.setColor('#00E676')
                 .setTitle('🎉 ขอบพระคุณสำหรับการร่วมสนับสนุน!')
                 .setDescription(`ระบบได้รับยอดสนับสนุน **${redeemResult.amount} บาท** เรียบร้อยแล้วค่ะ!\nปลดล็อก Supporter Perks ให้เซิร์ฟเวอร์ **${guildName}** เพิ่ม **+${proc.addedDays} วัน**${bonusText}`)
-                .setFooter({ text: 'ขอบคุณที่ร่วมเป็นกำลังสำคัญในการพัฒนา GOOLIX ค่ะ 💖' });
+                .setFooter({ text: 'ขอบคุณที่ร่วมเป็นกำลังสำคัญในการซัพพอร์ต GOOLIX นะ! 🟢⚡' });
 
             return interaction.followUp({ embeds: [embed] });
         }

@@ -1,11 +1,12 @@
 const { EmbedBuilder } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
 const subscriptionManager = require('../src/billing/subscriptionManager');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
         name: 'gskipplay',
-        description: 'ข้ามเพลงปัจจุบันแล้วเล่นเพลงใหม่ที่ระบุทันที',
+        description: 'ข้ามเพลงปัจจุบันแล้วเล่นเพลงใหม่ที่ระบุทันที (Skip current & play query now)',
         options: [
             {
                 name: 'query',
@@ -17,23 +18,24 @@ module.exports = {
     },
     run: async (client, interaction, kazagumo) => {
         const voiceChannel = interaction.member?.voice?.channel;
-        const embed = new EmbedBuilder().setColor('#FF69B4');
+        const guildId = interaction.guild.id;
+        const embed = new EmbedBuilder().setColor('#00FF88');
 
         if (!voiceChannel) {
-            embed.setDescription('❌ อ๊ะๆ! ตัวเธอต้องเข้าห้องเสียงก่อนนะคะ เดี๋ยวดีเจเหงาแย่เลย~ 🥺');
+            embed.setDescription(i18n.t(guildId, 'VOICE_JOIN_REQUIRED'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const query = interaction.options.getString('query');
         await interaction.deferReply();
 
-        let player = kazagumo.players.get(interaction.guild.id);
+        let player = kazagumo.players.get(guildId);
         if (!player) {
             player = await kazagumo.createPlayer({
-                guildId: interaction.guild.id,
+                guildId: guildId,
                 textId: interaction.channel.id,
                 voiceId: voiceChannel.id,
-                volume: settingsManager.getGuildVolume(interaction.guild.id)
+                volume: settingsManager.getGuildVolume(guildId)
             });
         }
 
@@ -42,7 +44,7 @@ module.exports = {
         });
 
         if (!result.tracks.length) {
-            embed.setDescription('❌ หาเพลงไม่เจอค่ะ! (ลองลบคำว่า Official/MV ออก หรือพิมพ์แค่ชื่อเพลงสั้นๆ ดูนะคะ) 😿');
+            embed.setDescription('❌ หาเพลงไม่เจอ! (ลองพิมพ์เฉพาะชื่อเพลงสั้นๆ ดูนะ 🥺)');
             return interaction.followUp({ embeds: [embed] });
         }
 
@@ -55,15 +57,16 @@ module.exports = {
             } else {
                 player.play();
             }
-            embed.setDescription(`⏭️ จัดเพลย์ลิสต์ใหม่ให้ด่วนจี๋! ข้ามไปเล่นเพลย์ลิสต์ **${result.playlistName}** ให้แล้วค่ะ 💃✨`);
+            embed.setDescription(`⏭️ สับเพลงใหม่ทันใจ! ข้ามไปเล่นเพลย์ลิสต์ **${result.playlistName}** ให้แล้ว 🎶🟢`);
             await interaction.followUp({ embeds: [embed] });
         } else {
             const track = result.tracks[0];
-            const tierConfig = subscriptionManager.getTierConfig(interaction.guild.id);
+            const tierConfig = subscriptionManager.getTierConfig(guildId);
             if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+                const durationMin = Math.floor((track.duration || 0) / 60);
                 embed.setColor('#FFD600')
-                    .setTitle('⏱️ เพลงมีความยาวเกิน 30 นาที')
-                    .setDescription(`เพลง **${track.title}** มีความยาว ${Math.floor(track.duration / 60)} นาที\n\nผู้ใช้ทั่วไปจำกัดความยาวไม่เกิน 30 นาทีต่อเพลงค่ะ!\nร่วมเป็น 💖 **ผู้สนับสนุนเซิร์ฟเวอร์** เพื่อปลดล็อกการเล่นคลิปยาวและ Live Stream ไม่จำกัดความยาวที่ \`/gdonate\` นะคะ~`);
+                    .setTitle('⏱️ Track Exceeds 30 Minutes')
+                    .setDescription(i18n.t(guildId, 'SONG_TOO_LONG', { duration: `${durationMin} min` }));
                 return interaction.followUp({ embeds: [embed] });
             }
 
@@ -75,7 +78,7 @@ module.exports = {
                 player.play();
             }
 
-            embed.setDescription(`⏭️ ด่วนทันใจ! ข้ามเพลงเดิมแล้วเปิดเพลง **${track.title}** ให้แล้วนะคะ โยกกก 🎧💋`);
+            embed.setDescription(`⏭️ ข้ามเพลงเดิมแล้วเปิดเพลง **${track.title}** ให้ทันใจ! 🎧🟢`);
             await interaction.followUp({ embeds: [embed] });
         }
     }

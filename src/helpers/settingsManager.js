@@ -79,6 +79,21 @@ class SettingsManager {
         this._save();
         return settings.autoplay;
     }
+
+    getGuildLanguage(guildId) {
+        const settings = this.getGuildSettings(guildId);
+        return settings.language === 'en' ? 'en' : 'th';
+    }
+
+    setGuildLanguage(guildId, language) {
+        if (!guildId) return 'th';
+        const valid = (language === 'en' || language === 'th') ? language : 'th';
+        const settings = this.getGuildSettings(guildId);
+        settings.language = valid;
+        this.cache.set(guildId, settings);
+        this._save();
+        return valid;
+    }
 }
 
 module.exports = new SettingsManager();

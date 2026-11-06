@@ -1,10 +1,11 @@
 const { EmbedBuilder } = require('discord.js');
 const subscriptionManager = require('../src/billing/subscriptionManager');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
         name: 'gfilter',
-        description: 'ปรับแต่งโทนเสียง Equalizer (เฉพาะเซิร์ฟเวอร์ผู้สนับสนุน)',
+        description: 'ปรับแต่งโทนเสียง Equalizer (เฉพาะเซิร์ฟเวอร์ผู้สนับสนุน VIP)',
         options: [
             {
                 name: 'mode',
@@ -29,8 +30,8 @@ module.exports = {
 
         if (!isSupporter) {
             embed.setColor('#FF2E93')
-                .setTitle('💎 ฟีเจอร์สำหรับผู้สนับสนุนเซิร์ฟเวอร์')
-                .setDescription('ระบบปรับแต่งโทนเสียง Equalizer สงวนไว้สำหรับเซิร์ฟเวอร์ **Supporter (VIP)** ค่ะ!\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุนค่าเซิร์ฟเวอร์เริ่มต้นเพียง **29฿/เดือน** นะคะ~ 💖');
+                .setTitle('💎 Supporter Feature')
+                .setDescription(i18n.t(guildId, 'FILTER_VIP_ONLY'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -49,17 +50,17 @@ module.exports = {
         }
 
         const modeNames = {
-            off: 'ปิดเสียงปรุงแต่ง (Original)',
-            bassboost: 'เบสหนักแน่น (Bass Boost)',
-            nightcore: 'ไนท์คอร์ (Nightcore)',
-            pop: 'โทนป็อปใส (Pop Vocal)',
-            soft: 'ฟังสบาย ผ่อนคลาย (Soft)',
-            vaporwave: 'เวเปอร์เวฟ (Vaporwave)'
+            off: 'Off (Original)',
+            bassboost: 'Bass Boost 💥',
+            nightcore: 'Nightcore ⚡',
+            pop: 'Pop Vocal 🎤',
+            soft: 'Soft Relax 🍃',
+            vaporwave: 'Vaporwave 🌊'
         };
 
-        embed.setColor('#00E676')
-            .setTitle('🎛️ ตั้งค่าโทนเสียง Equalizer เรียบร้อย!')
-            .setDescription(`เปลี่ยนโทนเสียงของเซิร์ฟเวอร์เป็น: **${modeNames[mode] || mode}**\n*(มีผลทันทีกับเพลงที่กำลังเล่นและเพลงถัดไปค่ะ)*`);
+        embed.setColor('#00FF88')
+            .setTitle('🎛️ Equalizer Configured')
+            .setDescription(i18n.t(guildId, 'FILTER_CHANGED', { filter: modeNames[mode] || mode }));
 
         return interaction.reply({ embeds: [embed] });
     }

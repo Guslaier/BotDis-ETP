@@ -93,7 +93,7 @@ module.exports = {
         if (sub === 'play') {
             const voiceChannel = interaction.member?.voice?.channel;
             if (!voiceChannel) {
-                embed.setDescription('❌ อ๊ะๆ! ตัวเธอต้องเข้าห้องเสียงก่อนนะคะ เดี๋ยวดีเจเหงาแย่เลย~ 🥺');
+                embed.setDescription('❌ ต้องเข้าห้องเสียงก่อนนะ เดี๋ยว GOOLIX เหงาแย่เลย! 🥺');
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 

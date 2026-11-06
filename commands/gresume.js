@@ -1,25 +1,27 @@
 const { EmbedBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
         name: 'gresume',
-        description: 'เล่นเพลงต่อจากที่หยุดไว้',
+        description: 'เล่นเพลงต่อจากที่หยุดไว้ (Resume paused track)',
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
-        const embed = new EmbedBuilder().setColor('#FF69B4');
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
+        const embed = new EmbedBuilder().setColor('#00FF88');
 
         if (!player) {
-            embed.setDescription('❌ ไม่มีคิวเพลงค่ะ! จะให้ดีเจเล่นอะไรเอ่ย? 🥺');
+            embed.setDescription(i18n.t(guildId, 'NO_PLAYING_TRACK'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (!player.paused) {
-            embed.setDescription('⚠️ เพลงก็กำลังเล่นอยู่แล้วนี่นา เต้นต่อเลยค่ะไม่ต้องรอ! 💃🔥');
+            embed.setDescription('⚠️ เพลงกำลังเล่นอยู่แล้วนะ เต้นต่อเลยไม่ต้องรอ! 💃🔥');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.pause(false);
-        embed.setDescription('▶️ ลุยกันต่อเลยค่ะ! ดีเจสาวกลับมาเปิดเพลงให้แล้วน้า โยกไปเลยยย 🎧💕');
+        embed.setDescription(i18n.t(guildId, 'RESUMED'));
         return interaction.reply({ embeds: [embed] });
     }
 };

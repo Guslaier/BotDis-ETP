@@ -68,7 +68,7 @@ function createNowPlayingCard(player, track) {
     }
 
     const isSupporter = subscriptionManager.isSupporter(player.guildId);
-    const bitrateBadge = isSupporter ? '⚡ 320kbps' : '📻 64kbps';
+    const bitrateBadge = isSupporter ? '⚡ 320k VIP' : '📻 64k Standard';
 
     let loopBadge = '🔁 Off';
     if (player.loop === 'track') loopBadge = '🔂 Track';
@@ -81,9 +81,9 @@ function createNowPlayingCard(player, track) {
     const safeAuthor = track.author || 'Unknown Artist';
 
     const embed = new EmbedBuilder()
-        .setColor(isSupporter ? '#FF2E93' : '#FF69B4')
+        .setColor(isSupporter ? '#00FF88' : '#00B0FF')
         .setAuthor({
-            name: `${player.manager.client.user.username}  •  Now Playing`,
+            name: `${player.manager.client.user.username}  •  Cosmic Stage 🟢`,
             iconURL: player.manager.client.user.displayAvatarURL()
         })
         .setTitle(safeTitle)

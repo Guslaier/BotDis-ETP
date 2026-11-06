@@ -107,6 +107,27 @@ class AdminServer {
             return this._sendHtml(res, path.join(__dirname, 'public/dashboard.html'));
         }
 
+        // --- Static Asset Routes (Images, CSS, Logos) ---
+        if (pathname.startsWith('/assets/') || pathname === '/goolix-avatar.jpg' || pathname.endsWith('.jpg') || pathname.endsWith('.png') || pathname.endsWith('.svg')) {
+            const relPath = pathname.replace(/^\//, '');
+            const filePath = path.join(__dirname, 'public', relPath);
+            if (fs.existsSync(filePath)) {
+                const ext = path.extname(filePath).toLowerCase();
+                const mimeTypes = {
+                    '.jpg': 'image/jpeg',
+                    '.jpeg': 'image/jpeg',
+                    '.png': 'image/png',
+                    '.svg': 'image/svg+xml',
+                    '.ico': 'image/x-icon'
+                };
+                res.writeHead(200, {
+                    'Content-Type': mimeTypes[ext] || 'application/octet-stream',
+                    'Cache-Control': 'public, max-age=86400'
+                });
+                return fs.createReadStream(filePath).pipe(res);
+            }
+        }
+
         // --- Public APIs ---
         if (pathname === '/api/public/verify-guild' && req.method === 'GET') {
             const guildId = query.guildId || '';

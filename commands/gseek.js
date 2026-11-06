@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -38,18 +39,18 @@ module.exports = {
         }
 
         if (isNaN(timeMs) || timeMs < 0) {
-            embed.setDescription('❌ อ๊ะ! รูปแบบเวลาไม่ถูกต้องค่ะ ลองพิมพ์แบบ 01:30 หรือใส่เป็นวินาทีดูนะคะ 🧐');
+            embed.setDescription('❌ รูปแบบเวลาไม่ถูกต้อง! ลองพิมพ์แบบ 01:30 หรือใส่เป็นตัวเลขวินาทีดูนะ 🧐');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         if (player.queue.current.length > 0 && timeMs > player.queue.current.length) {
-            embed.setDescription('❌ เวลาเกินความยาวเพลงค่ะ! กรอซะทะลุเพลงเลยนะตัวเธอ 😅');
+            embed.setDescription(i18n.t(interaction.guild.id, 'SEEK_TOO_FAR'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         await interaction.deferReply();
         await player.seek(timeMs);
-        embed.setDescription(`⏩ วาร์ปให้แล้วค่ะ! กรอเพลงไปยังเวลา **${timeInput}** ตามคำขอเป๊ะๆ ✨`);
+        embed.setDescription(`⏩ วาร์ปไปที่เวลา **${timeInput}** ให้เรียบร้อย! 🎶🟢`);
         return interaction.followUp({ embeds: [embed] });
     }
 };

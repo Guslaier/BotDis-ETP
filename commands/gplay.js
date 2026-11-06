@@ -1,6 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
 const subscriptionManager = require('../src/billing/subscriptionManager');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -29,18 +30,19 @@ module.exports = {
     },
     run: async (client, interaction, kazagumo) => {
         const voiceChannel = interaction.member?.voice?.channel;
-        const embed = new EmbedBuilder().setColor('#FF69B4');
+        const guildId = interaction.guild.id;
+        const embed = new EmbedBuilder().setColor('#00FF88');
 
         if (!voiceChannel) {
-            embed.setDescription('❌ อ๊ะๆ! ตัวเธอต้องเข้าห้องเสียงก่อนนะคะ เดี๋ยวดีเจเหงาแย่เลย~ 🥺');
+            embed.setDescription(i18n.t(guildId, 'VOICE_JOIN_REQUIRED'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
-        const host = process.env.PUBLIC_WEB_URL || `http://${process.env.VPN_SOURCE_IP || '15.235.164.106'}:${process.env.WEB_PORT || '3000'}`;
-        const donateUrl = `${host}/donate?guildId=${interaction.guild.id}&userId=${interaction.user.id}`;
+        const host = process.env.PUBLIC_WEB_URL || `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${process.env.WEB_PORT || '11901'}`;
+        const donateUrl = `${host}/donate?guildId=${guildId}&userId=${interaction.user.id}`;
         const donateRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 ร่วมสนับสนุนเซิร์ฟเวอร์ (ช่องด่วน VIP)')
+                .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (VIP Stream Lanes)')
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl)
         );
@@ -73,8 +75,8 @@ module.exports = {
         // 2. Queue Limit Check
         if (player.queue.length >= tierConfig.maxQueue) {
             embed.setColor('#EF4444')
-                .setTitle('📋 คิวเพลงเต็มโควต้าแล้วค่ะ')
-                .setDescription(`เซิร์ฟเวอร์นี้มีคิวเพลงครบเพดาน **${tierConfig.maxQueue} เพลง** แล้วค่ะ!\n\n*(เซิร์ฟเวอร์ผู้สนับสนุนสามารถขยายคิวได้สูงสุดถึง 50 เพลง ร่วมสนับสนุนได้ที่ \`/gdonate\` นะคะ)*`);
+                .setTitle('📋 Queue Limit Reached')
+                .setDescription(i18n.t(guildId, 'QUEUE_LIMIT_FREE'));
             return interaction.followUp({ embeds: [embed], components: [donateRow] });
         }
 
@@ -85,7 +87,7 @@ module.exports = {
         });
 
         if (!result.tracks.length) {
-            embed.setDescription('❌ หาเพลงไม่เจอค่ะ! (ลองลบคำว่า Official/MV ออก หรือพิมพ์แค่ชื่อเพลงสั้นๆ ดูนะคะ) 😿');
+            embed.setDescription('❌ หาเพลงไม่เจอ! (ลองพิมพ์เฉพาะชื่อเพลงสั้นๆ ดูนะ 🥺)');
             return interaction.followUp({ embeds: [embed] });
         }
 
@@ -105,9 +107,9 @@ module.exports = {
                 player.queue.add(track);
             }
 
-            let msg = `✅ จัดไปชุดใหญ่ไฟกระพริบ! เพิ่มเพลย์ลิสต์ **${result.playlistName}** (${addedTracks.length} เพลง) ลงในคิวแล้วค่ะ 💃✨`;
+            let msg = `📋 **${result.playlistName || 'Playlist'}**\n\n${i18n.t(guildId, 'PLAYLIST_ADDED')} (${addedTracks.length} tracks)`;
             if (skippedOver30Min > 0) {
-                msg += `\n*(ข้ามเพลงที่ยาวเกิน 30 นาทีไป ${skippedOver30Min} เพลงสำหรับผู้ใช้ทั่วไปค่ะ)*`;
+                msg += `\n*(Skipped ${skippedOver30Min} tracks > 30 mins for Free Tier)*`;
             }
             embed.setDescription(msg);
             await interaction.followUp({ embeds: [embed] });
@@ -116,9 +118,10 @@ module.exports = {
 
             // 3. 30-minute limit check for single song
             if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+                const durationMin = Math.floor((track.duration || 0) / 60);
                 embed.setColor('#FFD600')
-                    .setTitle('⏱️ เพลงมีความยาวเกิน 30 นาที')
-                    .setDescription(`เพลง **${track.title}** มีความยาว ${Math.floor(track.duration / 60)} นาที\n\nผู้ใช้ทั่วไปจำกัดความยาวไม่เกิน 30 นาทีต่อเพลงค่ะ!\nร่วมเป็น 💖 **ผู้สนับสนุนเซิร์ฟเวอร์** เพื่อปลดล็อกการเล่นคลิปยาวและ Live Stream ไม่จำกัดความยาวนะคะ~`);
+                    .setTitle('⏱️ Track Exceeds 30 Minutes')
+                    .setDescription(i18n.t(guildId, 'SONG_TOO_LONG', { duration: `${durationMin} min` }));
                 return interaction.followUp({ embeds: [embed], components: [donateRow] });
             }
 
@@ -127,7 +130,10 @@ module.exports = {
             } else {
                 player.queue.add(track);
             }
-            embed.setDescription(`**${track.title}**\n\n${(player.playing || player._starting) ? (top ? `⬆️ วีไอพีสุดๆ! แซงคิวเป็นเพลงต่อไปให้แล้วค่ะ 💅` : `✅ รับแซ่บค่ะ! ดีเจสาวจับยัดลงคิวให้แล้วนะคะ เตรียมตัวโยกได้เลย 📝💋`) : `▶️ ดีเจจัดให้! เริ่มเล่นเพลงแล้วค่ะ 🎧✨`}`);
+
+            const isPlaying = (player.playing || player._starting);
+            const msgKey = !isPlaying ? 'NOW_PLAYING' : (top ? 'VIP_PRIORITY_ADDED' : 'ADDED_QUEUE');
+            embed.setDescription(`**${track.title}**\n\n${i18n.t(guildId, msgKey)}`);
             await interaction.followUp({ embeds: [embed] });
         }
 

@@ -8,6 +8,7 @@ const { createNowPlayingCard } = require('./src/helpers/musicCardHelper');
 const favoriteManager = require('./src/helpers/favoriteManager');
 const AdminServer = require('./src/web/AdminServer');
 const subscriptionManager = require('./src/billing/subscriptionManager');
+const i18n = require('./src/helpers/i18nHelper');
 
 const client = new Client({
     intents: [
@@ -114,8 +115,8 @@ kazagumo.on("playerEmpty", player => {
     const channel = client.channels.cache.get(player.textId);
     if (channel) {
         const embed = new EmbedBuilder()
-            .setColor('#FF69B4')
-            .setDescription('🎵 คิวเพลงว่างเปล่าแล้วค่ะ! ดีเจสาวขอตัวไปพักเติมแป้งก่อนนะคะ 💋');
+            .setColor('#00FF88')
+            .setDescription(i18n.t(player.guildId, 'QUEUE_EMPTY'));
         channel.send({ embeds: [embed] }).catch(() => { });
     }
     player.destroy();
@@ -198,7 +199,7 @@ client.on('interactionCreate', async interaction => {
                 await interaction.message.edit({ components: [] }).catch(() => {});
             }
             return interaction.reply({
-                content: '🗑️ ตรวจพบการ์ดเพลงเก่าที่ค้างอยู่ ระบบลบทิ้งให้แล้วค่ะ (กรุณาใช้การ์ดล่าสุดด้านล่างนะคะ 💕)',
+                content: i18n.t(interaction.guildId, 'STALE_CARD_REMOVED'),
                 flags: MessageFlags.Ephemeral
             }).catch(() => {});
         }
@@ -206,7 +207,7 @@ client.on('interactionCreate', async interaction => {
         const voiceChannel = interaction.member?.voice?.channel;
         if (!voiceChannel || voiceChannel.id !== player.voiceId) {
             return interaction.reply({
-                content: '❌ ตัวเธอต้องเข้าห้องเสียงเดียวกับบอทก่อนนะคะ ถึงจะกดควบคุมได้! 🥺',
+                content: i18n.t(interaction.guildId, 'VOICE_SAME_REQUIRED'),
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -228,7 +229,7 @@ client.on('interactionCreate', async interaction => {
                 const track = player.queue.current;
                 if (track.isStream) {
                     return interaction.reply({
-                        content: '❌ ไม่สามารถกรอเพลงที่เป็น Live Stream สดได้ค่ะ 🥺',
+                        content: i18n.t(interaction.guildId, 'CANNOT_SEEK_LIVE'),
                         flags: MessageFlags.Ephemeral
                     });
                 }
@@ -248,7 +249,7 @@ client.on('interactionCreate', async interaction => {
                 const track = player.queue.current;
                 if (track.isStream) {
                     return interaction.reply({
-                        content: '❌ ไม่สามารถกรอเพลงที่เป็น Live Stream สดได้ค่ะ 🥺',
+                        content: i18n.t(interaction.guildId, 'CANNOT_SEEK_LIVE'),
                         flags: MessageFlags.Ephemeral
                     });
                 }
@@ -257,7 +258,7 @@ client.on('interactionCreate', async interaction => {
                 const maxDuration = track.length || 0;
                 if (maxDuration > 0 && newPos >= maxDuration) {
                     return interaction.reply({
-                        content: '❌ กรอเกินความยาวเพลงไม่ได้ค่ะ! ดีเจแนะนำกดข้ามเพลง (⏭️) ได้เลยน้า 💋',
+                        content: i18n.t(interaction.guildId, 'SEEK_TOO_FAR'),
                         flags: MessageFlags.Ephemeral
                     });
                 }
@@ -297,7 +298,7 @@ client.on('interactionCreate', async interaction => {
             case 'music_autoplay': {
                 if (!player.autoplay && !subscriptionManager.isSupporter(player.guildId)) {
                     return interaction.reply({
-                        content: '💎 ฟีเจอร์ **เล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)** สงวนไว้สำหรับเซิร์ฟเวอร์ผู้สนับสนุน (Supporter VIP) ค่ะ!\n\nพิมพ์ `/gdonate` หรือเข้าเว็บเติมเงินเพื่อร่วมสนับสนุนเริ่มต้นเพียง **29฿/เดือน** นะคะ~ 💖',
+                        content: i18n.t(player.guildId, 'AUTOPLAY_VIP_ONLY'),
                         flags: MessageFlags.Ephemeral
                     });
                 }

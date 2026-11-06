@@ -1,6 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
 const subscriptionManager = require('../src/billing/subscriptionManager');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -25,24 +26,25 @@ module.exports = {
     },
     run: async (client, interaction, kazagumo) => {
         const voiceChannel = interaction.member?.voice?.channel;
-        const embed = new EmbedBuilder().setColor('#FF69B4');
+        const guildId = interaction.guild.id;
+        const embed = new EmbedBuilder().setColor('#00FF88');
 
         if (!voiceChannel) {
-            embed.setDescription('❌ อ๊ะๆ! ตัวเธอต้องเข้าห้องเสียงก่อนนะคะ เดี๋ยวดีเจเหงาแย่เลย~ 🥺');
+            embed.setDescription(i18n.t(guildId, 'VOICE_JOIN_REQUIRED'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
-        const host = process.env.PUBLIC_WEB_URL || `http://${process.env.VPN_SOURCE_IP || '15.235.164.106'}:${process.env.WEB_PORT || '3000'}`;
-        const donateUrl = `${host}/donate?guildId=${interaction.guild.id}&userId=${interaction.user.id}`;
+        const host = process.env.PUBLIC_WEB_URL || `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${process.env.WEB_PORT || '11901'}`;
+        const donateUrl = `${host}/donate?guildId=${guildId}&userId=${interaction.user.id}`;
         const donateRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 ร่วมสนับสนุนเซิร์ฟเวอร์ (ช่องด่วน VIP)')
+                .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (VIP Stream Lanes)')
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl)
         );
 
         // 1. Slot Guard Check
-        const slotCheck = subscriptionManager.checkStreamSlot(interaction.guild.id, kazagumo, client);
+        const slotCheck = subscriptionManager.checkStreamSlot(guildId, kazagumo, client);
         if (!slotCheck.allowed) {
             embed.setColor('#FFD600')
                 .setTitle('⚠️ ช่องสัญญาณเซิร์ฟเวอร์เต็ม')
@@ -90,12 +92,12 @@ module.exports = {
             player.queue.add(track);
         }
 
-        let desc = `✅ จัดไปชุดใหญ่ไฟกระพริบ! เพิ่มเพลย์ลิสต์ **${result.playlistName}** (${addedTracks.length} เพลง) ลงในคิวแล้วค่ะ 💃✨`;
+        let desc = `📋 **${result.playlistName || 'Playlist'}**\n\n${i18n.t(guildId, 'PLAYLIST_ADDED')} (${addedTracks.length} tracks)`;
         if (skippedOver30Min > 0) {
-            desc += `\n*(ข้ามเพลงที่ยาวเกิน 30 นาทีไป ${skippedOver30Min} เพลงสำหรับผู้ใช้ทั่วไปค่ะ)*`;
+            desc += `\n*(Skipped ${skippedOver30Min} tracks > 30 mins for Free Tier)*`;
         }
         if (player.queue.length >= tierConfig.maxQueue) {
-            desc += `\n*(คิวเต็มเพดาน ${tierConfig.maxQueue} เพลงแล้วค่ะ อัปเกรดเป็นผู้สนับสนุนเพื่อขยายเป็น 50 เพลงที่ \`/gdonate\` นะคะ)*`;
+            desc += `\n*(${i18n.t(guildId, 'QUEUE_LIMIT_FREE')})*`;
         }
 
         embed.setDescription(desc);
