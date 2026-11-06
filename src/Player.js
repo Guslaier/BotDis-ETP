@@ -348,6 +348,7 @@ class Player {
             this.queue.current = track;
             this._position = 0;
             this.playbackStartTime = Date.now();
+            this.manager.emit('playerPrepare', this, track);
             if (track) {
                 if (track.identifier) this.playedHistory.add(track.identifier);
                 if (track.uri) this.playedHistory.add(track.uri);

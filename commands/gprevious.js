@@ -14,19 +14,15 @@ module.exports = {
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
-        const previousTrack = player.queue.previous;
-        if (!previousTrack) {
+        const hasPrev = !!(player.queue.previous || (player.previousTracks && player.previousTracks.length > 0));
+        if (!hasPrev) {
             embed.setDescription('❌ อ๊ะ! ไม่มีเพลงก่อนหน้านี้ในประวัติเลยค่ะ เพิ่งเริ่มปาร์ตี้เองน้า~ 😅');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
-        const success = await player.playPrevious();
-        if (!success) {
-            embed.setDescription('❌ อ๊ะ! ไม่มีเพลงก่อนหน้านี้ในประวัติเลยค่ะ เพิ่งเริ่มปาร์ตี้เองน้า~ 😅');
-            return interaction.reply({ embeds: [embed], flags: 64 });
-        }
-
-        embed.setDescription(`⏪ จัดให้ตามคำเรียกร้อง! ย้อนกลับไปเล่นเพลง **${previousTrack.title}** อีกรอบค่ะ 💖`);
+        player.playPrevious();
+        const targetTitle = player.queue.current?.title || player.queue.previous?.title || 'เพลงก่อนหน้า';
+        embed.setDescription(`⏮️ จัดให้ตามคำเรียกร้อง! กำลังย้อนกลับไปเล่นเพลง: **${targetTitle}** ค่ะ 💖`);
         return interaction.reply({ embeds: [embed] });
     }
 };

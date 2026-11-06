@@ -4,7 +4,7 @@ const path = require('path');
 const { Client, GatewayIntentBits, Options, Collection, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const QueueManager = require('./src/QueueManager');
 const cacheManager = require('./src/CacheManager');
-const { createNowPlayingCard } = require('./src/helpers/musicCardHelper');
+const { createNowPlayingCard, createPreparingCard } = require('./src/helpers/musicCardHelper');
 const favoriteManager = require('./src/helpers/favoriteManager');
 const AdminServer = require('./src/web/AdminServer');
 const subscriptionManager = require('./src/billing/subscriptionManager');
@@ -58,6 +58,24 @@ for (const file of commandFiles) {
 // สร้าง Audio Engine และ QueueManager
 const kazagumo = new QueueManager(client);
 
+// Event เมื่อกำลังเตรียมโหลดเพลงถัดไป
+kazagumo.on("playerPrepare", async (player, track) => {
+    if (!player || player._destroyed || !player.connection) return;
+    if (!player.textId) return;
+    const channel = client.channels.cache.get(player.textId);
+    if (!channel) return;
+
+    try {
+        const prepCard = createPreparingCard(player, track, 'กำลังเตรียมสตรีมเสียง...');
+        if (player.nowPlayingMessage) {
+            await player.nowPlayingMessage.edit(prepCard).catch(() => {});
+            return;
+        }
+        const msg = await channel.send(prepCard).catch(() => {});
+        if (msg) player.nowPlayingMessage = msg;
+    } catch {}
+});
+
 // Event เมื่อเริ่มเล่นเพลง
 kazagumo.on("playerStart", async (player, track) => {
     if (!player || player._destroyed || !player.connection) return;
@@ -66,15 +84,16 @@ kazagumo.on("playerStart", async (player, track) => {
     const channel = client.channels.cache.get(player.textId);
     if (!channel) return;
 
-    if (player.nowPlayingMessage) {
-        try {
-            await player.nowPlayingMessage.delete().catch(() => {});
-        } catch {}
-        player.nowPlayingMessage = null;
-    }
-
     try {
         const cardData = createNowPlayingCard(player, track);
+        if (player.nowPlayingMessage) {
+            try {
+                await player.nowPlayingMessage.edit(cardData);
+                return;
+            } catch {
+                player.nowPlayingMessage = null;
+            }
+        }
         const msg = await channel.send(cardData);
         player.nowPlayingMessage = msg;
     } catch (err) {
@@ -235,9 +254,14 @@ client.on('interactionCreate', async interaction => {
                 if (!player.queue.previous && (!player.previousTracks || player.previousTracks.length === 0)) {
                     return interaction.deferUpdate();
                 }
-                await interaction.deferUpdate();
-                await player.playPrevious();
-                return;
+                player.playPrevious();
+                if (player.queue.current) {
+                    const prepCard = createPreparingCard(player, player.queue.current, 'กำลังย้อนกลับไปเพลงก่อนหน้า...');
+                    try {
+                        return await interaction.update(prepCard);
+                    } catch {}
+                }
+                return interaction.deferUpdate();
             }
             case 'music_backward': {
                 const track = player.queue.current;
@@ -287,9 +311,14 @@ client.on('interactionCreate', async interaction => {
                 }
             }
             case 'music_skip': {
-                await interaction.deferUpdate();
                 player.skip();
-                return;
+                if (player.queue.current) {
+                    const prepCard = createPreparingCard(player, player.queue.current, 'กำลังข้ามเพลง...');
+                    try {
+                        return await interaction.update(prepCard);
+                    } catch {}
+                }
+                return interaction.deferUpdate();
             }
             case 'music_loop': {
                 player.cycleLoop();

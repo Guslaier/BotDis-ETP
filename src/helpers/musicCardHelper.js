@@ -182,8 +182,73 @@ function createNowPlayingCard(player, track) {
     };
 }
 
+function createPreparingCard(player, track, customStatus = 'กำลังเตรียมเพลงถัดไป...') {
+    const safeTitle = track?.title || 'เพลงถัดไป...';
+    const safeAuthor = track?.author || 'กำลังค้นหาและเชื่อมต่อสัญญาณเสียง...';
+
+    const embed = new EmbedBuilder()
+        .setColor('#FFA500')
+        .setAuthor({
+            name: `${player.manager.client.user.username}  •  Preparing Stream ⏳`,
+            iconURL: player.manager.client.user.displayAvatarURL()
+        })
+        .setTitle(safeTitle)
+        .setDescription(
+            `**${safeAuthor}**\n\n` +
+            `\`⏳ ${customStatus}\`  \`⚡ Buffering...\`\n\n` +
+            `\`00:00\`  ⏳ ━━━━━━━━━━━━━━  \`--:--\``
+        );
+
+    if (track?.thumbnail) {
+        embed.setThumbnail(track.thumbnail);
+    }
+
+    const voiceChannel = player.manager.client.channels.cache.get(player.voiceId);
+    const channelName = voiceChannel ? voiceChannel.name : 'Voice Channel';
+    const membersCount = voiceChannel ? voiceChannel.members.filter(m => !m.user.bot).size : 1;
+    embed.setFooter({
+        text: `🔊 #${channelName}  •  👥 ${membersCount} listening  •  Loading...`
+    });
+
+    const hasPrev = !!(player.queue.previous || (player.previousTracks && player.previousTracks.length > 0));
+
+    // Keep Row 1 buttons visible and allow continuous skipping/previous
+    const row1 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('music_previous')
+            .setEmoji('⏮️')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(!hasPrev),
+        new ButtonBuilder()
+            .setCustomId('music_backward')
+            .setEmoji('⏪')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+        new ButtonBuilder()
+            .setCustomId('music_pause_resume')
+            .setEmoji('⏳')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+        new ButtonBuilder()
+            .setCustomId('music_forward')
+            .setEmoji('⏩')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+        new ButtonBuilder()
+            .setCustomId('music_skip')
+            .setEmoji('⏭️')
+            .setStyle(ButtonStyle.Secondary)
+    );
+
+    return {
+        embeds: [embed],
+        components: [row1]
+    };
+}
+
 module.exports = {
     createNowPlayingCard,
+    createPreparingCard,
     formatDuration,
     createProgressBar
 };

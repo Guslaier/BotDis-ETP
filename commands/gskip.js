@@ -15,7 +15,8 @@ module.exports = {
         }
 
         player.skip();
-        embed.setDescription('⏭️ จัดไปค่ะ! ข้ามเพลงนี้ให้แล้ว ไปลุยเพลงต่อไปกันเลยยย 💅✨');
+        const nextTitle = player.queue.current?.title || 'เพลงถัดไป';
+        embed.setDescription(`⏭️ จัดไปค่ะ! ข้ามเพลงนี้แล้ว กำลังเตรียมเล่น: **${nextTitle}** ค่ะ 💅✨`);
         return interaction.reply({ embeds: [embed] });
     }
 };
