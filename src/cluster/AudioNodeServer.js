@@ -5,6 +5,14 @@ const os = require('os');
 const cacheManager = require('../CacheManager');
 const proxyManager = require('../helpers/proxyManager');
 
+// Clear system proxy variables so yt-dlp always uses direct residential internet when no proxy configured
+delete process.env.http_proxy;
+delete process.env.https_proxy;
+delete process.env.HTTP_PROXY;
+delete process.env.HTTPS_PROXY;
+delete process.env.all_proxy;
+delete process.env.ALL_PROXY;
+
 class AudioNodeServer {
     constructor() {
         this.port = parseInt(process.env.NODE_PORT || '2333', 10);
@@ -162,9 +170,10 @@ class AudioNodeServer {
                 const volume = parseInt(query.volume || '100', 10) || 100;
                 const filter = query.filter || 'off';
                 const bitrate = query.bitrate || '64k';
+                const title = query.title ? decodeURIComponent(query.title) : 'Track';
 
                 this.activeStreams++;
-                console.log(`[AudioNode] Stream requested: ${uri} (Active: ${this.activeStreams}/${this.maxRooms})`);
+                console.log(`[AudioNode] Stream requested: "${title}" (${uri}) (Active: ${this.activeStreams}/${this.maxRooms})`);
 
                 let streamInstance = null;
                 let isTerminated = false;
@@ -176,7 +185,7 @@ class AudioNodeServer {
                     if (streamInstance && typeof streamInstance.kill === 'function') {
                         try { streamInstance.kill(); } catch {}
                     }
-                    console.log(`[AudioNode] Stream terminated: ${uri} (Remaining: ${this.activeStreams})`);
+                    console.log(`[AudioNode] Stream terminated: "${title}" (${uri}) (Remaining: ${this.activeStreams})`);
                 };
 
                 req.on('close', cleanup);
@@ -184,8 +193,8 @@ class AudioNodeServer {
                 res.on('error', cleanup);
 
                 try {
-                    const track = { title: 'RemoteStream', uri };
-                    streamInstance = await cacheManager._spawnPipedStream(
+                    const track = { title, uri };
+                    const spawned = await cacheManager._spawnPipedStream(
                         track,
                         uri,
                         seekSeconds,
@@ -195,6 +204,13 @@ class AudioNodeServer {
                         filter,
                         bitrate
                     );
+
+                    if (isTerminated) {
+                        try { spawned.kill(); } catch {}
+                        return;
+                    }
+
+                    streamInstance = spawned;
 
                     res.writeHead(200, {
                         'Content-Type': 'audio/ogg; codecs=opus',

@@ -548,8 +548,23 @@ class AdminServer {
                 const vpnServerName = typeof proxyManager.getVpnServerName === 'function' ? proxyManager.getVpnServerName() : 'Direct';
                 const isVpnActive = proxyManager.vpnEnabled && !!vpnSourceIp;
 
+                let localRoomsCount = 0;
+                const remoteNodeRooms = new Map();
+
+                if (this.kazagumo && this.kazagumo.players) {
+                    for (const [gId, p] of this.kazagumo.players.entries()) {
+                        if (!p || !p.connection || p._destroyed) continue;
+                        const nId = p.node?.id || 'local-0';
+                        if (nId === 'local-0') {
+                            localRoomsCount++;
+                        } else {
+                            remoteNodeRooms.set(nId, (remoteNodeRooms.get(nId) || 0) + 1);
+                        }
+                    }
+                }
+
                 nodeRouter.updateLocalStats({
-                    activeRooms: streamStats.total,
+                    activeRooms: localRoomsCount,
                     maxRooms: maxTotal,
                     cpu: cpuUsage.display,
                     ram: `${rssMb} MB (Node)`,
@@ -562,7 +577,15 @@ class AdminServer {
                     }
                 });
 
-                const nodes = nodeRouter.getNodes();
+                const nodes = nodeRouter.getNodes().map(n => {
+                    if (n.type === 'remote') {
+                        return {
+                            ...n,
+                            activeRooms: remoteNodeRooms.get(n.id) || 0
+                        };
+                    }
+                    return n;
+                });
 
                 return this._sendJson(res, 200, {
                     success: true,

@@ -497,6 +497,7 @@ class CacheManager {
         return new Promise((resolve, reject) => {
             const queryParams = new URLSearchParams({
                 uri: track.uri,
+                title: track.title || '',
                 seek: String(seekSeconds),
                 volume: String(volume),
                 filter: String(filter),

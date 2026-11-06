@@ -256,7 +256,7 @@ class ProxyManager {
         if (proxy) {
             return ['--proxy', proxy];
         }
-        return [];
+        return ['--proxy', ''];
     }
 
     /**
