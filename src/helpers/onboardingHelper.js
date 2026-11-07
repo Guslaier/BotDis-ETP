@@ -70,7 +70,7 @@ class OnboardingHelper {
                     inline: false
                 },
                 {
-                    name: '💎 3. Supporter VIP Perks / สิทธิพิเศษผู้สนับสนุน',
+                    name: '💎 3. Supporter Perks / สิทธิพิเศษผู้สนับสนุน',
                     value: [
                         '⚡ **Priority Lane** — Instant stream slot, no waiting in line',
                         '🎵 **Extended Queue** — Up to 50 songs & 25 playlist items',
@@ -97,7 +97,7 @@ class OnboardingHelper {
 
         const actionRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 VIP Supporter Portal')
+                .setLabel('💖 Supporter Portal')
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl),
             new ButtonBuilder()
@@ -184,7 +184,7 @@ class OnboardingHelper {
                         name: isEn ? '🎛️ Audio & Stage Management' : '🎛️ ปรับแต่งเสียง & ระบบ',
                         value: [
                             '`/gvolume <0-150>` — Adjust stage volume',
-                            '`/gfilter` — Equalizer & BassBoost (Supporter VIP)',
+                            '`/gfilter` — Equalizer & BassBoost (Supporter)',
                             '`/gautoplay` — Toggle auto-queuing similar tracks',
                             '`/gnowplaying` — Open interactive stage dashboard',
                             '`/glang` — Switch server language anytime'

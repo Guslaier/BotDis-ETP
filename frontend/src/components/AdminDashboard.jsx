@@ -495,7 +495,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             {data?.stats?.slots?.total || 0} / {data?.stats?.slots?.maxTotal || 12}
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
-            Free: {data?.stats?.slots?.free || 0}/{data?.stats?.slots?.maxFree || 6} • VIP Max: {data?.stats?.slots?.dynamicVipMax || 0}
+            Free: {data?.stats?.slots?.free || 0}/{data?.stats?.slots?.maxFree || 6} • Supporter Max: {data?.stats?.slots?.dynamicVipMax || 0}
           </div>
         </div>
 
@@ -529,7 +529,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             {data?.guilds?.length || 0}
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
-            {data?.guilds?.filter(g => g.isSupporter).length || 0} VIP Supporters
+            {data?.guilds?.filter(g => g.isSupporter).length || 0} Supporters
           </div>
         </div>
 
@@ -1035,7 +1035,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     <tr key={p.guildId}>
                       <td style={{ fontWeight: 700, color: '#FFF' }}>
                         {p.guildName}
-                        {p.isSupporter && <span className="slime-badge" style={{ marginLeft: 6, fontSize: 9 }}>VIP</span>}
+                        {p.isSupporter && <span className="slime-badge" style={{ marginLeft: 6, fontSize: 9 }}>SUPPORTER</span>}
                       </td>
                       <td style={{ maxWidth: 280, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {p.trackTitle}
@@ -1146,7 +1146,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                       {g.isBanned ? (
                         <span style={{ color: 'var(--danger)', fontWeight: 700, fontSize: 11 }}>BANNED</span>
                       ) : g.isSupporter ? (
-                        <span className="slime-badge" style={{ fontSize: 10 }}>VIP SUPPORTER</span>
+                        <span className="slime-badge" style={{ fontSize: 10 }}>SUPPORTER</span>
                       ) : (
                         <span style={{ color: 'var(--text-dim)', fontSize: 11 }}>FREE</span>
                       )}
@@ -1716,7 +1716,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   {lang === 'th' ? 'สถานะปัจจุบัน:' : 'Current Status:'}
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: isCurrentlySupporter ? 'var(--slime-green)' : 'var(--text-dim)' }}>
-                  {isCurrentlySupporter ? `VIP SUPPORTER (${currentRemainingDays} วัน • หมดอายุ: ${new Date(adjustDaysModal.expiresAt).toLocaleDateString('th-TH')})` : 'FREE (ยังไม่มีวันใช้งาน)'}
+                  {isCurrentlySupporter ? `SUPPORTER (${currentRemainingDays} วัน • หมดอายุ: ${new Date(adjustDaysModal.expiresAt).toLocaleDateString('th-TH')})` : 'FREE (ยังไม่มีวันใช้งาน)'}
                 </span>
               </div>
 

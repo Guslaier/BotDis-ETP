@@ -5,7 +5,7 @@ const i18n = require('../src/helpers/i18nHelper');
 module.exports = {
     data: {
         name: 'gfilter',
-        description: 'Apply audio Equalizer and tone filters (VIP Supporter)',
+        description: 'Apply audio Equalizer and tone filters (Supporter)',
         options: [
             {
                 name: 'mode',
@@ -39,7 +39,7 @@ module.exports = {
             }
             embed.setColor('#FF2E93')
                 .setTitle('💎 Supporter Feature')
-                .setDescription(i18n.t(guildId, 'FILTER_VIP_ONLY'));
+                .setDescription(i18n.t(guildId, 'FILTER_SUPPORTER_ONLY'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

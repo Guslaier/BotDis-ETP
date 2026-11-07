@@ -5,7 +5,7 @@ const truemoneyGateway = require('../src/billing/truemoneyGateway');
 module.exports = {
     data: {
         name: 'gdonate',
-        description: 'Server supporter perks, VIP status, and donation',
+        description: 'Server supporter perks, membership status, and donation',
         options: [
             {
                 name: 'status',
@@ -73,7 +73,7 @@ module.exports = {
                     },
                     {
                         name: '📊 ระดับสมาชิก',
-                        value: isSupporter ? '💎 **VIP SUPPORTER**' : '🆓 **Standard (Free Tier)**',
+                        value: isSupporter ? '💎 **SUPPORTER**' : '🆓 **Standard (Free Tier)**',
                         inline: true
                     },
                     {
@@ -87,7 +87,7 @@ module.exports = {
                         inline: false
                     },
                     {
-                        name: '✨ สิทธิประโยชน์ผู้สนับสนุน (VIP Perks)',
+                        name: '✨ สิทธิประโยชน์ผู้สนับสนุน (Supporter Perks)',
                         value: [
                             '⚡ **Priority Lane** — ช่องสัญญาณด่วน การันตีเข้าเล่นทันที ไม่ติดคิว',
                             '🎵 **Extended Queue** — คิวสูงสุด 50 เพลง & เพลย์ลิสต์ครั้งละ 25 เพลง',

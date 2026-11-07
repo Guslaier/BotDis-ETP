@@ -153,7 +153,7 @@ class SubscriptionManager extends EventEmitter {
                 }
             }
         }
-        console.log(`[SubscriptionManager] Enforced FREE downgrade on guild ${guildId} (VIP features stripped).`);
+        console.log(`[SubscriptionManager] Enforced FREE downgrade on guild ${guildId} (Supporter features stripped).`);
     }
 
     /**

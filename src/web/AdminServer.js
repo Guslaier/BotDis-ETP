@@ -524,7 +524,7 @@ class AdminServer {
                                 source: sourceLabel,
                                 sourceBadge: sourceLabel,
                                 sourceType: isSoundCloud ? 'soundcloud' : 'youtube',
-                                bitrate: isSupp ? '96 kbps (VIP)' : '64 kbps',
+                                bitrate: isSupp ? '96 kbps (Supporter)' : '64 kbps',
                                 isSupporter: isSupp,
                                 listeners,
                                 elapsed: `${this._formatDuration(currentPos)} / ${this._formatDuration(currentDuration)}`,

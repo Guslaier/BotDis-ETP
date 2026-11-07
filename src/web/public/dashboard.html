@@ -318,7 +318,7 @@
     <div class="stat-card">
         <h4 id="lblStatSlots">ช่องสัญญาณสตรีม (Slots)</h4>
         <div class="val" id="slotVal">0 / 12</div>
-        <div class="sub" id="slotSub">สายฟรี: 0/6 • VIP ใช้ได้สูงสุด: 12 ห้อง</div>
+        <div class="sub" id="slotSub">สายฟรี: 0/6 • Supporter ใช้ได้สูงสุด: 12 ห้อง</div>
     </div>
     <!-- 2. CPU & RAM -->
     <div class="stat-card">
@@ -913,7 +913,7 @@
 
         const dynamicVip = slots.dynamicVipMax !== undefined ? slots.dynamicVipMax : Math.max(0, (slots.maxTotal || 12) - (slots.free || 0));
         document.getElementById('slotVal').textContent = `${slots.total || 0} / ${slots.maxTotal || 12}`;
-        document.getElementById('slotSub').textContent = `สายฟรี: ${slots.free || 0}/${slots.maxFree || 6} • VIP เข้าได้สูงสุด: ${dynamicVip} ห้อง (Dynamic)`;
+        document.getElementById('slotSub').textContent = `สายฟรี: ${slots.free || 0}/${slots.maxFree || 6} • Supporter เข้าได้สูงสุด: ${dynamicVip} ห้อง (Dynamic)`;
 
         const cpuText = s.cpu || '0%';
         if (s.hostRam) {
@@ -1034,7 +1034,7 @@
                 <tr>
                     <td><strong>${safeName}</strong><br><span style="font-size: 11px; color: var(--text-sub);">${g.guildId}</span></td>
                     <td>
-                        <span class="badge-pill ${g.isSupporter ? 'badge-vip' : 'badge-free'}">${g.isSupporter ? 'VIP 96k' : 'FREE 64k'}</span>
+                        <span class="badge-pill ${g.isSupporter ? 'badge-vip' : 'badge-free'}">${g.isSupporter ? 'Supporter 96k' : 'FREE 64k'}</span>
                         ${g.isBanned ? '<br><span class="badge-pill" style="margin-top: 4px; background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid #EF4444;">⛔ BANNED</span>' : ''}
                     </td>
                     <td>

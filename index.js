@@ -345,7 +345,7 @@ client.on('interactionCreate', async interaction => {
                         } catch {}
                     }
                     return interaction.reply({
-                        content: i18n.t(player.guildId, 'AUTOPLAY_VIP_ONLY'),
+                        content: i18n.t(player.guildId, 'AUTOPLAY_SUPPORTER_ONLY'),
                         flags: MessageFlags.Ephemeral
                     });
                 }

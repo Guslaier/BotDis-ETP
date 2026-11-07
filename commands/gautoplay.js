@@ -5,7 +5,7 @@ const subscriptionManager = require('../src/billing/subscriptionManager');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gautoplay')
-        .setDescription('Toggle smart continuous autoplay when queue ends (VIP Supporter)'),
+        .setDescription('Toggle smart continuous autoplay when queue ends (Supporter)'),
 
     run: async (client, interaction, kazagumo) => {
         const guildId = interaction.guild.id;
@@ -25,7 +25,7 @@ module.exports = {
             }
             embed.setColor('#FF2E93')
                 .setTitle('💎 ฟีเจอร์สำหรับผู้สนับสนุนเซิร์ฟเวอร์')
-                .setDescription('ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) สงวนไว้สำหรับเซิร์ฟเวอร์ **Supporter (VIP)** ค่ะ!\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุนค่าเซิร์ฟเวอร์เริ่มต้นเพียง **29฿/เดือน** นะคะ~ 💖');
+                .setDescription('ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) สงวนไว้สำหรับเซิร์ฟเวอร์ **Supporter** ค่ะ!\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุนค่าเซิร์ฟเวอร์เริ่มต้นเพียง **29฿/เดือน** นะคะ~ 💖');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

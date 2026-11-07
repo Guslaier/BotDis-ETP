@@ -17,7 +17,7 @@ module.exports = {
             {
                 name: 'limit',
                 type: 4, // INTEGER
-                description: 'Maximum tracks to import into queue (Free: 1-5, VIP: 1-25)',
+                description: 'Maximum tracks to import into queue (Free: 1-5, Supporter: 1-25)',
                 required: false,
                 min_value: 1,
                 max_value: 25,
@@ -39,7 +39,7 @@ module.exports = {
         const donateUrl = `${host}/donate?guildId=${guildId}&userId=${interaction.user.id}`;
         const donateRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (VIP Stream Lanes)')
+                .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (Supporter Stream Lanes)')
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl)
         );

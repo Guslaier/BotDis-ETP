@@ -73,7 +73,7 @@ module.exports = {
                         '`/gforward` - Fast forward by seconds',
                         '`/gbackward` - Rewind by seconds',
                         '`/gautoplay` - Toggle intelligent continuous autoplay [Supporter]',
-                        '`/gdonate` - Server Supporter VIP portal & top-up perks (status, support, redeem)'
+                        '`/gdonate` - Server Supporter portal & top-up perks (status, support, redeem)'
                     ].join('\n') : [
                         '`/gvolume` - ปรับระดับความดังของเสียง (0 - 150%)',
                         '`/gfilter` - ปรับแต่งเสียง Equalizer (BassBoost, Nightcore, Pop ฯลฯ) [Supporter]',

@@ -11,7 +11,7 @@ const dictionary = {
         QUEUE_EMPTY: '🎵 คิวเพลงว่างเปล่าแล้ว! GOOLIX สไลม์เขียวขอแวบไปชาร์จบีตก่อนนะ 🎧🔋',
         NOW_PLAYING: '▶️ สเตจพร้อม! GOOLIX เริ่มเปิดเพลงแล้ว 🎶🟢',
         ADDED_QUEUE: '✅ รับทราบ! GOOLIX จับลงคิวให้แล้ว เตรียมตัวโยกได้เลย ⚡🟢',
-        VIP_PRIORITY_ADDED: '⬆️ VIP สุดๆ! แซงคิวขึ้นเป็นเพลงถัดไปให้ทันใจ 💎✨',
+        SUPPORTER_PRIORITY_ADDED: '⬆️ Priority Fast-Track! แซงคิวขึ้นเป็นเพลงถัดไปให้ทันใจ 💎✨',
         PLAYLIST_ADDED: '📋 โหลดเพลย์ลิสต์สำเร็จ! เพิ่มเพลงเข้าคิวให้เรียบร้อยแล้ว 🎶🟢',
         RESUMED: '▶️ ลุยกันต่อเลย! GOOLIX คัมแบ็ก ปล่อยบีตโยกต่อยาวๆ 🎧🟢',
         PAUSED: '⏸️ พักเบรกจังหวะชั่วคราว กดเล่นต่อเมื่อพร้อมนะ 🟢',
@@ -21,12 +21,12 @@ const dictionary = {
         STOPPED: '⏹️ หยุดเล่นเพลงและเคลียร์คิวเรียบร้อยแล้ว!',
 
         // Supporter & Quotas
-        AUTOPLAY_VIP_ONLY: '💎 ฟีเจอร์ **เล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)** สงวนไว้สำหรับเซิร์ฟเวอร์ผู้สนับสนุน (Supporter VIP) นะ!\n\nพิมพ์ `/gdonate` หรือเข้าเว็บเติมเงินเพื่อร่วมสนับสนุนเริ่มต้นเพียง **29฿/เดือน** 💖',
-        FILTER_VIP_ONLY: '💎 ระบบปรับแต่งโทนเสียง Equalizer สงวนไว้สำหรับเซิร์ฟเวอร์ **Supporter (VIP)** นะ!\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุนค่าเซิร์ฟเวอร์เริ่มต้นเพียง **29฿/เดือน** 💖',
+        AUTOPLAY_SUPPORTER_ONLY: '💎 ฟีเจอร์ **เล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)** สงวนไว้สำหรับเซิร์ฟเวอร์ผู้สนับสนุน (Supporter) นะ!\n\nพิมพ์ `/gdonate` หรือเข้าเว็บเติมเงินเพื่อร่วมสนับสนุนเริ่มต้นเพียง **29฿/เดือน** 💖',
+        FILTER_SUPPORTER_ONLY: '💎 ระบบปรับแต่งโทนเสียง Equalizer สงวนไว้สำหรับเซิร์ฟเวอร์ **Supporter** นะ!\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุนค่าเซิร์ฟเวอร์เริ่มต้นเพียง **29฿/เดือน** 💖',
         SLOTS_FULL: '⚠️ ขณะนี้ช่องสัญญาณทั่วไปเต็มแล้ว ({current}/{max} ห้อง) — ร่วมสนับสนุนเซิร์ฟเวอร์เพื่อเข้าใช้ช่องทางด่วนได้ทันที!',
         SONG_TOO_LONG: '⏳ เพลงนี้ยาวเกิน 30 นาที ({duration}) — สิทธิพิเศษสำหรับผู้สนับสนุนฟังได้ยาวไม่จำกัด!',
         QUEUE_LIMIT_FREE: '⚠️ คิวเพลงเซิร์ฟเวอร์ทั่วไปจำกัดสูงสุด 10 เพลง — ร่วมสนับสนุนเซิร์ฟเวอร์เพื่อขยายคิวเป็น 50 เพลง!',
-        PLAYLIST_LIMIT_FREE: '⚠️ เซิร์ฟเวอร์ทั่วไป (Free) สามารถดึงเพลย์ลิสต์ได้ครั้งละสูงสุด 5 เพลงค่ะ (อัปเกรด VIP ดึงได้สูงสุด 25 เพลง)',
+        PLAYLIST_LIMIT_FREE: '⚠️ เซิร์ฟเวอร์ทั่วไป (Free) สามารถดึงเพลย์ลิสต์ได้ครั้งละสูงสุด 5 เพลงค่ะ (อัปเกรด Supporter ดึงได้สูงสุด 25 เพลง)',
         FILTER_CHANGED: '🎛️ ปรับแต่งโทนเสียง Equalizer เป็น: **{filter}**\n*(มีผลทันทีกับเพลงที่กำลังเล่นและเพลงถัดไป)*',
 
         // Language command
@@ -42,7 +42,7 @@ const dictionary = {
         QUEUE_EMPTY: '🎵 Queue is empty! GOOLIX Slime DJ is bouncing out to recharge the beats! 🎧🔋',
         NOW_PLAYING: '▶️ Stage is live! GOOLIX is dropping the track 🎶🟢',
         ADDED_QUEUE: '✅ Added to queue! GOOLIX is lining up the groove ⚡🟢',
-        VIP_PRIORITY_ADDED: '⬆️ VIP Fast-Track! Jumped straight to next up in queue 💎✨',
+        SUPPORTER_PRIORITY_ADDED: '⬆️ Priority Fast-Track! Jumped straight to next up in queue 💎✨',
         PLAYLIST_ADDED: '📋 Playlist loaded! Tracks added to queue smoothly 🎶🟢',
         RESUMED: '▶️ Resumed! GOOLIX is back with the high-voltage groove 🎧🟢',
         PAUSED: '⏸️ Playback paused. Hit resume whenever you are ready 🟢',
@@ -52,12 +52,12 @@ const dictionary = {
         STOPPED: '⏹️ Playback stopped and queue cleared!',
 
         // Supporter & Quotas
-        AUTOPLAY_VIP_ONLY: '💎 **Autoplay Mode** is reserved for Server Supporters (VIP)!\n\nType `/gdonate` or visit the web portal to support starting at only **29฿/month** 💖',
-        FILTER_VIP_ONLY: '💎 Equalizer Audio Filters are reserved for **Server Supporters (VIP)**!\n\nType `/gdonate` to support the server starting at only **29฿/month** 💖',
+        AUTOPLAY_SUPPORTER_ONLY: '💎 **Autoplay Mode** is reserved for Server Supporters!\n\nType `/gdonate` or visit the web portal to support starting at only **29฿/month** 💖',
+        FILTER_SUPPORTER_ONLY: '💎 Equalizer Audio Filters are reserved for **Server Supporters**!\n\nType `/gdonate` to support the server starting at only **29฿/month** 💖',
         SLOTS_FULL: '⚠️ Free stream slots are full ({current}/{max} rooms) — Support GOOLIX to access priority lanes instantly!',
         SONG_TOO_LONG: '⏳ Track exceeds 30 minutes ({duration}) — Supporters enjoy unlimited song length!',
         QUEUE_LIMIT_FREE: '⚠️ Free queue limit reached (10 songs max) — Become a Supporter to expand queue up to 50 songs!',
-        PLAYLIST_LIMIT_FREE: '⚠️ Free servers can add up to 5 songs per playlist (Upgrade to VIP for up to 25 songs)',
+        PLAYLIST_LIMIT_FREE: '⚠️ Free servers can add up to 5 songs per playlist (Upgrade to Supporter for up to 25 songs)',
         FILTER_CHANGED: '🎛️ Equalizer tone set to: **{filter}**\n*(Applied immediately to current and upcoming tracks)*',
 
         // Language command

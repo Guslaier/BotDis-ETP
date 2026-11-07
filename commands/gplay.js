@@ -43,7 +43,7 @@ module.exports = {
         const donateUrl = `${host}/donate?guildId=${guildId}&userId=${interaction.user.id}`;
         const donateRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (VIP Stream Lanes)')
+                .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (Supporter Stream Lanes)')
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl)
         );
@@ -133,7 +133,7 @@ module.exports = {
             }
 
             const isPlaying = (player.playing || player._starting);
-            const msgKey = !isPlaying ? 'NOW_PLAYING' : (top ? 'VIP_PRIORITY_ADDED' : 'ADDED_QUEUE');
+            const msgKey = !isPlaying ? 'NOW_PLAYING' : (top ? 'SUPPORTER_PRIORITY_ADDED' : 'ADDED_QUEUE');
             embed.setDescription(`**${track.title}**\n\n${i18n.t(guildId, msgKey)}`);
             await interaction.followUp({ embeds: [embed] });
         }

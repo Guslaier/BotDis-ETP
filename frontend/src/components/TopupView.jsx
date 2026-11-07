@@ -154,7 +154,7 @@ export default function TopupView({ lang, onToast }) {
 
   const formatExpiry = (timestamp) => {
     if (!timestamp || timestamp <= Date.now()) {
-      return lang === 'th' ? 'ยังไม่มีแพ็กเกจ (สายฟรี)' : 'Free Tier (No Active VIP)';
+      return lang === 'th' ? 'ยังไม่มีแพ็กเกจ (สายฟรี)' : 'Free Tier (No Active Supporter)';
     }
     const diff = timestamp - Date.now();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -316,7 +316,7 @@ export default function TopupView({ lang, onToast }) {
                   gap: 6
                 }}>
                   {guildData.guild.isSupporter ? <ShieldCheck size={14} /> : null}
-                  {guildData.guild.isSupporter ? 'VIP SUPPORTER' : 'FREE TIER'}
+                  {guildData.guild.isSupporter ? 'SUPPORTER' : 'FREE TIER'}
                 </span>
               </div>
 
@@ -468,7 +468,7 @@ export default function TopupView({ lang, onToast }) {
             alignItems: 'center'
           }}>
             <span>{lang === 'th' ? 'อัตราค่าบริการมาตรฐาน:' : 'Standard Pricing:'}</span>
-            <strong style={{ color: '#FFF' }}>29 บาท = 30 วัน VIP</strong>
+            <strong style={{ color: '#FFF' }}>29 บาท = 30 วัน (Supporter)</strong>
           </div>
         </div>
       </div>
@@ -511,7 +511,7 @@ export default function TopupView({ lang, onToast }) {
             </ul>
           </div>
 
-          {/* VIP Supporter */}
+          {/* Supporter */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(0, 255, 136, 0.08) 0%, rgba(17, 22, 32, 0.95) 100%)',
             border: '1px solid var(--slime-green)',
@@ -522,7 +522,7 @@ export default function TopupView({ lang, onToast }) {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div>
-                <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--slime-green)' }}>VIP SUPPORTER</span>
+                <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--slime-green)' }}>SUPPORTER</span>
                 <span className="slime-badge" style={{ marginLeft: 8, fontSize: 10 }}>RECOMMENDED</span>
               </div>
               <span style={{ fontWeight: 700, fontSize: 14, color: '#FFF' }}>29฿ / 30 วัน</span>
@@ -534,7 +534,7 @@ export default function TopupView({ lang, onToast }) {
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Music2 size={14} style={{ color: 'var(--slime-green)' }} />
-                <span>การันตีสล็อตสตรีมเสียงเฉพาะ VIP ไม่ต้องรอคิว</span>
+                <span>การันตีสล็อตสตรีมเสียงเฉพาะ Supporter ไม่ต้องรอคิว</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Sliders size={14} style={{ color: 'var(--slime-green)' }} />
