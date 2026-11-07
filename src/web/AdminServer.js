@@ -513,7 +513,7 @@ class AdminServer {
                             const currentDuration = p.queue.current?.length || 0;
                             const currentPos = p.position || 0;
                             const isSoundCloud = p.queue.current?.uri?.includes('soundcloud.com');
-                            const sourceLabel = isSoundCloud ? '🟠 เมฆส้ม' : '🔴 นกแดง';
+                            const sourceLabel = isSoundCloud ? 'SoundCloud' : 'YouTube';
 
                             playersList.push({
                                 guildId: gId,
@@ -522,6 +522,7 @@ class AdminServer {
                                 title: title,
                                 source: sourceLabel,
                                 sourceBadge: sourceLabel,
+                                sourceType: isSoundCloud ? 'soundcloud' : 'youtube',
                                 bitrate: isSupp ? '96 kbps (VIP)' : '64 kbps',
                                 isSupporter: isSupp,
                                 listeners,

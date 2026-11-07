@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Shield, Server, HardDrive, Wifi, Activity, Cpu, RotateCw, 
   Trash2, Play, Square, FastForward, Search, Plus, Ban, CheckCircle, 
-  AlertTriangle, Settings, RefreshCw, Power, Radio, Sliders, ExternalLink
+  AlertTriangle, Settings, RefreshCw, Power, Radio, Sliders, ExternalLink,
+  Users, Globe, MapPin, Cloud, Save, Gift
 } from 'lucide-react';
 
 export default function AdminDashboard({ lang, token, setToken, onToast }) {
@@ -366,7 +367,17 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             {nodesList.filter(n => n.status === 'online').length} / {nodesList.length} Online
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
-            {nodesList.some(n => n.type === 'remote' && n.status === 'online') ? '🌐 Hybrid Cloud & Residential Active' : '📍 Local Core Only'}
+            {nodesList.some(n => n.type === 'remote' && n.status === 'online') ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--accent-blue)' }}>
+                <Globe size={13} />
+                <span>Hybrid Cloud & Residential Active</span>
+              </span>
+            ) : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <MapPin size={13} style={{ color: 'var(--text-dim)' }} />
+                <span>Local Core Only</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -723,8 +734,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       {/* --- TAB 2: LIVE STREAMS / PLAYERS --- */}
       {activeSubTab === 'streams' && (
         <div className="glass-panel fade-in" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>
-            {lang === 'th' ? '🎵 ห้องที่กำลังเล่นเพลง (Live Streams)' : 'Active Discord Audio Sessions'}
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Radio size={16} style={{ color: 'var(--slime-green)' }} />
+            <span>{lang === 'th' ? 'ห้องที่กำลังเล่นเพลง (Live Streams)' : 'Active Discord Audio Sessions'}</span>
           </h3>
 
           <div style={{ overflowX: 'auto' }}>
@@ -751,10 +763,28 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                         {p.trackTitle}
                       </td>
                       <td>
-                        <span style={{ fontSize: 11 }}>{p.source}</span>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                          background: (p.sourceType === 'soundcloud' || p.source?.toLowerCase().includes('soundcloud')) ? 'rgba(255, 85, 0, 0.15)' : 'rgba(255, 0, 0, 0.15)',
+                          color: (p.sourceType === 'soundcloud' || p.source?.toLowerCase().includes('soundcloud')) ? '#FF7700' : '#FF4444',
+                          border: `1px solid ${(p.sourceType === 'soundcloud' || p.source?.toLowerCase().includes('soundcloud')) ? 'rgba(255, 85, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)'}`
+                        }}>
+                          {(p.sourceType === 'soundcloud' || p.source?.toLowerCase().includes('soundcloud')) ? (
+                            <Cloud size={12} />
+                          ) : (
+                            <Play size={10} fill="currentColor" />
+                          )}
+                          <span>{(p.sourceType === 'soundcloud' || p.source?.toLowerCase().includes('soundcloud')) ? 'SoundCloud' : 'YouTube'}</span>
+                        </span>
                       </td>
                       <td style={{ fontSize: 12 }}>
-                        {p.elapsed} • 👥 {p.listeners || 0}
+                        {p.elapsed} • <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Users size={12} /> {p.listeners || 0}</span>
                       </td>
                       <td>
                         <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#1A2230' }}>
@@ -800,8 +830,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       {activeSubTab === 'guilds' && (
         <div className="glass-panel fade-in" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700 }}>
-              {lang === 'th' ? '🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Subscriptions)' : 'Guild Subscriptions'}
+            <h3 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Shield size={16} style={{ color: 'var(--slime-green)' }} />
+              <span>{lang === 'th' ? 'จัดการวันใช้งานเซิร์ฟเวอร์ (Subscriptions)' : 'Guild Subscriptions'}</span>
             </h3>
             <div style={{ width: 260 }}>
               <input
@@ -907,8 +938,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       {/* --- TAB 4: CAMPAIGNS & EARLY BIRD DROPS --- */}
       {activeSubTab === 'drops' && (
         <div className="glass-panel fade-in" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>
-            {lang === 'th' ? '🎁 แคมเปญ Early-Bird Drops' : 'Early-Bird Drops'}
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Gift size={16} style={{ color: 'var(--slime-green)' }} />
+            <span>{lang === 'th' ? 'แคมเปญ Early-Bird Drops' : 'Early-Bird Drops'}</span>
           </h3>
 
           {/* Create Drop Form */}
@@ -982,8 +1014,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       {/* --- TAB 5: TRANSACTIONS & AUDIT LOG --- */}
       {activeSubTab === 'tx' && (
         <div className="glass-panel fade-in" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>
-            {lang === 'th' ? '📋 ประวัติธุรกรรมและการเงินล่าสุด (Audit Log)' : 'Transactions & Topup Audit Log'}
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Activity size={16} style={{ color: 'var(--slime-green)' }} />
+            <span>{lang === 'th' ? 'ประวัติธุรกรรมและการเงินล่าสุด (Audit Log)' : 'Transactions & Topup Audit Log'}</span>
           </h3>
 
           <div style={{ overflowX: 'auto', maxHeight: 500, overflowY: 'auto' }}>
@@ -1032,7 +1065,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         <div className="glass-panel fade-in" style={{ padding: 24, maxWidth: 640 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Settings size={18} style={{ color: 'var(--slime-green)' }} />
-            <span>{lang === 'th' ? '⚙️ ตั้งค่าระบบด่วน (Live Config)' : 'System Configuration'}</span>
+            <span>{lang === 'th' ? 'ตั้งค่าระบบด่วน (Live Config)' : 'System Configuration'}</span>
           </h3>
 
           <form onSubmit={handleSaveSettings}>
@@ -1087,7 +1120,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             </div>
 
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px 18px', marginBottom: 16 }}>
-              <span>{lang === 'th' ? '💾 บันทึกการตั้งค่าระบบ' : 'Save System Settings'}</span>
+              <Save size={15} />
+              <span>{lang === 'th' ? 'บันทึกการตั้งค่าระบบ' : 'Save System Settings'}</span>
             </button>
           </form>
 
