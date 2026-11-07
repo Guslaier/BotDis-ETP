@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, Server, HardDrive, Wifi, Activity, Cpu, RotateCw, 
   Trash2, Play, Square, FastForward, Search, Plus, Ban, CheckCircle, 
@@ -46,13 +46,17 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [dropClaims, setDropClaims] = useState(50);
   const [dropDays, setDropDays] = useState(30);
 
-  // Settings
+  // Settings Form State & Protection against Polling Overwrites
   const [settingsForm, setSettingsForm] = useState({
     paymentMode: 'sandbox',
     price30Days: 29,
-    maxFreeStreams: 6,
-    maxTotalStreams: 12
+    maxFreeStreams: 2,
+    maxTotalStreams: 4,
+    maxReferralMonths: 6,
+    phoneNumber: ''
   });
+  const hasInitializedSettingsRef = useRef(false);
+  const isSettingsDirtyRef = useRef(false);
 
   const fetchData = async () => {
     if (!token) return;
@@ -69,7 +73,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       const json = await res.json();
       if (json.success) {
         setData(json);
-        if (json.config) {
+        // Only initialize settings form ONCE or when not dirty, never overwrite while typing!
+        if (json.config && !hasInitializedSettingsRef.current && !isSettingsDirtyRef.current) {
+          hasInitializedSettingsRef.current = true;
           setSettingsForm({
             paymentMode: json.config.paymentMode || 'sandbox',
             price30Days: json.config.price30Days ?? 29,
@@ -164,6 +170,11 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
 
   const handleSaveNodeConfig = async () => {
     if (!editNodeModal) return;
+    const maxRoomsNum = parseInt(nodeMaxRoomsInput, 10);
+    if (isNaN(maxRoomsNum) || maxRoomsNum < 1) {
+      onToast('warning', lang === 'th' ? 'กรุณาระบุจำนวนห้องที่ถูกต้อง' : 'Valid room count required');
+      return;
+    }
     try {
       const res = await fetch(`/api/admin/nodes/${editNodeModal.id}/config`, {
         method: 'POST',
@@ -173,7 +184,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         },
         body: JSON.stringify({
           name: nodeNameInput,
-          maxRooms: parseInt(nodeMaxRoomsInput, 10)
+          maxRooms: maxRoomsNum
         })
       });
       const resJson = await res.json();
@@ -436,6 +447,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       const resJson = await res.json();
       if (resJson.success) {
         onToast('success', lang === 'th' ? 'บันทึกการตั้งค่าแล้ว' : 'Settings Saved');
+        isSettingsDirtyRef.current = false;
         fetchData();
       } else {
         onToast('error', 'Error', resJson.error);
@@ -1269,7 +1281,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               type="number"
               placeholder="Claims Limit"
               value={dropClaims}
-              onChange={(e) => setDropClaims(parseInt(e.target.value, 10))}
+              onChange={(e) => {
+                const v = e.target.value;
+                setDropClaims(v === '' ? '' : (parseInt(v, 10) || 0));
+              }}
               style={{ width: 120 }}
               min="1"
             />
@@ -1277,7 +1292,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               type="number"
               placeholder="Days"
               value={dropDays}
-              onChange={(e) => setDropDays(parseInt(e.target.value, 10))}
+              onChange={(e) => {
+                const v = e.target.value;
+                setDropDays(v === '' ? '' : (parseInt(v, 10) || 0));
+              }}
               style={{ width: 100 }}
               min="1"
             />
@@ -1387,7 +1405,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               </label>
               <select
                 value={settingsForm.paymentMode}
-                onChange={(e) => setSettingsForm({ ...settingsForm, paymentMode: e.target.value })}
+                onChange={(e) => {
+                  isSettingsDirtyRef.current = true;
+                  setSettingsForm(prev => ({ ...prev, paymentMode: e.target.value }));
+                }}
               >
                 <option value="sandbox">โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)</option>
                 <option value="production">โหมดใช้งานจริง (PRODUCTION - รับซอง TrueMoney จริง)</option>
@@ -1401,7 +1422,11 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               <input
                 type="number"
                 value={settingsForm.price30Days}
-                onChange={(e) => setSettingsForm({ ...settingsForm, price30Days: parseInt(e.target.value, 10) })}
+                onChange={(e) => {
+                  isSettingsDirtyRef.current = true;
+                  const v = e.target.value;
+                  setSettingsForm(prev => ({ ...prev, price30Days: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                }}
                 min="0"
               />
             </div>
@@ -1414,7 +1439,11 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 <input
                   type="number"
                   value={settingsForm.maxFreeStreams}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, maxFreeStreams: parseInt(e.target.value, 10) })}
+                  onChange={(e) => {
+                    isSettingsDirtyRef.current = true;
+                    const v = e.target.value;
+                    setSettingsForm(prev => ({ ...prev, maxFreeStreams: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                  }}
                   min="0"
                 />
               </div>
@@ -1425,16 +1454,45 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 <input
                   type="number"
                   value={settingsForm.maxTotalStreams}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, maxTotalStreams: parseInt(e.target.value, 10) })}
+                  onChange={(e) => {
+                    isSettingsDirtyRef.current = true;
+                    const v = e.target.value;
+                    setSettingsForm(prev => ({ ...prev, maxTotalStreams: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                  }}
                   min="1"
                 />
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px 18px', marginBottom: 16 }}>
-              <Save size={15} />
-              <span>{lang === 'th' ? 'บันทึกการตั้งค่าระบบ' : 'Save System Settings'}</span>
-            </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (data?.config) {
+                    isSettingsDirtyRef.current = false;
+                    setSettingsForm({
+                      paymentMode: data.config.paymentMode || 'sandbox',
+                      price30Days: data.config.price30Days ?? 29,
+                      maxFreeStreams: data.config.maxFreeStreams ?? 2,
+                      maxTotalStreams: data.config.maxTotalStreams ?? 4,
+                      maxReferralMonths: data.config.maxReferralMonths ?? 6,
+                      phoneNumber: data.config.phoneNumber || ''
+                    });
+                    onToast('info', lang === 'th' ? 'คืนค่าล่าสุดจากเซิร์ฟเวอร์แล้ว' : 'Reset to server config');
+                  }
+                }}
+                className="btn btn-sm"
+                style={{ flex: '0 0 auto', padding: '12px 18px' }}
+                title="Reset to current server values"
+              >
+                <RefreshCw size={14} />
+                <span>{lang === 'th' ? 'รีเซ็ตค่าเดิม' : 'Reset'}</span>
+              </button>
+              <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px 18px' }}>
+                <Save size={15} />
+                <span>{lang === 'th' ? 'บันทึกการตั้งค่าระบบ' : 'Save System Settings'}</span>
+              </button>
+            </div>
           </form>
 
           <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 16 }}>
@@ -1538,7 +1596,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               <input
                 type="number"
                 value={nodeMaxRoomsInput}
-                onChange={(e) => setNodeMaxRoomsInput(parseInt(e.target.value, 10))}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setNodeMaxRoomsInput(v === '' ? '' : (parseInt(v, 10) || 0));
+                }}
                 min="1"
               />
             </div>
@@ -1621,7 +1682,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   <input
                     type="number"
                     value={addNodeMaxRooms}
-                    onChange={(e) => setAddNodeMaxRooms(parseInt(e.target.value, 10))}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setAddNodeMaxRooms(v === '' ? '' : (parseInt(v, 10) || 0));
+                    }}
                     min="1"
                     required
                   />
@@ -1802,7 +1866,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     min="1"
                     max="3650"
                     value={adjustDaysValue}
-                    onChange={(e) => setAdjustDaysValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setAdjustDaysValue(v === '' ? '' : (parseInt(v, 10) || 0));
+                    }}
                     style={{
                       width: '100%',
                       padding: '9px 12px',
