@@ -28,11 +28,18 @@ else
     exit 1
 fi
 
-# 4. Verify Nginx Syntax
+# 4. Deploy web assets to /var/www/goolix
+echo "[+] Deploying web assets to /var/www/goolix..."
+mkdir -p /var/www/goolix
+cp -r /root/DisLava-MusicBot/dist/* /var/www/goolix/
+chown -R www-data:www-data /var/www/goolix
+chmod -R 755 /var/www/goolix
+
+# 5. Verify Nginx Syntax
 echo "[+] Validating Nginx configuration..."
 nginx -t
 
-# 5. Enable and Restart Nginx
+# 6. Enable and Restart Nginx
 echo "[+] Restarting Nginx service..."
 systemctl enable nginx
 systemctl restart nginx
