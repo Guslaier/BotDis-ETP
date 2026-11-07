@@ -199,12 +199,17 @@ export default function TopupView({ lang, onToast }) {
                   {guildData.campaign.name}
                 </span>
                 <span className="slime-badge" style={{ fontSize: 10, padding: '2px 8px' }}>
-                  FREE 30 DAYS
+                  FREE {guildData.campaign.days || 30} DAYS
                 </span>
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
                 {lang === 'th' ? 'แคมเปญสิทธิ์พิเศษเปิดตัวเซิร์ฟเวอร์ เหลือเพียง' : 'Limited Early-Bird Drop remaining:'}{' '}
                 <strong style={{ color: 'var(--slime-green)' }}>{guildData.campaign.remaining}</strong> / {guildData.campaign.maxClaims} {lang === 'th' ? 'สิทธิ์' : 'claims'}
+                {guildData.campaign.expiresAt && (
+                  <span style={{ marginLeft: 6 }}>
+                    • {lang === 'th' ? 'หมดเขต:' : 'Ends:'} <strong style={{ color: 'var(--accent-yellow)' }}>{new Date(guildData.campaign.expiresAt).toLocaleDateString('th-TH')}</strong>
+                  </span>
+                )}
               </div>
             </div>
           </div>

@@ -45,6 +45,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [dropCode, setDropCode] = useState('');
   const [dropClaims, setDropClaims] = useState(50);
   const [dropDays, setDropDays] = useState(30);
+  const [dropExpireMode, setDropExpireMode] = useState('7'); // '7' | '14' | '30' | 'custom' | 'never'
+  const [dropCustomDate, setDropCustomDate] = useState('');
 
   // Settings Form State & Protection against Polling Overwrites
   const [settingsForm, setSettingsForm] = useState({
@@ -394,6 +396,23 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const handleCreateDrop = async (e) => {
     e.preventDefault();
     if (!dropCode.trim()) return;
+
+    const payload = {
+      code: dropCode.trim(),
+      maxClaims: parseInt(dropClaims, 10) || 50,
+      days: parseInt(dropDays, 10) || 30
+    };
+
+    if (dropExpireMode === 'custom') {
+      if (!dropCustomDate) {
+        onToast('warning', lang === 'th' ? 'กรุณาระบุวันหมดอายุแคมเปญ' : 'Please specify expiry date');
+        return;
+      }
+      payload.expiresAt = new Date(dropCustomDate + 'T23:59:59').getTime();
+    } else if (dropExpireMode !== 'never') {
+      payload.expiresInDays = parseInt(dropExpireMode, 10);
+    }
+
     try {
       const res = await fetch('/api/admin/campaigns', {
         method: 'POST',
@@ -401,17 +420,16 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          code: dropCode.trim(),
-          maxClaims: dropClaims,
-          days: dropDays
-        })
+        body: JSON.stringify(payload)
       });
       const resJson = await res.json();
       if (resJson.success) {
         onToast('success', lang === 'th' ? 'สร้างแคมเปญสำเร็จ' : 'Campaign Created');
         setDropCode('');
+        setDropCustomDate('');
         fetchData();
+      } else {
+        onToast('error', 'Error', resJson.error);
       }
     } catch (err) {
       onToast('error', 'Error', err.message);
@@ -1268,41 +1286,92 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           </h3>
 
           {/* Create Drop Form */}
-          <form onSubmit={handleCreateDrop} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
-            <input
-              type="text"
-              placeholder={lang === 'th' ? 'รหัสโค้ด เช่น DROP1' : 'Code e.g. DROP1'}
-              value={dropCode}
-              onChange={(e) => setDropCode(e.target.value.toUpperCase())}
-              style={{ width: 180 }}
-              required
-            />
-            <input
-              type="number"
-              placeholder="Claims Limit"
-              value={dropClaims}
-              onChange={(e) => {
-                const v = e.target.value;
-                setDropClaims(v === '' ? '' : (parseInt(v, 10) || 0));
-              }}
-              style={{ width: 120 }}
-              min="1"
-            />
-            <input
-              type="number"
-              placeholder="Days"
-              value={dropDays}
-              onChange={(e) => {
-                const v = e.target.value;
-                setDropDays(v === '' ? '' : (parseInt(v, 10) || 0));
-              }}
-              style={{ width: 100 }}
-              min="1"
-            />
-            <button type="submit" className="btn btn-primary">
-              <Plus size={14} />
-              <span>{lang === 'th' ? 'สร้างแคมเปญ' : 'Create Drop'}</span>
-            </button>
+          <form onSubmit={handleCreateDrop} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 24 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                {lang === 'th' ? 'รหัสโค้ด (Code)' : 'Code'}
+              </label>
+              <input
+                type="text"
+                placeholder="เช่น DROP1 หรือ VIP30"
+                value={dropCode}
+                onChange={(e) => setDropCode(e.target.value.toUpperCase())}
+                style={{ width: 170 }}
+                required
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                {lang === 'th' ? 'โควตาสิทธิ์ (Claims)' : 'Claims'}
+              </label>
+              <input
+                type="number"
+                placeholder="50"
+                value={dropClaims}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setDropClaims(v === '' ? '' : (parseInt(v, 10) || 0));
+                }}
+                style={{ width: 110 }}
+                min="1"
+                required
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                {lang === 'th' ? 'วันใช้งานที่ได้รับ (Days)' : 'Reward Days'}
+              </label>
+              <input
+                type="number"
+                placeholder="30"
+                value={dropDays}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setDropDays(v === '' ? '' : (parseInt(v, 10) || 0));
+                }}
+                style={{ width: 120 }}
+                min="1"
+                required
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                {lang === 'th' ? 'อายุแคมเปญ (Expiration)' : 'Campaign Expiry'}
+              </label>
+              <select
+                value={dropExpireMode}
+                onChange={(e) => setDropExpireMode(e.target.value)}
+                style={{ width: 180 }}
+              >
+                <option value="7">หมดอายุใน 7 วัน</option>
+                <option value="14">หมดอายุใน 14 วัน</option>
+                <option value="30">หมดอายุใน 30 วัน</option>
+                <option value="60">หมดอายุใน 60 วัน</option>
+                <option value="custom">กำหนดวันที่เอง...</option>
+                <option value="never">ไม่มีวันหมดอายุ (Never)</option>
+              </select>
+            </div>
+            {dropExpireMode === 'custom' && (
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                  {lang === 'th' ? 'ระบุวันหมดเขต' : 'Expiry Date'}
+                </label>
+                <input
+                  type="date"
+                  value={dropCustomDate}
+                  onChange={(e) => setDropCustomDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  style={{ width: 150 }}
+                  required
+                />
+              </div>
+            )}
+            <div style={{ marginTop: 18 }}>
+              <button type="submit" className="btn btn-primary" style={{ padding: '9px 18px' }}>
+                <Plus size={14} />
+                <span>{lang === 'th' ? 'สร้างแคมเปญ' : 'Create Drop'}</span>
+              </button>
+            </div>
           </form>
 
           {/* Drops Table */}
@@ -1313,7 +1382,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   <th>{lang === 'th' ? 'รหัสโค้ด' : 'Code'}</th>
                   <th>{lang === 'th' ? 'ชื่อแคมเปญ' : 'Name'}</th>
                   <th>{lang === 'th' ? 'สิทธิ์ที่เคลมแล้ว' : 'Claims'}</th>
-                  <th>{lang === 'th' ? 'จำนวนวัน' : 'Days'}</th>
+                  <th>{lang === 'th' ? 'วันใช้งานที่ได้' : 'Reward Days'}</th>
+                  <th>{lang === 'th' ? 'อายุแคมเปญ' : 'Campaign Expiry'}</th>
                   <th>{lang === 'th' ? 'จัดการ' : 'Action'}</th>
                 </tr>
               </thead>
@@ -1324,6 +1394,23 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     <td>{c.name}</td>
                     <td>{c.claimedCount || 0} / {c.maxClaims}</td>
                     <td>+{c.days} วัน</td>
+                    <td>
+                      {!c.expiresAt ? (
+                        <span className="slime-badge" style={{ background: 'rgba(0, 210, 255, 0.12)', color: 'var(--accent-blue)', border: '1px solid rgba(0, 210, 255, 0.3)', fontSize: 11 }}>
+                          {lang === 'th' ? 'ไม่มีวันหมดอายุ' : 'Never Expire'}
+                        </span>
+                      ) : c.expiresAt <= Date.now() ? (
+                        <span className="slime-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', fontSize: 11 }}>
+                          ● {lang === 'th' ? 'หมดอายุแล้ว' : 'Expired'} ({new Date(c.expiresAt).toLocaleDateString('th-TH')})
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 12, fontWeight: 600, color: (c.expiresAt - Date.now() < 3 * 24 * 3600 * 1000) ? 'var(--accent-yellow)' : 'var(--slime-green)' }}>
+                          {lang === 'th'
+                            ? `เหลือ ${Math.ceil((c.expiresAt - Date.now()) / (24 * 3600 * 1000))} วัน (${new Date(c.expiresAt).toLocaleDateString('th-TH')})`
+                            : `${Math.ceil((c.expiresAt - Date.now()) / (24 * 3600 * 1000))}d left (${new Date(c.expiresAt).toLocaleDateString()})`}
+                        </span>
+                      )}
+                    </td>
                     <td>
                       <button
                         onClick={() => handleDeleteDrop(c.code)}

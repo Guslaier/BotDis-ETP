@@ -332,7 +332,11 @@ class AdminServer {
 
             const sub = subscriptionManager.getGuildSubscription(guildId, guild.name);
             const campaigns = dbManager.get('campaigns') || {};
-            const activeEarlyBird = Object.values(campaigns).find(c => c.type === 'EARLY_BIRD' && c.claimedCount < c.maxClaims);
+            const activeEarlyBird = Object.values(campaigns).find(c => 
+                c.type === 'EARLY_BIRD' && 
+                c.claimedCount < c.maxClaims && 
+                (!c.expiresAt || c.expiresAt > Date.now())
+            );
 
             let userObj = null;
             if (userId) {
@@ -359,8 +363,10 @@ class AdminServer {
                 user: userObj,
                 campaign: activeEarlyBird ? {
                     name: activeEarlyBird.name,
+                    days: activeEarlyBird.days || 30,
                     remaining: activeEarlyBird.maxClaims - activeEarlyBird.claimedCount,
-                    maxClaims: activeEarlyBird.maxClaims
+                    maxClaims: activeEarlyBird.maxClaims,
+                    expiresAt: activeEarlyBird.expiresAt || null
                 } : null
             });
         }
@@ -894,12 +900,19 @@ class AdminServer {
 
             if (pathname === '/api/admin/campaigns' && req.method === 'POST') {
                 const body = await this._parseBody(req);
-                const { code, name, maxClaims, days } = body;
+                const { code, name, maxClaims, days, expiresAt, expiresInDays } = body;
                 if (!code || !maxClaims) {
                     return this._sendJson(res, 400, { success: false, error: 'Missing code or maxClaims' });
                 }
 
                 const cleanCode = code.trim().toUpperCase();
+                let campaignExpiresAt = null;
+                if (expiresAt && !isNaN(new Date(expiresAt).getTime())) {
+                    campaignExpiresAt = new Date(expiresAt).getTime();
+                } else if (expiresInDays && !isNaN(parseInt(expiresInDays, 10)) && parseInt(expiresInDays, 10) > 0) {
+                    campaignExpiresAt = Date.now() + parseInt(expiresInDays, 10) * 24 * 3600 * 1000;
+                }
+
                 const newCampaign = {
                     code: cleanCode,
                     name: name || `Drop ${cleanCode}`,
@@ -908,6 +921,7 @@ class AdminServer {
                     maxClaims: parseInt(maxClaims, 10) || 50,
                     claimedCount: 0,
                     claimedGuilds: [],
+                    expiresAt: campaignExpiresAt,
                     createdAt: Date.now()
                 };
                 dbManager.set('campaigns', cleanCode, newCampaign);

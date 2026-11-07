@@ -374,6 +374,10 @@ class SubscriptionManager extends EventEmitter {
             return { success: false, error: 'ไม่พบรหัสโค้ดนี้ หรือโค้ดหมดอายุแล้วค่ะ' };
         }
 
+        if (campaign.expiresAt && Date.now() > campaign.expiresAt) {
+            return { success: false, error: 'แคมเปญนี้หมดอายุระยะเวลารับสิทธิ์แล้วค่ะ' };
+        }
+
         const sub = this.getGuildSubscription(guildId, guildName);
 
         if (campaign.type === 'EARLY_BIRD') {
