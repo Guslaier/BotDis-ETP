@@ -78,7 +78,9 @@ class CacheManager {
             }
         }
         this._activeSpawns = 0;
+        this._activeTasks = new Map();
         this._spawnQueue = [];
+        this._taskIdCounter = 0;
         console.log(`[CacheManager] Stream Guard Active (Max Concurrent Spawns: ${this.maxConcurrentSpawns} [${configuredSpawns > 0 ? 'Manual .env' : 'Auto-Tuned'}])`);
     }
 
@@ -90,38 +92,89 @@ class CacheManager {
         return this._spawnQueue.length;
     }
 
-    async _acquireSpawnSlot() {
+    async _acquireSpawnSlot(priority = 'interactive', onAbort = null, trackTitle = '') {
+        const taskId = ++this._taskIdCounter;
+
+        // 1. Immediate slot available
         if (this._activeSpawns < this.maxConcurrentSpawns) {
             this._activeSpawns++;
+            const task = { id: taskId, priority, onAbort, trackTitle, createdAt: Date.now() };
+            this._activeTasks.set(taskId, task);
             let released = false;
             return () => {
                 if (!released) {
                     released = true;
+                    this._activeTasks.delete(taskId);
                     this._releaseSpawnSlot();
                 }
             };
         }
 
+        // 2. All slots occupied:
+        // If an INTERACTIVE request arrives (Play / Skip), check if any running task is BACKGROUND (Pre-fetch)
+        // If so, PREEMPT / ABORT the background task to free the slot immediately for the user!
+        if (priority === 'interactive') {
+            const bgTask = Array.from(this._activeTasks.values()).find(t => t.priority === 'background');
+            if (bgTask && typeof bgTask.onAbort === 'function') {
+                console.warn(`[CacheManager:StreamGuard] Preempting background pre-fetch "${bgTask.trackTitle || bgTask.id}" for user action "${trackTitle || 'Interactive'}"`);
+                try {
+                    bgTask.onAbort('Preempted by interactive user action');
+                } catch (e) {
+                    console.error('[CacheManager:StreamGuard] Failed to abort background task:', e.message);
+                }
+            }
+        }
+
+        // 3. Queue the request with priority insertion:
+        // Interactive tasks jump ahead of all queued background tasks (FIFO among interactive tasks)
         return new Promise((resolve) => {
-            this._spawnQueue.push(() => {
-                this._activeSpawns++;
-                let released = false;
-                resolve(() => {
-                    if (!released) {
-                        released = true;
-                        this._releaseSpawnSlot();
-                    }
-                });
-            });
+            const queueItem = {
+                id: taskId,
+                priority,
+                onAbort,
+                trackTitle,
+                createdAt: Date.now(),
+                resolve
+            };
+
+            if (priority === 'interactive') {
+                const firstBgIndex = this._spawnQueue.findIndex(item => item.priority === 'background');
+                if (firstBgIndex !== -1) {
+                    this._spawnQueue.splice(firstBgIndex, 0, queueItem);
+                } else {
+                    this._spawnQueue.push(queueItem);
+                }
+            } else {
+                this._spawnQueue.push(queueItem);
+            }
+
+            console.log(`[CacheManager:StreamGuard] Queued [${priority.toUpperCase()}] task for "${trackTitle || 'Track'}" (Queue: ${this._spawnQueue.length})`);
         });
     }
 
     _releaseSpawnSlot() {
         this._activeSpawns = Math.max(0, this._activeSpawns - 1);
         if (this._spawnQueue.length > 0 && this._activeSpawns < this.maxConcurrentSpawns) {
-            const next = this._spawnQueue.shift();
-            if (typeof next === 'function') {
-                next();
+            const nextItem = this._spawnQueue.shift();
+            if (nextItem && typeof nextItem.resolve === 'function') {
+                this._activeSpawns++;
+                const task = {
+                    id: nextItem.id,
+                    priority: nextItem.priority,
+                    onAbort: nextItem.onAbort,
+                    trackTitle: nextItem.trackTitle,
+                    createdAt: Date.now()
+                };
+                this._activeTasks.set(nextItem.id, task);
+
+                let released = false;
+                nextItem.resolve(() => {
+                    if (!released) {
+                        released = true;
+                        this._activeTasks.delete(nextItem.id);
+                        this._releaseSpawnSlot();
+                    }
+                });
             }
         }
     }
@@ -356,7 +409,7 @@ class CacheManager {
     }
 
     async _spawnPipedStream(track, sourceUri, seekSeconds = 0, volume = 100, isFallback = false, onSpawn = null, filter = 'off', bitrate = '64k') {
-        const releaseSlot = await this._acquireSpawnSlot();
+        const releaseSlot = await this._acquireSpawnSlot('interactive', null, track.title);
         let slotReleased = false;
         const safeReleaseSlot = () => {
             if (!slotReleased) {
@@ -668,8 +721,19 @@ class CacheManager {
             return this.downloadPromises.get(trackHash);
         }
 
+        const priority = isBackground ? 'background' : 'interactive';
+        let activeProc = null;
+        let wasAborted = false;
+        const abortHandler = (reason) => {
+            wasAborted = true;
+            if (activeProc) {
+                console.warn(`[CacheManager:StreamGuard] Preempting background download for "${track.title}": ${reason}`);
+                try { activeProc.kill('SIGTERM'); } catch {}
+            }
+        };
+
         const downloadPromise = (async () => {
-            const releaseSlot = await this._acquireSpawnSlot();
+            const releaseSlot = await this._acquireSpawnSlot(priority, isBackground ? abortHandler : null, track.title);
             try {
                 this._ensureExecutable();
                 const outTemplate = path.join(this.cacheDir, `${trackHash}.%(ext)s`);
@@ -684,9 +748,11 @@ class CacheManager {
                     const fbFinalArgs = (isBackground && process.platform === 'linux') ? ['-n', '19', this.binPath, ...fbArgs] : fbArgs;
                     await new Promise((resolve, reject) => {
                         const fbChild = execFile(fbBin, fbFinalArgs, { maxBuffer: 8 * 1024 * 1024, timeout: 35000, windowsHide: true }, (fbErr) => {
+                            activeProc = null;
                             if (fbErr) return reject(fbErr);
                             resolve();
                         });
+                        activeProc = fbChild;
                         if (typeof onSpawn === 'function') {
                             onSpawn({
                                 kill: () => {
@@ -713,12 +779,14 @@ class CacheManager {
             try {
                 await new Promise((resolve, reject) => {
                     const child = execFile(execBin, execArgs, { maxBuffer: 8 * 1024 * 1024, timeout: downloadTimeout, windowsHide: true }, (err, stdout, stderr) => {
+                        activeProc = null;
                         if (err) {
                             const errMsg = (stderr || '') + (err.message || '');
                             return reject(new Error(errMsg));
                         }
                         resolve();
                     });
+                    activeProc = child;
                     if (typeof onSpawn === 'function') {
                         onSpawn({
                             kill: () => {
@@ -732,10 +800,15 @@ class CacheManager {
                 }
                 track.realSource = track.uri && track.uri.includes('soundcloud.com') ? 'SoundCloud (Direct)' : 'YouTube (Direct)';
             } catch (err) {
+                if (isBackground && (wasAborted || err.signal === 'SIGTERM' || err.killed)) {
+                    console.log(`[CacheManager] Background pre-cache aborted for "${track.title}" (Yielded to interactive request).`);
+                    return null;
+                }
+
                 if (activeProxy) {
                     proxyManager.reportFailure(activeProxy, err.message);
                 }
-                if (youtubeCircuit.constructor.isBotBlock(err.message)) {
+                if (!wasAborted && youtubeCircuit.constructor.isBotBlock(err.message)) {
                     youtubeCircuit.trip(err.message);
                 }
                 // Try SoundCloud fallback download
@@ -746,9 +819,11 @@ class CacheManager {
                     const fbFinalArgs = (isBackground && process.platform === 'linux') ? ['-n', '19', this.binPath, ...fbArgs] : fbArgs;
                     await new Promise((resolve, reject) => {
                         const fbChild = execFile(fbBin, fbFinalArgs, { maxBuffer: 8 * 1024 * 1024, timeout: 35000, windowsHide: true }, (fbErr) => {
+                            activeProc = null;
                             if (fbErr) return reject(fbErr);
                             resolve();
                         });
+                        activeProc = fbChild;
                         if (typeof onSpawn === 'function') {
                             onSpawn({
                                 kill: () => {
