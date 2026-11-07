@@ -128,6 +128,9 @@ class NodeRouter extends EventEmitter {
                         node.ram = parsed.ram || '-';
                         node.hostRam = parsed.hostRam || '-';
                         node.vpn = parsed.vpn || null;
+                        node.activeSpawns = parsed.activeSpawns || 0;
+                        node.maxSpawns = parsed.maxSpawns || 2;
+                        node.queuedSpawns = parsed.queuedSpawns || 0;
                         node.latency = Date.now() - pingStart;
                         node.lastPing = Date.now();
                     } catch (e) {
@@ -201,6 +204,12 @@ class NodeRouter extends EventEmitter {
             const loadA = a.activeRooms / Math.max(1, a.maxRooms);
             const loadB = b.activeRooms / Math.max(1, b.maxRooms);
             if (loadA !== loadB) return loadA - loadB;
+
+            // Balance by spawn queue pressure if active rooms ratio is equal
+            const spawnPressureA = (a.activeSpawns || 0) / Math.max(1, a.maxSpawns || 2);
+            const spawnPressureB = (b.activeSpawns || 0) / Math.max(1, b.maxSpawns || 2);
+            if (spawnPressureA !== spawnPressureB) return spawnPressureA - spawnPressureB;
+
             return (a.latency || 0) - (b.latency || 0);
         });
 

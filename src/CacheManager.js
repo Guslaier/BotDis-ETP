@@ -2,6 +2,7 @@ const { execFile, spawn, execSync } = require('child_process');
 const { PassThrough } = require('stream');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const crypto = require('crypto');
 const proxyManager = require('./helpers/proxyManager');
 const youtubeCircuit = require('./helpers/youtubeCircuit');
@@ -58,6 +59,71 @@ class CacheManager {
             fs.mkdirSync(this.cacheDir, { recursive: true });
         }
         this._ensureExecutable();
+
+        // Stream Guard Concurrency Limiter
+        const configuredSpawns = parseInt(process.env.MAX_CONCURRENT_SPAWNS || '0', 10);
+        if (configuredSpawns > 0) {
+            this.maxConcurrentSpawns = configuredSpawns;
+        } else {
+            const cpus = os.cpus()?.length || 1;
+            const totalMemMb = Math.round(os.totalmem() / (1024 * 1024));
+            if (cpus <= 1 || totalMemMb < 1024) {
+                this.maxConcurrentSpawns = 2;
+            } else if (cpus <= 2 || totalMemMb < 3072) {
+                this.maxConcurrentSpawns = 3;
+            } else if (cpus <= 4 || totalMemMb < 6144) {
+                this.maxConcurrentSpawns = 4;
+            } else {
+                this.maxConcurrentSpawns = Math.min(8, Math.max(4, cpus));
+            }
+        }
+        this._activeSpawns = 0;
+        this._spawnQueue = [];
+        console.log(`[CacheManager] Stream Guard Active (Max Concurrent Spawns: ${this.maxConcurrentSpawns} [${configuredSpawns > 0 ? 'Manual .env' : 'Auto-Tuned'}])`);
+    }
+
+    getActiveSpawns() {
+        return this._activeSpawns;
+    }
+
+    getQueuedSpawnsCount() {
+        return this._spawnQueue.length;
+    }
+
+    async _acquireSpawnSlot() {
+        if (this._activeSpawns < this.maxConcurrentSpawns) {
+            this._activeSpawns++;
+            let released = false;
+            return () => {
+                if (!released) {
+                    released = true;
+                    this._releaseSpawnSlot();
+                }
+            };
+        }
+
+        return new Promise((resolve) => {
+            this._spawnQueue.push(() => {
+                this._activeSpawns++;
+                let released = false;
+                resolve(() => {
+                    if (!released) {
+                        released = true;
+                        this._releaseSpawnSlot();
+                    }
+                });
+            });
+        });
+    }
+
+    _releaseSpawnSlot() {
+        this._activeSpawns = Math.max(0, this._activeSpawns - 1);
+        if (this._spawnQueue.length > 0 && this._activeSpawns < this.maxConcurrentSpawns) {
+            const next = this._spawnQueue.shift();
+            if (typeof next === 'function') {
+                next();
+            }
+        }
     }
 
     _ensureExecutable() {
@@ -290,7 +356,16 @@ class CacheManager {
         return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
     }
 
-    _spawnPipedStream(track, sourceUri, seekSeconds = 0, volume = 100, isFallback = false, onSpawn = null, filter = 'off', bitrate = '64k') {
+    async _spawnPipedStream(track, sourceUri, seekSeconds = 0, volume = 100, isFallback = false, onSpawn = null, filter = 'off', bitrate = '64k') {
+        const releaseSlot = await this._acquireSpawnSlot();
+        let slotReleased = false;
+        const safeReleaseSlot = () => {
+            if (!slotReleased) {
+                slotReleased = true;
+                releaseSlot();
+            }
+        };
+
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
             this._ensureExecutable();
@@ -360,6 +435,7 @@ class CacheManager {
 
             // Combined kill helper for clean termination
             outputStream.kill = () => {
+                safeReleaseSlot();
                 if (streamTimeout) {
                     clearTimeout(streamTimeout);
                     streamTimeout = null;
@@ -380,6 +456,7 @@ class CacheManager {
             const triggerFallbackOrReject = async (reason, isBotBan = false) => {
                 if (isHandled || hasOutput) return;
                 isHandled = true;
+                safeReleaseSlot();
 
                 const activeProxy = proxyManager.getYouTubeProxy();
                 if (activeProxy && !isFallback) {
@@ -422,6 +499,7 @@ class CacheManager {
                 if (hasOutput || isHandled) return;
                 hasOutput = true;
                 isHandled = true;
+                safeReleaseSlot();
                 outputStream.off('data', onData);
                 if (releaseTimer) {
                     clearTimeout(releaseTimer);
@@ -592,8 +670,10 @@ class CacheManager {
         }
 
         const downloadPromise = (async () => {
-            this._ensureExecutable();
-            const outTemplate = path.join(this.cacheDir, `${trackHash}.%(ext)s`);
+            const releaseSlot = await this._acquireSpawnSlot();
+            try {
+                this._ensureExecutable();
+                const outTemplate = path.join(this.cacheDir, `${trackHash}.%(ext)s`);
             const isYouTube = !track.uri?.includes('soundcloud.com');
 
             // If circuit is open, download directly from SoundCloud
@@ -683,17 +763,19 @@ class CacheManager {
                 } else {
                     throw err;
                 }
-            } finally {
-                this.downloadPromises.delete(trackHash);
-                if (global.gc) global.gc();
-                this.cleanOldCache();
             }
 
             if (fs.existsSync(targetPath)) {
                 return targetPath;
             }
             throw new Error(`Cached file not found at ${targetPath}`);
-        })();
+        } finally {
+            releaseSlot();
+            this.downloadPromises.delete(trackHash);
+            if (global.gc) global.gc();
+            this.cleanOldCache();
+        }
+    })();
 
         this.downloadPromises.set(trackHash, downloadPromise);
         return downloadPromise;
