@@ -1,7 +1,9 @@
 import React from 'react';
-import { Shield, Sparkles, Globe, Headphones, Radio } from 'lucide-react';
+import { Shield, Globe } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, lang, setLang, isAdminLoggedIn, onLogout }) {
+export default function Navbar({ mode, lang, setLang, isAdminLoggedIn, onLogout }) {
+  const isAdmin = mode === 'admin';
+
   return (
     <header style={{
       display: 'flex',
@@ -9,7 +11,7 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, isAdmin
       justifyContent: 'space-between',
       padding: '16px 24px',
       borderBottom: '1px solid var(--card-border)',
-      background: 'rgba(8, 11, 16, 0.8)',
+      background: 'rgba(8, 11, 16, 0.85)',
       backdropFilter: 'blur(16px)',
       position: 'sticky',
       top: 0,
@@ -27,8 +29,8 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, isAdmin
               width: 44,
               height: 44,
               borderRadius: '50%',
-              border: '2px solid var(--slime-green)',
-              boxShadow: '0 0 16px var(--slime-glow)',
+              border: `2px solid ${isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)'}`,
+              boxShadow: `0 0 16px ${isAdmin ? 'var(--cyber-glow)' : 'var(--slime-glow)'}`,
               objectFit: 'cover'
             }}
           />
@@ -39,9 +41,9 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, isAdmin
             width: 12,
             height: 12,
             borderRadius: '50%',
-            background: 'var(--slime-green)',
+            background: isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)',
             border: '2px solid var(--bg-dark)',
-            boxShadow: '0 0 8px var(--slime-green)'
+            boxShadow: `0 0 8px ${isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)'}`
           }} />
         </div>
         <div>
@@ -50,67 +52,26 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, isAdmin
               fontSize: 20,
               fontWeight: 800,
               letterSpacing: '-0.4px',
-              background: 'linear-gradient(135deg, #FFFFFF 0%, #00FF88 100%)',
+              background: isAdmin 
+                ? 'linear-gradient(135deg, #FFFFFF 0%, #FF2E93 100%)' 
+                : 'linear-gradient(135deg, #FFFFFF 0%, #00FF88 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               margin: 0
             }}>
-              GOOLIX
+              {isAdmin ? 'GOOLIX MASTER' : 'GOOLIX'}
             </h1>
-            <span className="slime-badge">
-              LIVE
+            <span className={isAdmin ? 'btn-sm btn-pink' : 'slime-badge'} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20 }}>
+              {isAdmin ? 'ADMIN CORE' : 'ONLINE'}
             </span>
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 500 }}>
-            Cosmic Slime Audio Engine & Cluster
+            {isAdmin ? 'Internal Cluster Governance & Telemetry' : 'Cosmic Slime Audio Engine & Support Portal'}
           </div>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <nav style={{
-        display: 'flex',
-        alignItems: 'center',
-        background: 'rgba(17, 22, 32, 0.9)',
-        border: '1px solid var(--card-border)',
-        borderRadius: 14,
-        padding: 4,
-        gap: 4
-      }}>
-        <button
-          onClick={() => setActiveTab('topup')}
-          className={`btn btn-sm ${activeTab === 'topup' ? 'btn-primary' : ''}`}
-          style={{
-            border: activeTab === 'topup' ? '1px solid var(--slime-green)' : 'none',
-            background: activeTab === 'topup' ? 'var(--slime-green)' : 'transparent',
-            color: activeTab === 'topup' ? '#080B10' : 'var(--text-sub)',
-            borderRadius: 10,
-            padding: '8px 14px',
-            fontSize: 12.5
-          }}
-        >
-          <Sparkles size={14} />
-          <span>{lang === 'th' ? 'เติมเงิน / สนับสนุน' : 'Donate & Topup'}</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('admin')}
-          className={`btn btn-sm ${activeTab === 'admin' ? 'btn-primary' : ''}`}
-          style={{
-            border: activeTab === 'admin' ? '1px solid var(--slime-green)' : 'none',
-            background: activeTab === 'admin' ? 'var(--slime-green)' : 'transparent',
-            color: activeTab === 'admin' ? '#080B10' : 'var(--text-sub)',
-            borderRadius: 10,
-            padding: '8px 14px',
-            fontSize: 12.5
-          }}
-        >
-          <Shield size={14} />
-          <span>{lang === 'th' ? 'แดชบอร์ดแอดมิน' : 'Admin Portal'}</span>
-        </button>
-      </nav>
-
-      {/* Right Controls: Language & Auth */}
+      {/* Right Controls: Language & Auth (Strictly Separated) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {/* Language Switch */}
         <div style={{
@@ -124,8 +85,8 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, isAdmin
           <button
             onClick={() => setLang('th')}
             style={{
-              background: lang === 'th' ? 'var(--slime-green)' : 'transparent',
-              color: lang === 'th' ? '#080B10' : 'var(--text-sub)',
+              background: lang === 'th' ? (isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)') : 'transparent',
+              color: lang === 'th' ? (isAdmin ? '#FFF' : '#080B10') : 'var(--text-sub)',
               fontWeight: lang === 'th' ? 700 : 500,
               border: 'none',
               padding: '4px 10px',
@@ -140,8 +101,8 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, isAdmin
           <button
             onClick={() => setLang('en')}
             style={{
-              background: lang === 'en' ? 'var(--slime-green)' : 'transparent',
-              color: lang === 'en' ? '#080B10' : 'var(--text-sub)',
+              background: lang === 'en' ? (isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)') : 'transparent',
+              color: lang === 'en' ? (isAdmin ? '#FFF' : '#080B10') : 'var(--text-sub)',
               fontWeight: lang === 'en' ? 700 : 500,
               border: 'none',
               padding: '4px 10px',
@@ -155,7 +116,7 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, isAdmin
           </button>
         </div>
 
-        {activeTab === 'admin' && isAdminLoggedIn && (
+        {isAdmin && isAdminLoggedIn && (
           <button
             onClick={onLogout}
             className="btn btn-sm btn-danger"

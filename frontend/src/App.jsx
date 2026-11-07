@@ -6,18 +6,12 @@ import AdminLogin from './components/AdminLogin';
 import Toast from './components/Toast';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('topup');
   const [lang, setLang] = useState('th');
   const [token, setToken] = useState(localStorage.getItem('goolix_admin_token') || '');
   const [toasts, setToasts] = useState([]);
 
-  useEffect(() => {
-    // Inspect pathname for routing
-    const path = window.location.pathname.toLowerCase();
-    if (path.includes('admin') || path.includes('dashboard')) {
-      setActiveTab('admin');
-    }
-  }, []);
+  // Strict Port-Based Isolation: Port 11902 is strictly Admin. Any other port is strictly Public Donate/Topup.
+  const isAdmin = window.location.port === '11902' || window.location.search.includes('mode=admin');
 
   const addToast = (type, title, message) => {
     const id = Date.now() + Math.random().toString();
@@ -45,8 +39,7 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        mode={isAdmin ? 'admin' : 'public'}
         lang={lang}
         setLang={setLang}
         isAdminLoggedIn={!!token}
@@ -56,9 +49,11 @@ export default function App() {
       <Toast toasts={toasts} onDismiss={dismissToast} />
 
       <main style={{ flex: 1 }}>
-        {activeTab === 'topup' ? (
+        {!isAdmin ? (
+          /* Public Portal: Only Topup / Donate / Guild lookup */
           <TopupView lang={lang} onToast={addToast} />
         ) : token ? (
+          /* Admin Dedicated Portal: Only Master Console */
           <AdminDashboard
             lang={lang}
             token={token}
@@ -82,7 +77,9 @@ export default function App() {
         color: 'var(--text-dim)',
         marginTop: 'auto'
       }}>
-        GOOLIX • Cosmic Slime Music Engine & Distributed Cluster Architecture • v2.0
+        {isAdmin 
+          ? 'GOOLIX Master Console • Internal Cluster Administration & Governance' 
+          : 'GOOLIX • Cosmic Slime Music Engine & Community Support'}
       </footer>
     </div>
   );
