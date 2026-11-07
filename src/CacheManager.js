@@ -218,7 +218,7 @@ class CacheManager {
         return parts.length > 0 ? parts.join(',') : null;
     }
 
-    _buildYtDlpArgs(source, isStreamOutput = false, outTemplate = null) {
+    _buildYtDlpArgs(source, isStreamOutput = false, outTemplate = null, seekSeconds = 0) {
         const bufferSize = process.env.STREAM_BUFFER_SIZE || '512K';
         const chunkSize = process.env.STREAM_CHUNK_SIZE || '512K';
         const socketTimeout = process.env.STREAM_SOCKET_TIMEOUT || '10';
@@ -239,6 +239,11 @@ class CacheManager {
         ];
 
         const isSoundCloud = source.includes('soundcloud.com') || source.startsWith('scsearch');
+
+        // Direct hardware/network seek on YouTube pipe to prevent FFmpeg pipe starvation & filter glitches
+        if (seekSeconds > 0 && isStreamOutput && !isSoundCloud) {
+            args.push('--download-sections', `*${seekSeconds}-inf`);
+        }
         const cookiesPath = path.resolve(__dirname, '../cookies.txt');
         const hasCookies = fs.existsSync(cookiesPath);
         const useIPv6 = process.env.USE_IPV6 === 'true';
@@ -375,15 +380,17 @@ class CacheManager {
         const streamMode = (process.env.STREAM_MODE || 'cache').toLowerCase().trim();
         const durationSec = track.duration || (track.length ? Math.round(track.length / 1000) : 0);
 
+        const maxCacheDurationSec = parseInt(process.env.MAX_CACHE_DURATION_SEC || '1800', 10); // 30 minutes threshold
+
         // 1. Live Pipe Mode: stream directly via live pipe (<2.5s start latency)
         if (streamMode === 'pipe') {
             console.log(`[CacheManager:Stream] Live pipe stream for "${track.title}" (Mode: pipe, Duration: ${durationSec}s, Seek: ${seekSeconds}s)`);
             return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
         }
 
-        // 2. Auto Mode: Direct live pipe for long tracks (>6 min), seeking, or live streams
-        if (streamMode === 'auto' && (track.isStream || durationSec > 360 || seekSeconds > 0)) {
-            console.log(`[CacheManager:Stream] Live pipe stream for long/live track "${track.title}" (Mode: auto, Duration: ${durationSec}s)`);
+        // 2. Auto Mode: Direct live pipe ONLY for truly long tracks (>30 min) or infinite live streams
+        if (streamMode === 'auto' && (track.isStream || durationSec > maxCacheDurationSec)) {
+            console.log(`[CacheManager:Stream] Live pipe stream for long/live track "${track.title}" (Mode: auto, Duration: ${durationSec}s, Seek: ${seekSeconds}s)`);
             return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
         }
 
@@ -421,7 +428,8 @@ class CacheManager {
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
             this._ensureExecutable();
-            const ytdlpArgs = this._buildYtDlpArgs(sourceUri, true);
+            const isYouTube = !sourceUri.includes('soundcloud.com');
+            const ytdlpArgs = this._buildYtDlpArgs(sourceUri, true, null, seekSeconds);
             const ytdlpProc = spawn(this.binPath, ytdlpArgs, { windowsHide: true });
 
             const threadQueueSize = process.env.THREAD_QUEUE_SIZE || '1024';
@@ -435,7 +443,8 @@ class CacheManager {
                 '-loglevel', 'error',
                 '-thread_queue_size', threadQueueSize
             ];
-            if (seekSeconds > 0) {
+            // If seek was not already handled directly by yt-dlp download sections (e.g. SoundCloud)
+            if (seekSeconds > 0 && !isYouTube) {
                 ffmpegArgs.push('-ss', seekSeconds.toString());
             }
             ffmpegArgs.push('-i', 'pipe:0', '-vn');
