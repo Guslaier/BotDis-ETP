@@ -1086,21 +1086,26 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     </div>
                   </div>
 
-                  {/* 4. Stream Guard & Compute Load */}
+                  {/* 4. Streams & Compute Load */}
                   <div className="glass-panel" style={{ padding: 20 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Cpu size={14} style={{ color: 'var(--accent-yellow)' }} />
-                      <span>{lang === 'th' ? 'STREAM GUARD & CPU' : 'Stream Guard & Load'}</span>
+                      <Activity size={14} style={{ color: 'var(--accent-yellow)' }} />
+                      <span>{lang === 'th' ? 'ภาระสตรีม & โหลดซีพียู (STREAMS & LOAD)' : 'Streams & Compute Load'}</span>
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
-                      Spawns: <span style={{ color: isOffline ? 'var(--danger)' : 'var(--slime-green)' }}>
-                        {isOffline ? '0' : (isRemote ? (selectedNode.activeSpawns || 0) : (data?.stats?.slots?.total || 0))}
-                      </span> / {isRemote ? (selectedNode.maxSpawns || 2) : (data?.stats?.slots?.maxTotal || 4)}
+                      Streams: <span style={{ color: isOffline ? 'var(--danger)' : 'var(--slime-green)' }}>
+                        {isOffline ? '0' : (isRemote ? (selectedNode.activeRooms || 0) : (data?.stats?.slots?.total || selectedNode.activeRooms || 0))}
+                      </span> / {isRemote ? (selectedNode.maxRooms || 15) : (data?.stats?.slots?.maxTotal || selectedNode.maxRooms || 4)}
                       <span style={{ fontSize: 12, color: 'var(--text-sub)', marginLeft: 6 }}>
-                        {isOffline ? '(Offline)' : `(Queue: ${isRemote ? (selectedNode.queuedSpawns || 0) : 0})`}
+                        {isOffline ? '(Offline)' : `Rooms (${Math.round((((isRemote ? selectedNode.activeRooms : data?.stats?.slots?.total) || 0) / Math.max(1, (isRemote ? selectedNode.maxRooms : data?.stats?.slots?.maxTotal) || 4)) * 100)}%)`}
                       </span>
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+                      Stream Guard: <strong style={{ color: isOffline ? 'var(--text-dim)' : 'var(--accent-yellow)' }}>
+                        {isOffline ? '-' : `${selectedNode.activeSpawns || 0} / ${selectedNode.maxSpawns || (isRemote ? 2 : 1)} Spawns (Queue: ${selectedNode.queuedSpawns || 0})`}
+                      </strong>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 2 }}>
                       CPU: {isOffline ? 'Offline' : (isRemote ? (selectedNode.cpu || '-') : (data?.stats?.cpuDisplay || '-'))}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
