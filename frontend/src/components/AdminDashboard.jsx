@@ -1355,7 +1355,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 ) : (
                   <tr>
                     <td colSpan="6" style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-dim)' }}>
-                      {lang === 'th' ? 'ไม่มีห้องที่กำลังเล่นเพลงอยู่ค่ะ' : 'No active playback sessions'}
+                      {lang === 'th' ? 'ไม่มีห้องที่กำลังเล่นเพลงอยู่ครับ' : 'No active playback sessions'}
                     </td>
                   </tr>
                 )}
@@ -2362,7 +2362,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             <div style={{ overflowY: 'auto', flex: 1, border: '1px solid var(--card-border)', borderRadius: 10, marginBottom: 16 }}>
               {(!viewClaimedModal.claimedGuilds || viewClaimedModal.claimedGuilds.length === 0) ? (
                 <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-dim)', fontSize: 12 }}>
-                  {lang === 'th' ? 'ยังไม่มีเซิร์ฟเวอร์ใดเข้ามากดเคลมโค้ดนี้ค่ะ' : 'No guilds have claimed this drop yet.'}
+                  {lang === 'th' ? 'ยังไม่มีเซิร์ฟเวอร์ใดเข้ามากดเคลมโค้ดนี้ครับ' : 'No guilds have claimed this drop yet.'}
                 </div>
               ) : (
                 <table className="custom-table" style={{ margin: 0 }}>

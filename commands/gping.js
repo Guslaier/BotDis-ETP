@@ -6,7 +6,7 @@ module.exports = {
         .setDescription('Check bot latency and gateway WebSocket ping'),
 
     run: async (client, interaction) => {
-        const sent = await interaction.reply({ content: '🏓 กำลังวัดความเร็วปิงนะคะ...', fetchReply: true });
+        const sent = await interaction.reply({ content: '🏓 กำลังวัดความเร็วปิงครับ...', fetchReply: true });
         const roundtripLatency = sent.createdTimestamp - interaction.createdTimestamp;
         const wsPing = client.ws.ping;
 
@@ -27,7 +27,7 @@ module.exports = {
                 { name: '🌏 Voice Region', value: `\`${rtcRegion}\``, inline: true },
                 { name: '🛡️ Routing Mode', value: '`Direct (Zero VPN on Voice)`', inline: true }
             )
-            .setFooter({ text: 'เสียงส่งตรงผ่านสายไฟเบอร์ Singapore ไม่ผ่าน VPN ค่ะ! 💋' });
+            .setFooter({ text: 'เสียงส่งตรงผ่านเครือข่าย Singapore ไม่ผ่าน VPN ครับ' });
 
         return interaction.editReply({ content: null, embeds: [embed] });
     }

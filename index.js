@@ -111,7 +111,7 @@ kazagumo.on("playerException", (player, track, exception) => {
     if (channel) {
         const embed = new EmbedBuilder()
             .setColor('#FF0000')
-            .setDescription(`❌ ไม่สามารถโหลดเพลง **${trackTitle}** ได้ค่ะ ขอข้ามไปเพลงถัดไปนะคะ 🥺\n\`${errorMsg}\``);
+            .setDescription(`❌ ไม่สามารถโหลดเพลง **${trackTitle}** ได้ครับ ขอข้ามไปเพลงถัดไป\n\`${errorMsg}\``);
         channel.send({ embeds: [embed] }).catch(() => { });
     }
 });
@@ -193,7 +193,7 @@ client.on('interactionCreate', async interaction => {
             const banEmbed = new EmbedBuilder()
                 .setColor('#EF4444')
                 .setTitle('⛔ เซิร์ฟเวอร์นี้ถูกระงับการใช้งาน (BANNED)')
-                .setDescription(`เซิร์ฟเวอร์นี้ถูกแบนจากระบบ GOOLIX ชั่วคราวหรือถาวร\n\n**เหตุผล:** ${banInfo.reason || 'ละเมิดข้อกำหนดการใช้งาน'}\n**ระยะเวลา:** ${timeStr}\n\nหากคิดว่านี่คือข้อผิดพลาด กรุณาติดต่อผู้ดูแลระบบค่ะ`);
+                .setDescription(`เซิร์ฟเวอร์นี้ถูกแบนจากระบบ GOOLIX ชั่วคราวหรือถาวร\n\n**เหตุผล:** ${banInfo.reason || 'ละเมิดข้อกำหนดการใช้งาน'}\n**ระยะเวลา:** ${timeStr}\n\nหากคิดว่านี่คือข้อผิดพลาด กรุณาติดต่อผู้ดูแลระบบครับ`);
             return interaction.reply({ embeds: [banEmbed], flags: MessageFlags.Ephemeral }).catch(() => {});
         }
     }
@@ -215,12 +215,12 @@ client.on('interactionCreate', async interaction => {
                     await interaction.message.edit({ components: [] }).catch(() => {});
                 }
                 return interaction.reply({
-                    content: '🗑️ ตรวจพบการ์ดเพลงที่หมดอายุ/หยุดเล่นแล้ว ระบบลบการ์ดทิ้งให้เรียบร้อยค่ะ!',
+                    content: '🗑️ ตรวจพบการ์ดเพลงที่หมดอายุ/หยุดเล่นแล้ว ระบบลบการ์ดทิ้งให้เรียบร้อยครับ!',
                     flags: MessageFlags.Ephemeral
                 }).catch(() => {});
             }
             return interaction.reply({
-                content: '❌ ไม่มีเพลงที่กำลังเล่นอยู่ตอนนี้ค่ะ',
+                content: '❌ ไม่มีเพลงที่กำลังเล่นอยู่ตอนนี้ครับ',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -365,7 +365,7 @@ client.on('interactionCreate', async interaction => {
                 const currentTitle = queue.current?.title || 'Unknown';
                 let desc = `**🎧 กำลังเล่น:** [${currentTitle}](${queue.current?.uri})\n\n`;
                 if (queue.length === 0) {
-                    desc += 'ไม่มีเพลงรอในคิวแล้วค่ะ สั่งเพลงเพิ่มได้เลยน้า~';
+                    desc += 'ไม่มีเพลงรอในคิวแล้วครับ สั่งเพลงเพิ่มได้เลย!';
                 } else {
                     desc += `**คิวรอเล่น (${queue.length} เพลง):**\n`;
                     const preview = queue.slice(0, 10);
@@ -387,7 +387,7 @@ client.on('interactionCreate', async interaction => {
 
                 if (!data || !data.lyrics) {
                     return interaction.followUp({
-                        content: `❌ หาเนื้อเพลงสำหรับ **${track.title}** ไม่เจอเลยค่ะ 🥺`,
+                        content: `❌ หาเนื้อเพลงสำหรับ **${track.title}** ไม่เจอครับ`,
                         flags: MessageFlags.Ephemeral
                     });
                 }
@@ -399,7 +399,7 @@ client.on('interactionCreate', async interaction => {
                     .setColor('#FF69B4')
                     .setTitle(`🎤 เนื้อเพลง: ${data.title || track.title}`)
                     .setDescription(text)
-                    .setFooter({ text: `แหล่งที่มา: ${data.source} 💋` });
+                    .setFooter({ text: `แหล่งที่มา: ${data.source}` });
 
                 return interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
@@ -408,12 +408,12 @@ client.on('interactionCreate', async interaction => {
                 const added = favoriteManager.addFavorite(interaction.user.id, track);
                 if (added) {
                     return interaction.reply({
-                        content: `💖 บันทึกเพลง **${track.title}** ลงในรายการเพลงโปรดของคุณแล้วค่ะ! เรียกฟังได้ด้วย \`/gfav play\``,
+                        content: `💖 บันทึกเพลง **${track.title}** ลงในรายการเพลงโปรดของคุณแล้วครับ! เรียกฟังได้ด้วย \`/gfav play\``,
                         flags: MessageFlags.Ephemeral
                     });
                 } else {
                     return interaction.reply({
-                        content: `ℹ️ เพลง **${track.title}** อยู่ในรายการเพลงโปรดของคุณอยู่แล้วค่ะ!`,
+                        content: `ℹ️ เพลง **${track.title}** อยู่ในรายการเพลงโปรดของคุณอยู่แล้วครับ!`,
                         flags: MessageFlags.Ephemeral
                     });
                 }
@@ -433,7 +433,7 @@ client.on('interactionCreate', async interaction => {
             }
             case 'music_stop': {
                 await interaction.reply({
-                    content: '🛑 ปิดแอปและออกจากห้องเสียงเรียบร้อยแล้วค่ะ! ไว้มาฟังเพลงด้วยกันใหม่น้า 👋💕',
+                    content: '🛑 ปิดระบบและออกจากห้องเสียงเรียบร้อยแล้วครับ! ไว้มาฟังเพลงด้วยกันใหม่นะครับ 👋',
                     flags: MessageFlags.Ephemeral
                 }).catch(() => {});
                 try {
@@ -485,7 +485,7 @@ client.on('interactionCreate', async interaction => {
                     } catch {}
                 }
                 return interaction.update({
-                    content: `🔊 ปรับและบันทึกระดับเสียงเป็น **${volNum}%** เรียบร้อยค่ะ! (ระบบจำค่านี้ไว้ใช้ตลอด)`,
+                    content: `🔊 ปรับและบันทึกระดับเสียงเป็น **${volNum}%** เรียบร้อยแล้วครับ! (ระบบจำค่านี้ไว้ใช้ตลอด)`,
                     components: []
                 });
             }
@@ -533,7 +533,7 @@ client.on('interactionCreate', async interaction => {
                 : interaction.fields.getTextInputValue('playlist_query');
 
             if (!query || !query.trim()) {
-                return interaction.followUp({ content: '❌ กรุณาระบุชื่อเพลงหรือลิงก์ค่ะ', flags: MessageFlags.Ephemeral });
+                return interaction.followUp({ content: '❌ กรุณาระบุชื่อเพลงหรือลิงก์ครับ', flags: MessageFlags.Ephemeral });
             }
 
             const settingsManager = require('./src/helpers/settingsManager');
@@ -564,7 +564,7 @@ client.on('interactionCreate', async interaction => {
             });
 
             if (!result || !result.tracks || !result.tracks.length) {
-                return interaction.followUp({ content: '❌ หาเพลงไม่เจอ! (ลองพิมพ์ชื่อเพลงสั้นๆ หรือตรวจสอบลิงก์นะคะ)', flags: MessageFlags.Ephemeral });
+                return interaction.followUp({ content: '❌ หาเพลงไม่เจอครับ (ลองพิมพ์ชื่อเพลงสั้นๆ หรือตรวจสอบลิงก์ใหม่อีกครั้ง)', flags: MessageFlags.Ephemeral });
             }
 
             const embed = new EmbedBuilder().setColor('#00FF88');
@@ -621,14 +621,14 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
     if (!interaction.inGuild()) {
         return interaction.reply({
-            embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription('❌ อ๊ะๆ! ใช้ได้เฉพาะในเซิร์ฟเวอร์เท่านั้นนะคะที่รัก 💕')],
+            embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription('❌ คำสั่งนี้ใช้ได้เฉพาะในเซิร์ฟเวอร์เท่านั้นครับ')],
             flags: MessageFlags.Ephemeral
         });
     }
     if (!interaction.guild) {
         console.error(`[GuildCache] Bot is not in guild ${interaction.guildId} — interaction received from guild the bot has left or cannot access.`);
         return interaction.reply({
-            embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription('❌ บอทไม่อยู่ในเซิร์ฟเวอร์นี้แล้วค่ะ กรุณาเชิญบอทใหม่ด้วยนะคะ 🥺')],
+            embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription('❌ บอทไม่อยู่ในเซิร์ฟเวอร์นี้แล้วครับ กรุณาเชิญบอทเข้าเซิร์ฟเวอร์ใหม่อีกครั้ง')],
             flags: MessageFlags.Ephemeral
         });
     }
@@ -648,7 +648,7 @@ client.on('interactionCreate', async interaction => {
         console.error(error);
         const errorEmbed = new EmbedBuilder()
             .setColor('#FF69B4')
-            .setDescription('❌ ว้าย! มีข้อผิดพลาดนิดหน่อยตอนรันคำสั่งนี้ค่ะ ขออภัยด้วยนะคะ 🥺');
+            .setDescription('❌ เกิดข้อผิดพลาดในการรันคำสั่งนี้ครับ ขออภัยด้วยครับ');
             
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });

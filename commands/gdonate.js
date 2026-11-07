@@ -120,11 +120,11 @@ module.exports = {
             if (result.success) {
                 embed.setColor('#00E676')
                     .setTitle('🎉 ปลดล็อกสิทธิ์สำเร็จ!')
-                    .setDescription(`เซิร์ฟเวอร์ **${guildName}** ได้รับสิทธิ์ผู้สนับสนุนจากรอบ **${result.campaignName}** เพิ่ม **+${result.addedDays} วัน** เรียบร้อยแล้วค่ะ!\n\n(สิทธิ์ในรอบนี้คงเหลือ: ${result.remainingClaims} เซิร์ฟเวอร์)`);
+                    .setDescription(`เซิร์ฟเวอร์ **${guildName}** ได้รับสิทธิ์ผู้สนับสนุนจากรอบ **${result.campaignName}** เพิ่ม **+${result.addedDays} วัน** เรียบร้อยแล้วครับ!\n\n(สิทธิ์ในรอบนี้คงเหลือ: ${result.remainingClaims} เซิร์ฟเวอร์)`);
             } else {
                 embed.setColor('#EF4444')
                     .setTitle('❌ ใช้โค้ดไม่สำเร็จ')
-                    .setDescription(result.error || 'รหัสโค้ดไม่ถูกต้องหรือสิทธิ์เต็มแล้วค่ะ');
+                    .setDescription(result.error || 'รหัสโค้ดไม่ถูกต้องหรือสิทธิ์เต็มแล้วครับ');
             }
             return interaction.followUp({ embeds: [embed] });
         }
@@ -141,11 +141,11 @@ module.exports = {
                 if (result.success) {
                     embed.setColor('#00E676')
                         .setTitle('🎉 ปลดล็อกสิทธิ์สำเร็จ!')
-                        .setDescription(`เซิร์ฟเวอร์ **${guildName}** ได้รับสิทธิ์ผู้สนับสนุนจากรอบ **${result.campaignName}** เพิ่ม **+${result.addedDays} วัน** เรียบร้อยแล้วค่ะ!\n\n(สิทธิ์ในรอบนี้คงเหลือ: ${result.remainingClaims} เซิร์ฟเวอร์)`);
+                        .setDescription(`เซิร์ฟเวอร์ **${guildName}** ได้รับสิทธิ์ผู้สนับสนุนจากรอบ **${result.campaignName}** เพิ่ม **+${result.addedDays} วัน** เรียบร้อยแล้วครับ!\n\n(สิทธิ์ในรอบนี้คงเหลือ: ${result.remainingClaims} เซิร์ฟเวอร์)`);
                 } else {
                     embed.setColor('#EF4444')
                         .setTitle('❌ ใช้โค้ดไม่สำเร็จ')
-                        .setDescription(result.error || 'รหัสโค้ดไม่ถูกต้องหรือสิทธิ์เต็มแล้วค่ะ');
+                        .setDescription(result.error || 'รหัสโค้ดไม่ถูกต้องหรือสิทธิ์เต็มแล้วครับ');
                 }
                 return interaction.followUp({ embeds: [embed] });
             }
@@ -161,7 +161,7 @@ module.exports = {
             if (!redeemResult.success) {
                 embed.setColor('#EF4444')
                     .setTitle('❌ ทำรายการไม่สำเร็จ')
-                    .setDescription(redeemResult.error || 'ไม่สามารถรับซองของขวัญได้ค่ะ');
+                    .setDescription(redeemResult.error || 'ไม่สามารถรับซองของขวัญได้ครับ');
                 return interaction.followUp({ embeds: [embed] });
             }
 
@@ -177,12 +177,12 @@ module.exports = {
 
             let bonusText = '';
             if (proc.referralBonusAwarded) {
-                bonusText = `\n🎁 **โบนัสพิเศษ:** เซิร์ฟเวอร์เพื่อนของคุณ (**${proc.referrerGuildName}**) และเซิร์ฟเวอร์นี้ ได้รับวันสนับสนุนฟรีเพิ่ม **+${proc.addedBonusDays || 7} วัน** เช่นกันค่ะ!`;
+                bonusText = `\n🎁 **โบนัสพิเศษ:** เซิร์ฟเวอร์เพื่อนของคุณ (**${proc.referrerGuildName}**) และเซิร์ฟเวอร์นี้ ได้รับวันสนับสนุนฟรีเพิ่ม **+${proc.addedBonusDays || 7} วัน** เช่นกันครับ!`;
             }
 
             embed.setColor('#00E676')
                 .setTitle('🎉 ขอบพระคุณสำหรับการร่วมสนับสนุน!')
-                .setDescription(`ระบบได้รับยอดสนับสนุน **${redeemResult.amount} บาท** เรียบร้อยแล้วค่ะ!\nปลดล็อก Supporter Perks ให้เซิร์ฟเวอร์ **${guildName}** เพิ่ม **+${proc.addedDays} วัน**${bonusText}`)
+                .setDescription(`ระบบได้รับยอดสนับสนุน **${redeemResult.amount} บาท** เรียบร้อยแล้วครับ!\nปลดล็อก Supporter Perks ให้เซิร์ฟเวอร์ **${guildName}** เพิ่ม **+${proc.addedDays} วัน**${bonusText}`)
                 .setFooter({ text: 'ขอบคุณที่ร่วมเป็นกำลังสำคัญในการซัพพอร์ต GOOLIX นะ! 🟢⚡' });
 
             return interaction.followUp({ embeds: [embed] });

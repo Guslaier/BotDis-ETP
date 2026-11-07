@@ -76,11 +76,11 @@ export default function TopupView({ lang, onToast }) {
   const handleTopup = async (e) => {
     e.preventDefault();
     if (!guildId.trim()) {
-      onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID', lang === 'th' ? 'เลือกหรือกรอกไอดีเซิร์ฟเวอร์ก่อนค่ะ' : 'Provide Guild ID first');
+      onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID', lang === 'th' ? 'เลือกหรือกรอกไอดีเซิร์ฟเวอร์ก่อนครับ' : 'Provide Guild ID first');
       return;
     }
     if (!voucher.trim()) {
-      onToast('warning', lang === 'th' ? 'กรุณาระบุลิงก์ซอง' : 'Missing Voucher', lang === 'th' ? 'วางลิงก์ซองของขวัญ TrueMoney ค่ะ' : 'Enter voucher link');
+      onToast('warning', lang === 'th' ? 'กรุณาระบุลิงก์ซอง' : 'Missing Voucher', lang === 'th' ? 'วางลิงก์ซองของขวัญ TrueMoney ครับ' : 'Enter voucher link');
       return;
     }
 
@@ -135,7 +135,7 @@ export default function TopupView({ lang, onToast }) {
       });
       const data = await res.json();
       if (data.success) {
-        onToast('success', lang === 'th' ? 'เคลมสิทธิ์สำเร็จ!' : 'Code Redeemed!', lang === 'th' ? `ยินดีด้วยค่ะ! ได้รับสิทธิ์ ${data.campaignName} (+${data.addedDays} วัน)` : `Received +${data.addedDays} days`);
+        onToast('success', lang === 'th' ? 'เคลมสิทธิ์สำเร็จ!' : 'Code Redeemed!', lang === 'th' ? `ยินดีด้วยครับ! ได้รับสิทธิ์ ${data.campaignName} (+${data.addedDays} วัน)` : `Received +${data.addedDays} days`);
         setPromoCode('');
         verifyGuild(guildId, userId);
       } else {
@@ -420,7 +420,7 @@ export default function TopupView({ lang, onToast }) {
               border: '1px dashed var(--card-border)',
               borderRadius: 14
             }}>
-              {lang === 'th' ? 'ระบุ Guild ID เพื่อดูข้อมูลสถานะการใช้งานค่ะ' : 'Enter Discord Guild ID to inspect status'}
+              {lang === 'th' ? 'ระบุ Guild ID เพื่อดูข้อมูลสถานะการใช้งานครับ' : 'Enter Discord Guild ID to inspect status'}
             </div>
           )}
         </div>
@@ -514,7 +514,7 @@ export default function TopupView({ lang, onToast }) {
                 </label>
                 {guildData?.referralConfig?.enabled === false ? (
                   <div style={{ padding: '9px 12px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--card-border)', borderRadius: 8, fontSize: 12, color: 'var(--text-dim)' }}>
-                    {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวค่ะ' : 'Referral campaign is temporarily paused'}
+                    {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral campaign is temporarily paused'}
                   </div>
                 ) : (
                   <>

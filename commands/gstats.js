@@ -52,7 +52,7 @@ module.exports = {
                 { name: '⚙️ Node.js / D.js', value: `\`${process.version} / v${djsVersion}\``, inline: true },
                 { name: '⚡ Audio Engine', value: '`Ultra-Light Direct OggOpus`', inline: true }
             )
-            .setFooter({ text: 'ทำงานเบาสบาย กินแรมน้อย ไม่เปลืองเครื่องค่ะ! 💃✨' });
+            .setFooter({ text: 'ทำงานเบาสบาย กินแรมน้อย ไม่เปลืองทรัพยากรเครื่องครับ ⚡' });
 
         return interaction.reply({ embeds: [embed] });
     }

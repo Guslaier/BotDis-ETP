@@ -145,7 +145,7 @@ class OnboardingHelper {
         if (customId === 'welcome_lang_th') {
             settingsManager.setGuildLanguage(guildId, 'th');
             await interaction.reply({
-                content: '🇹🇭 ตั้งค่าภาษาของบอทในเซิร์ฟเวอร์นี้เป็น **ภาษาไทย (TH)** เรียบร้อยแล้วค่ะ!\nเริ่มฟังเพลงได้ทันทีโดยพิมพ์คำสั่ง `/gplay` 🎶🟢',
+                content: '🇹🇭 ตั้งค่าภาษาของบอทในเซิร์ฟเวอร์นี้เป็น **ภาษาไทย (TH)** เรียบร้อยแล้วครับ!\nเริ่มฟังเพลงได้ทันทีโดยพิมพ์คำสั่ง `/gplay` 🎶🟢',
                 flags: MessageFlags.Ephemeral
             }).catch(() => {});
             return true;

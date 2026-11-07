@@ -22,7 +22,7 @@ module.exports = {
         const amount = interaction.options.getInteger('amount');
         if (amount === null) {
             const currentVolume = player ? player.volume : settingsManager.getGuildVolume(interaction.guild.id);
-            embed.setDescription(`🔊 ระดับเสียงปัจจุบันของเซิร์ฟเวอร์นี้คือ **${currentVolume}%** ค่ะ 💕\n*(พิมพ์ \`/gvolume <0-150>\` เพื่อเปลี่ยนและบันทึกค่า)*`);
+            embed.setDescription(`🔊 ระดับเสียงปัจจุบันของเซิร์ฟเวอร์นี้คือ **${currentVolume}%** ครับ\n*(พิมพ์ \`/gvolume <0-150>\` เพื่อเปลี่ยนและบันทึกค่า)*`);
             return interaction.reply({ embeds: [embed] });
         }
 
@@ -44,11 +44,11 @@ module.exports = {
         }
 
         if (volume > 100) {
-            embed.setDescription(`🔊 อื้อหือ! จัดหนักจัดเต็ม ปรับและบันทึกระดับเสียงเป็น **${volume}%** แล้วค่ะ หูดับแน่นอน 🔥💋`);
+            embed.setDescription(`🔊 ปรับและบันทึกระดับเสียงเป็น **${volume}%** เรียบร้อยครับ ⚡`);
         } else if (volume === 0) {
-            embed.setDescription(`🔇 จุ๊ๆ! ปิดเสียงเป็น **0%** แล้วค่ะ แอบฟังอะไรกันอยู่เนี่ย 🤭`);
+            embed.setDescription(`🔇 ปิดเสียงเป็น **0%** (Muted) เรียบร้อยครับ`);
         } else {
-            embed.setDescription(`🔊 รับทราบค่ะ! ดีเจปรับและบันทึกระดับเสียงเป็น **${volume}%** ให้พอดีหูแล้วน้า (ระบบจำค่านี้ไว้ใช้ตลอดค่ะ) 🎧💕`);
+            embed.setDescription(`🔊 ปรับและบันทึกระดับเสียงเป็น **${volume}%** เรียบร้อยแล้วครับ (ระบบจำค่านี้ไว้ใช้ตลอด) 🎧`);
         }
 
         return interaction.reply({ embeds: [embed] });

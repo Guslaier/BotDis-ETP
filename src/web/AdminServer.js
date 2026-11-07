@@ -382,10 +382,10 @@ class AdminServer {
         if (pathname === '/api/public/verify-referral' && req.method === 'GET') {
             const config = subscriptionManager.getConfig();
             if (config.referralEnabled === false) {
-                return this._sendJson(res, 400, { success: false, error: 'ระบบแคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวค่ะ' });
+                return this._sendJson(res, 400, { success: false, error: 'ระบบแคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' });
             }
             if (config.referralExpiresAt && Date.now() > config.referralExpiresAt) {
-                return this._sendJson(res, 400, { success: false, error: 'แคมเปญชวนเพื่อนรอบนี้หมดอายุแล้วค่ะ' });
+                return this._sendJson(res, 400, { success: false, error: 'แคมเปญชวนเพื่อนรอบนี้หมดอายุแล้วครับ' });
             }
 
             const code = (query.code || '').trim().toUpperCase();
@@ -403,7 +403,7 @@ class AdminServer {
             }
 
             if (referrer.guildId === guildId) {
-                return this._sendJson(res, 400, { success: false, error: 'ไม่สามารถใช้โค้ดชวนเพื่อนของเซิร์ฟเวอร์ตัวเองได้ค่ะ' });
+                return this._sendJson(res, 400, { success: false, error: 'ไม่สามารถใช้โค้ดชวนเพื่อนของเซิร์ฟเวอร์ตัวเองได้ครับ' });
             }
 
             return this._sendJson(res, 200, {
@@ -417,7 +417,7 @@ class AdminServer {
             const { guildId, userId, voucher, referralCode } = body;
 
             if (!guildId || !voucher) {
-                return this._sendJson(res, 400, { success: false, error: 'ข้อมูลไม่ครบถ้วน กรุณาระบุรหัสซองหรือโค้ดค่ะ' });
+                return this._sendJson(res, 400, { success: false, error: 'ข้อมูลไม่ครบถ้วน กรุณาระบุรหัสซองหรือโค้ดครับ' });
             }
 
             const cleanVoucher = (voucher || '').trim();
@@ -430,7 +430,7 @@ class AdminServer {
                 if (!redeemResult.success) {
                     return this._sendJson(res, 400, {
                         success: false,
-                        error: redeemResult.error || 'รหัสโค้ดไม่ถูกต้อง หรือสิทธิ์เต็มแล้วค่ะ'
+                        error: redeemResult.error || 'รหัสโค้ดไม่ถูกต้อง หรือสิทธิ์เต็มแล้วครับ'
                     });
                 }
 
@@ -484,7 +484,7 @@ class AdminServer {
             const { guildId, userId, code } = body;
 
             if (!guildId || !code) {
-                return this._sendJson(res, 400, { success: false, error: 'ข้อมูลไม่ครบถ้วน กรุณาระบุโค้ดค่ะ' });
+                return this._sendJson(res, 400, { success: false, error: 'ข้อมูลไม่ครบถ้วน กรุณาระบุโค้ดครับ' });
             }
 
             const guild = this.client.guilds.cache.get(guildId);
@@ -1001,13 +1001,13 @@ class AdminServer {
                 const price = parseInt(body.price30Days, 10);
 
                 if (isNaN(maxFree) || isNaN(maxTotal) || maxFree < 0 || maxTotal < 1) {
-                    return this._sendJson(res, 400, { success: false, error: 'ตัวเลขโควต้าต้องเป็นจำนวนเต็มบวกค่ะ' });
+                    return this._sendJson(res, 400, { success: false, error: 'ตัวเลขโควต้าต้องเป็นจำนวนเต็มบวกครับ' });
                 }
                 if (maxFree > maxTotal) {
-                    return this._sendJson(res, 400, { success: false, error: 'โควตาสตรีมสายฟรี (Max Free Streams) ต้องไม่มากกว่าโควตาสตรีมรวม (Max Total Streams) ค่ะ' });
+                    return this._sendJson(res, 400, { success: false, error: 'โควตาสตรีมสายฟรี (Max Free Streams) ต้องไม่มากกว่าโควตาสตรีมรวม (Max Total Streams) ครับ' });
                 }
                 if (!isNaN(price) && price < 0) {
-                    return this._sendJson(res, 400, { success: false, error: 'ราคาต้องไม่ติดลบค่ะ' });
+                    return this._sendJson(res, 400, { success: false, error: 'ราคาต้องไม่ติดลบครับ' });
                 }
 
                 const configPayload = {

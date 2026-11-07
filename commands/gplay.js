@@ -143,7 +143,7 @@ module.exports = {
                 await player.play();
             } catch (error) {
                 console.error('[gplay] Play error:', error.message);
-                return interaction.followUp({ content: '❌ เกิดข้อผิดพลาดในการเริ่มเล่นเพลงค่ะ', flags: 64 });
+                return interaction.followUp({ content: '❌ เกิดข้อผิดพลาดในการเริ่มเล่นเพลงครับ', flags: 64 });
             }
         }
     }

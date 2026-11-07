@@ -77,7 +77,7 @@ module.exports = {
         });
 
         if (!result.tracks.length) {
-            embed.setDescription('❌ หาเพลย์ลิสต์ไม่เจอค่ะ! (กรุณาตรวจสอบว่าลิ้งก์ไม่ได้ตั้งเป็น Private หรือพิมพ์ชื่อเพลย์ลิสต์ให้ชัดเจนขึ้นนะคะ) 😿');
+            embed.setDescription('❌ หาเพลย์ลิสต์ไม่เจอครับ (กรุณาตรวจสอบว่าลิงก์ไม่ได้ตั้งเป็น Private หรือพิมพ์ชื่อเพลย์ลิสต์ให้ชัดเจนขึ้นครับ)');
             return interaction.followUp({ embeds: [embed] });
         }
 
@@ -101,7 +101,7 @@ module.exports = {
             desc += `\n*(${i18n.t(guildId, 'PLAYLIST_LIMIT_FREE')})*`;
         }
         if (requestedLimit && requestedLimit > maxPlaylistAllowed) {
-            desc += `\n*(จำกัดดึงสูงสุด ${maxPlaylistAllowed} เพลงตามโควต้าเซิร์ฟเวอร์ค่ะ)*`;
+            desc += `\n*(จำกัดดึงสูงสุด ${maxPlaylistAllowed} เพลงตามโควต้าเซิร์ฟเวอร์ครับ)*`;
         }
         if (skippedOver30Min > 0) {
             desc += `\n*(Skipped ${skippedOver30Min} tracks > 30 mins for Free Tier)*`;
@@ -118,7 +118,7 @@ module.exports = {
                 await player.play();
             } catch (error) {
                 console.error('[gplaylist] Play error:', error.message);
-                return interaction.followUp({ content: '❌ เกิดข้อผิดพลาดในการเริ่มเล่นเพลงค่ะ', flags: 64 });
+                return interaction.followUp({ content: '❌ เกิดข้อผิดพลาดในการเริ่มเล่นเพลงครับ', flags: 64 });
             }
         }
     }

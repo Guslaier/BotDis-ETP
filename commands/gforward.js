@@ -17,13 +17,13 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing || !player.queue.current) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ค่ะ! จะให้ดีเจกรออะไรเอ่ย 😅');
+            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const track = player.queue.current;
         if (track.isStream) {
-            embed.setDescription('❌ ไม่สามารถกรอเพลงที่เป็น Live Stream สดได้ค่ะ 🥺');
+            embed.setDescription('❌ ไม่สามารถกรอเพลงที่เป็น Live Stream สดได้ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -33,7 +33,7 @@ module.exports = {
         const maxDuration = track.length || 0;
 
         if (maxDuration > 0 && newPos >= maxDuration) {
-            embed.setDescription(`❌ กรอเกินความยาวเพลงไม่ได้ค่ะ! เพลงนี้ยาวแค่ \`${formatDuration(maxDuration)}\``);
+            embed.setDescription(`❌ กรอเกินความยาวเพลงไม่ได้ครับ เพลงนี้ยาวแค่ \`${formatDuration(maxDuration)}\``);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

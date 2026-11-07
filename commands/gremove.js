@@ -19,22 +19,22 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player) {
-            embed.setDescription('❌ ไม่มีคิวเพลงค่ะ! จะให้ดีเจลบอะไรเอ่ย? 🥺');
+            embed.setDescription('❌ ไม่มีคิวเพลงครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         
         if (position < 1 || position > player.queue.length) {
-            embed.setDescription(`❌ เอ๊ะๆ! ระบุลำดับคิวผิดรึเปล่าคะ ในคิวมีแค่ ${player.queue.length} เพลงเองน้า~ 🧐`);
+            embed.setDescription(`❌ ระบุลำดับคิวไม่ถูกต้องครับ ในคิวมีเพลงรออยู่ ${player.queue.length} เพลง`);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const removedTrack = player.queue.remove(position - 1);
         if (!removedTrack) {
-            embed.setDescription('❌ ไม่สามารถลบเพลงออกจากคิวได้ค่ะ');
+            embed.setDescription('❌ ไม่สามารถลบเพลงออกจากคิวได้ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
-        embed.setDescription(`🗑️ ชึบ! ลบเพลง **${removedTrack.title}** ออกจากคิวให้แล้วค่ะ ตามใจคนฟังสุดๆ ✂️💕`);
+        embed.setDescription(`🗑️ ลบเพลง **${removedTrack.title}** ออกจากคิวเรียบร้อยแล้วครับ ⚡`);
         return interaction.reply({ embeds: [embed] });
     }
 };

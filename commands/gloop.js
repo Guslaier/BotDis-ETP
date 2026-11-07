@@ -23,18 +23,18 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player) {
-            embed.setDescription('❌ ไม่มีคิวเพลงค่ะ! จะให้ดีเจวนลูปความเหงาเหรอคะ? 🥺');
+            embed.setDescription('❌ ไม่มีคิวเพลงครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const mode = interaction.options.getString('mode');
         player.setLoop(mode);
 
-        let modeText = '❌ ปิดการวนลูปแล้วค่ะ ฟังไปเรื่อยๆ ชิลๆ นะคะ';
-        if (mode === 'track') modeText = '🔂 วนเพลงปัจจุบันซ้ำๆ ฟังกันให้หูแฉะไปเลยค่า!';
-        if (mode === 'queue') modeText = '🔁 วนทั้งคิว ปาร์ตี้นี้ไม่มีจบค่ะ!';
+        let modeText = '❌ ปิดการวนลูปแล้วครับ';
+        if (mode === 'track') modeText = '🔂 วนซ้ำเพลงปัจจุบัน (Repeat Track)';
+        if (mode === 'queue') modeText = '🔁 วนซ้ำทั้งคิว (Repeat Queue)';
 
-        embed.setDescription(`**${modeText}** 🎧💋`);
+        embed.setDescription(`**${modeText}** 🎧`);
         return interaction.reply({ embeds: [embed] });
     }
 };

@@ -10,7 +10,7 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || (!player.playing && player.queue.length === 0)) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นหรือรอคิวอยู่ค่ะ สเตจเงียบเหงามากตอนนี้ 🥺');
+            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นหรือรอคิวอยู่ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -18,7 +18,7 @@ module.exports = {
         if (queue.length === 0) {
             embed.setTitle('📋 คิวเพลงของค่ำคืนนี้');
             const currentTitle = queue.current.title ? queue.current.title.replace(/\[/g, '(').replace(/\]/g, ')') : "Unknown";
-            embed.setDescription(`**กำลังเล่น:**\n[${currentTitle}](${queue.current.uri}) - ขอโดย: <@${queue.current.requester.id}>\n\nไม่มีเพลงในคิวแล้วค่ะ สั่งดีเจมาได้เลยน้า~ 💋`);
+            embed.setDescription(`**กำลังเล่น:**\n[${currentTitle}](${queue.current.uri}) - ขอโดย: <@${queue.current.requester.id}>\n\nไม่มีเพลงในคิวแล้วครับ สั่งเพลงเพิ่มได้เลย! 🎶`);
             return interaction.reply({ embeds: [embed] });
         }
 
@@ -89,7 +89,7 @@ module.exports = {
 
         collector.on('collect', async (i) => {
             if (i.user.id !== interaction.user.id) {
-                return i.reply({ content: '❌ คุณไม่ใช่คนเรียกดูคิวนะคะ ห้ามแย่งกด!', flags: 64 });
+                return i.reply({ content: '❌ ปุ่มนี้สำหรับผู้ที่เรียกดูคิวเท่านั้นครับ', flags: 64 });
             }
 
             if (i.customId === 'queue_prev') {

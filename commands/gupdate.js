@@ -36,11 +36,11 @@ module.exports = {
                 await interaction.guild.commands.set(newCommandsData);
             }
 
-            embed.setDescription('✅ รีเฟรชคำสั่งให้เรียบร้อยแล้วค่ะ! สมาชิกทุกคนสามารถใช้งานคำสั่งล่าสุดได้ทันที ✨💋');
+            embed.setDescription('✅ รีเฟรชคำสั่งเรียบร้อยแล้วครับ สมาชิกทุกคนสามารถใช้งานคำสั่งล่าสุดได้ทันที ⚡');
             return interaction.followUp({ embeds: [embed] });
         } catch (error) {
             console.error(error);
-            embed.setDescription('❌ ว้าย! เกิดข้อผิดพลาดตอนอัปเดตระบบ ลองตรวจสอบ Console หน่อยนะคะ 🥺');
+            embed.setDescription('❌ เกิดข้อผิดพลาดในการอัปเดตระบบ ลองตรวจสอบ Console อีกครั้งครับ');
             return interaction.followUp({ embeds: [embed] });
         }
     }

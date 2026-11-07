@@ -20,7 +20,7 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ค่ะ! จะให้ดีเจกรอความเหงาเหรอคะ? 🥺');
+            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

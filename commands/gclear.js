@@ -10,12 +10,12 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player) {
-            embed.setDescription('❌ อ๊ะ! ตอนนี้ไม่มีคิวเพลงให้ล้างเลยค่ะ สั่งดีเจเปิดเพลงได้เลยน้า~ 🎶');
+            embed.setDescription('❌ ตอนนี้ไม่มีคิวเพลงให้ล้างครับ สั่งเปิดเพลงได้เลย 🎶');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.queue.clear();
-        embed.setDescription('🧹 ปัดกวาดเช็ดถู! ล้างคิวเพลงที่รออยู่ทั้งหมดให้เรียบร้อยแล้วค่ะ ✨');
+        embed.setDescription('🧹 ล้างคิวเพลงที่รออยู่ทั้งหมดเรียบร้อยแล้วครับ ✨');
         return interaction.reply({ embeds: [embed] });
     }
 };

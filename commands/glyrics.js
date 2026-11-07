@@ -11,7 +11,7 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing || !player.queue.current) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ค่ะ! ร้องเพลงอะไรกันเอ่ย? 🥺');
+            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -22,7 +22,7 @@ module.exports = {
             const data = await lyricsHelper.getLyrics(track);
 
             if (!data || !data.lyrics) {
-                embed.setDescription(`❌ ว้าย! ขออภัยค่ะ หาเนื้อเพลงสำหรับ **${track.title}** ไม่เจอเลย 😿`);
+                embed.setDescription(`❌ ขออภัยครับ หาเนื้อเพลงสำหรับ **${track.title}** ไม่เจอ`);
                 return interaction.followUp({ embeds: [embed] });
             }
 
@@ -33,13 +33,13 @@ module.exports = {
 
             embed.setTitle(`🎤 เนื้อเพลง: ${data.title || track.title}`)
                  .setDescription(lyrics)
-                 .setFooter({ text: `แหล่งที่มา: ${data.source} • ร้องตามดีเจดังๆ เลยนะคะ! 💋` });
+                 .setFooter({ text: `แหล่งที่มา: ${data.source}` });
 
             return interaction.followUp({ embeds: [embed] });
 
         } catch (error) {
             console.error('[LyricsCommand] Error:', error.message);
-            embed.setDescription('❌ แง้! เกิดข้อผิดพลาดตอนไปคุ้ยหาเนื้อเพลงมาให้ค่ะ ขออภัยด้วยน้า 🥺');
+            embed.setDescription('❌ เกิดข้อผิดพลาดในการค้นหาเนื้อเพลงครับ');
             return interaction.followUp({ embeds: [embed] });
         }
     }

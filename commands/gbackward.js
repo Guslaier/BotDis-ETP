@@ -17,13 +17,13 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing || !player.queue.current) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ค่ะ! จะให้ดีเจกรอย้อนอะไรเอ่ย 😅');
+            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const track = player.queue.current;
         if (track.isStream) {
-            embed.setDescription('❌ ไม่สามารถกรอเพลงที่เป็น Live Stream สดได้ค่ะ 🥺');
+            embed.setDescription('❌ ไม่สามารถกรอเพลงที่เป็น Live Stream สดได้ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

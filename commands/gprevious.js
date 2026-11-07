@@ -10,19 +10,19 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player) {
-            embed.setDescription('❌ ไม่มีคิวเพลงค่ะ! ดีเจยังไม่ได้เปิดเพลงอะไรเลยน้า~ 🥺');
+            embed.setDescription('❌ ไม่มีคิวเพลงครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const hasPrev = !!(player.queue.previous || (player.previousTracks && player.previousTracks.length > 0));
         if (!hasPrev) {
-            embed.setDescription('❌ อ๊ะ! ไม่มีเพลงก่อนหน้านี้ในประวัติเลยค่ะ เพิ่งเริ่มปาร์ตี้เองน้า~ 😅');
+            embed.setDescription('❌ ไม่มีเพลงก่อนหน้านี้ในประวัติครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.playPrevious();
         const targetTitle = player.queue.current?.title || player.queue.previous?.title || 'เพลงก่อนหน้า';
-        embed.setDescription(`⏮️ จัดให้ตามคำเรียกร้อง! กำลังย้อนกลับไปเล่นเพลง: **${targetTitle}** ค่ะ 💖`);
+        embed.setDescription(`⏮️ กำลังย้อนกลับไปเล่นเพลง: **${targetTitle}** ครับ ⚡`);
         return interaction.reply({ embeds: [embed] });
     }
 };

@@ -10,7 +10,7 @@ module.exports = {
         const channel = interaction.channel;
         if (!channel || !channel.messages) {
             return interaction.followUp({
-                content: '❌ ไม่สามารถเข้าถึงข้อความในห้องนี้ได้ค่ะ 🥺',
+                content: '❌ ไม่สามารถเข้าถึงข้อความในห้องนี้ได้ครับ',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -38,7 +38,7 @@ module.exports = {
 
             if (deadCards.size === 0) {
                 return interaction.followUp({
-                    content: '✨ ไม่พบการ์ดเพลงที่ค้างอยู่เลยค่ะ ห้องแชทสะอาดเรียบร้อยดีแล้วน้า 💕',
+                    content: '✨ ไม่พบการ์ดเพลงที่ค้างอยู่เลยครับ ห้องแชทสะอาดเรียบร้อยดีแล้ว',
                     flags: MessageFlags.Ephemeral
                 });
             }
@@ -57,7 +57,7 @@ module.exports = {
             }
 
             return interaction.followUp({
-                content: `🧹 กวาดล้างเรียบร้อย! ลบการ์ดเพลงเก่าที่ค้างอยู่จำนวน **${deletedCount}** ใบแล้วค่ะ ✨`,
+                content: `🧹 กวาดล้างเรียบร้อย! ลบการ์ดเพลงเก่าที่ค้างอยู่จำนวน **${deletedCount}** ใบแล้วครับ ✨`,
                 flags: MessageFlags.Ephemeral
             });
         } catch (err) {

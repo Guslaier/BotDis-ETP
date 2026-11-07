@@ -37,16 +37,16 @@ module.exports = {
         if (sub === 'add') {
             const player = kazagumo.players.get(interaction.guild.id);
             if (!player || !player.playing || !player.queue.current) {
-                embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ตอนนี้ค่ะ! เล่นเพลงก่อนแล้วค่อยกดใจน้า~ 🥺');
+                embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ตอนนี้ครับ เปิดเพลงก่อนแล้วค่อยกดบันทึกนะ');
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const track = player.queue.current;
             const added = favoriteManager.addFavorite(userId, track);
             if (added) {
-                embed.setDescription(`💖 ว้าว! บันทึกเพลง **${track.title}** ลงในรายการเพลงโปรดของคุณเรียบร้อยแล้วค่ะ! ✨`);
+                embed.setDescription(`💖 บันทึกเพลง **${track.title}** ลงในรายการเพลงโปรดของคุณเรียบร้อยแล้วครับ! ✨`);
             } else {
-                embed.setDescription(`ℹ️ เพลง **${track.title}** มีอยู่ในรายการโปรดของคุณอยู่แล้วนะคะที่รัก 💕`);
+                embed.setDescription(`ℹ️ เพลง **${track.title}** มีอยู่ในรายการโปรดของคุณอยู่แล้วครับ`);
             }
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
@@ -54,7 +54,7 @@ module.exports = {
         if (sub === 'list') {
             const favorites = favoriteManager.getFavorites(userId);
             if (!favorites || favorites.length === 0) {
-                embed.setDescription('❌ คุณยังไม่มีเพลงโปรดเลยค่ะ! ลองฟังเพลงแล้วกดปุ่ม 💖 หรือใช้ `/gfav add` ดูนะคะ 🥺');
+                embed.setDescription('❌ คุณยังไม่มีเพลงโปรดครับ ลองฟังเพลงแล้วกดปุ่ม 💖 หรือใช้ `/gfav add` ดูนะ');
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
@@ -66,7 +66,7 @@ module.exports = {
             if (favorites.length > 15) {
                 desc += `\n*...และอีก ${favorites.length - 15} เพลง*`;
             }
-            desc += '\n\n💡 *พิมพ์ `/gfav play` เพื่อเล่นเพลงโปรดทั้งหมดเข้าคิวได้เลยนะคะ!*';
+            desc += '\n\n💡 *พิมพ์ `/gfav play` เพื่อเล่นเพลงโปรดทั้งหมดเข้าคิวได้เลยครับ!*';
             embed.setDescription(desc);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
@@ -75,31 +75,31 @@ module.exports = {
             const index = interaction.options.getInteger('number');
             const favorites = favoriteManager.getFavorites(userId);
             if (!favorites || favorites.length === 0) {
-                embed.setDescription('❌ คุณยังไม่มีรายการเพลงโปรดเลยค่ะ');
+                embed.setDescription('❌ คุณยังไม่มีรายการเพลงโปรดครับ');
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             if (index < 1 || index > favorites.length) {
-                embed.setDescription(`❌ ลำดับไม่ถูกต้องค่ะ! คุณมีเพลงโปรดทั้งหมด **${favorites.length}** เพลง`);
+                embed.setDescription(`❌ ลำดับไม่ถูกต้องครับ คุณมีเพลงโปรดทั้งหมด **${favorites.length}** เพลง`);
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const target = favorites[index - 1];
             favoriteManager.removeFavorite(userId, target.identifier || target.uri);
-            embed.setDescription(`🗑️ ลบเพลง **${target.title}** ออกจากรายการเพลงโปรดเรียบร้อยแล้วค่ะ!`);
+            embed.setDescription(`🗑️ ลบเพลง **${target.title}** ออกจากรายการเพลงโปรดเรียบร้อยแล้วครับ!`);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         if (sub === 'play') {
             const voiceChannel = interaction.member?.voice?.channel;
             if (!voiceChannel) {
-                embed.setDescription('❌ ต้องเข้าห้องเสียงก่อนนะ เดี๋ยว GOOLIX เหงาแย่เลย! 🥺');
+                embed.setDescription('❌ ต้องเข้าห้องเสียงก่อนนะ เดี๋ยว GOOLIX เหงาแย่เลย! 🔊');
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const favorites = favoriteManager.getFavorites(userId);
             if (!favorites || favorites.length === 0) {
-                embed.setDescription('❌ ยังไม่มีเพลงในรายการโปรดให้เปิดเลยค่ะ ลองเพิ่มเพลงก่อนน้า~ 💖');
+                embed.setDescription('❌ ยังไม่มีเพลงในรายการโปรดให้เปิดครับ ลองเพิ่มเพลงก่อนนะ 💖');
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
@@ -126,7 +126,7 @@ module.exports = {
                 }
             }
 
-            embed.setDescription(`💖 ขนมาให้ทั้งใจ! เพิ่มเพลงโปรด **${loadedCount}** เพลงลงในคิวเรียบร้อยแล้วค่ะ ปาร์ตี้เริ่มได้เลย! 💃✨`);
+            embed.setDescription(`💖 เพิ่มเพลงโปรด **${loadedCount}** เพลงลงในคิวเรียบร้อยแล้วครับ! ปาร์ตี้เริ่มได้เลย! ⚡`);
             await interaction.followUp({ embeds: [embed] });
 
             if (!player.playing && !player._starting && !player.paused) {

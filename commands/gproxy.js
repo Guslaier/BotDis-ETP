@@ -57,7 +57,7 @@ module.exports = {
             await interaction.deferReply();
             const targetArg = proxyManager.getNetworkArgString();
             if (!targetArg) {
-                embed.setDescription('❌ ไม่มี VPN หรือ Proxy ที่พร้อมใช้งานในขณะนี้ค่ะ (บอทใช้ Direct/Bypass แทน)');
+                embed.setDescription('❌ ไม่มี VPN หรือ Proxy ที่พร้อมใช้งานในขณะนี้ครับ (บอทใช้ Direct/Bypass แทน)');
                 return interaction.followUp({ embeds: [embed] });
             }
 
@@ -71,7 +71,7 @@ module.exports = {
             } else if (res.isBotBlock) {
                 embed.setColor('#FF0000');
                 embed.setTitle('🚫 ผลการทดสอบ: ติด นกแดง Anti-Bot!');
-                embed.setDescription(`Proxy \`${bestProxy}\` โดน นกแดง บล็อก (${res.reason})\nระบบทำการ **ย้ายเข้า Blacklist อัตโนมัติ (6 ชม.)** เรียบร้อยแล้วค่ะ!`);
+                embed.setDescription(`Proxy \`${bestProxy}\` โดน นกแดง บล็อก (${res.reason})\nระบบทำการ **ย้ายเข้า Blacklist อัตโนมัติ (6 ชม.)** เรียบร้อยแล้วครับ!`);
             } else {
                 embed.setColor('#FFA500');
                 embed.setTitle('⚠️ ผลการทดสอบ: เกิดข้อผิดพลาดทางเน็ตเวิร์ก');
@@ -84,7 +84,7 @@ module.exports = {
             const status = proxyManager.getStatus();
             embed.setTitle(`🚫 รายชื่อ Proxy ที่ติด Blacklist (${status.blacklistCount} ตัว)`);
             if (status.blacklisted.length === 0) {
-                embed.setDescription('✨ ไม่มี Proxy ใดติด Blacklist ในขณะนี้ค่ะ!');
+                embed.setDescription('✨ ไม่มี Proxy ใดติด Blacklist ในขณะนี้ครับ!');
             } else {
                 const list = status.blacklisted.slice(0, 10).map((b, idx) => {
                     const remainingMin = Math.max(0, Math.round((b.expiresAt - Date.now()) / 60000));
@@ -98,14 +98,14 @@ module.exports = {
         if (subcommand === 'clear') {
             const clearedCount = proxyManager.clearBlacklist();
             embed.setTitle('🧹 ล้าง Blacklist เรียบร้อยแล้ว');
-            embed.setDescription(`ปลดแบน Proxy ทั้งหมดจำนวน **${clearedCount}** ตัวออกจาก Blacklist แล้วค่ะ!`);
+            embed.setDescription(`ปลดแบน Proxy ทั้งหมดจำนวน **${clearedCount}** ตัวออกจาก Blacklist แล้วครับ!`);
             return interaction.reply({ embeds: [embed] });
         }
 
         if (subcommand === 'switch') {
             await interaction.deferReply();
             if (!proxyManager.vpnEnabled) {
-                embed.setDescription('❌ ระบบ VPN ถูกปิดใช้งานอยู่ค่ะ (ENABLE_VPN=false)');
+                embed.setDescription('❌ ระบบ VPN ถูกปิดใช้งานอยู่ครับ (ENABLE_VPN=false)');
                 return interaction.followUp({ embeds: [embed] });
             }
 
@@ -114,8 +114,8 @@ module.exports = {
 
             if (res.ok) {
                 embed.setColor('#00FF00');
-                embed.setTitle('🔄 สลับเซิร์ฟเวอร์ VPN สำเร็จแล้วค่ะ!');
-                embed.setDescription(`บอทเชื่อมต่อไปยังเซิร์ฟเวอร์ใหม่เรียบร้อยแล้วค่ะ\n\n🇸🇬 **เซิร์ฟเวอร์:** \`${res.server}\`\n📍 **Interface IP:** \`${res.ip || 'Detecting...'}\``);
+                embed.setTitle('🔄 สลับเซิร์ฟเวอร์ VPN สำเร็จแล้วครับ!');
+                embed.setDescription(`บอทเชื่อมต่อไปยังเซิร์ฟเวอร์ใหม่เรียบร้อยแล้วครับ\n\n🇸🇬 **เซิร์ฟเวอร์:** \`${res.server}\`\n📍 **Interface IP:** \`${res.ip || 'Detecting...'}\``);
             } else {
                 embed.setColor('#FF0000');
                 embed.setTitle('❌ ไม่สามารถสลับเซิร์ฟเวอร์ VPN ได้');

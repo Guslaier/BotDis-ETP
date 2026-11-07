@@ -213,7 +213,7 @@ class SubscriptionManager extends EventEmitter {
                 return {
                     allowed: false,
                     reason: 'CLUSTER_FULL',
-                    message: 'ขณะนี้ช่องสัญญาณเซิร์ฟเวอร์เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่อีกครั้งค่ะ'
+                    message: 'ขณะนี้ช่องสัญญาณเซิร์ฟเวอร์เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่อีกครั้งครับ'
                 };
             }
             return { allowed: true, slotType: 'SUPPORTER_PRIORITY' };
@@ -224,7 +224,7 @@ class SubscriptionManager extends EventEmitter {
             return {
                 allowed: false,
                 reason: 'CLUSTER_FULL',
-                message: 'ขณะนี้ช่องสัญญาณเซิร์ฟเวอร์เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่อีกครั้งค่ะ'
+                message: 'ขณะนี้ช่องสัญญาณเซิร์ฟเวอร์เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่อีกครั้งครับ'
             };
         }
 
@@ -234,7 +234,7 @@ class SubscriptionManager extends EventEmitter {
                 reason: 'FREE_SLOTS_FULL',
                 current: stats.free,
                 max: maxFree,
-                message: `ขณะนี้ช่องสัญญาณทั่วไปเต็มแล้ว (${stats.free}/${maxFree} ห้อง) — ร่วมสนับสนุนเซิร์ฟเวอร์เพื่อเข้าใช้ช่องทางด่วนได้ทันทีค่ะ!`
+                message: `ขณะนี้ช่องสัญญาณทั่วไปเต็มแล้ว (${stats.free}/${maxFree} ห้อง) — ร่วมสนับสนุนเซิร์ฟเวอร์เพื่อเข้าใช้ช่องทางด่วนได้ทันทีครับ!`
             };
         }
 
@@ -390,7 +390,7 @@ class SubscriptionManager extends EventEmitter {
      */
     redeemCode(guildId, guildName, userId, code) {
         if (!code || typeof code !== 'string') {
-            return { success: false, error: 'กรุณาระบุรหัสโค้ดค่ะ' };
+            return { success: false, error: 'กรุณาระบุรหัสโค้ดครับ' };
         }
 
         const cleanCode = code.trim().toUpperCase();
@@ -398,24 +398,24 @@ class SubscriptionManager extends EventEmitter {
         const campaign = campaigns[cleanCode];
 
         if (!campaign) {
-            return { success: false, error: 'ไม่พบรหัสโค้ดนี้ หรือโค้ดหมดอายุแล้วค่ะ' };
+            return { success: false, error: 'ไม่พบรหัสโค้ดนี้ หรือโค้ดหมดอายุแล้วครับ' };
         }
 
         if (campaign.expiresAt && Date.now() > campaign.expiresAt) {
-            return { success: false, error: 'แคมเปญนี้หมดอายุระยะเวลารับสิทธิ์แล้วค่ะ' };
+            return { success: false, error: 'แคมเปญนี้หมดอายุระยะเวลารับสิทธิ์แล้วครับ' };
         }
 
         const sub = this.getGuildSubscription(guildId, guildName);
 
         if (campaign.type === 'EARLY_BIRD') {
             if (sub.earlyBirdUsed) {
-                return { success: false, error: 'เซิร์ฟเวอร์นี้เคยรับสิทธิ์ Early-Bird ไปแล้วค่ะ (จำกัด 1 สิทธิ์ต่อเซิร์ฟเวอร์)' };
+                return { success: false, error: 'เซิร์ฟเวอร์นี้เคยรับสิทธิ์ Early-Bird ไปแล้วครับ (จำกัด 1 สิทธิ์ต่อเซิร์ฟเวอร์)' };
             }
             if (Array.isArray(campaign.claimedGuilds) && campaign.claimedGuilds.some(c => c.guildId === guildId)) {
-                return { success: false, error: 'เซิร์ฟเวอร์นี้เคยรับสิทธิ์จากโค้ดแคมเปญนี้ไปแล้วค่ะ (จำกัด 1 สิทธิ์ต่อเซิร์ฟเวอร์)' };
+                return { success: false, error: 'เซิร์ฟเวอร์นี้เคยรับสิทธิ์จากโค้ดแคมเปญนี้ไปแล้วครับ (จำกัด 1 สิทธิ์ต่อเซิร์ฟเวอร์)' };
             }
             if (campaign.claimedCount >= campaign.maxClaims) {
-                return { success: false, error: `สิทธิ์สำหรับรอบ ${campaign.name} เต็มแล้วค่ะ (${campaign.claimedCount}/${campaign.maxClaims})` };
+                return { success: false, error: `สิทธิ์สำหรับรอบ ${campaign.name} เต็มแล้วครับ (${campaign.claimedCount}/${campaign.maxClaims})` };
             }
 
             const now = Date.now();
@@ -488,7 +488,7 @@ class SubscriptionManager extends EventEmitter {
         const campaign = campaigns[cleanCode];
 
         if (!campaign) {
-            return { success: false, error: 'ไม่พบแคมเปญนี้ค่ะ' };
+            return { success: false, error: 'ไม่พบแคมเปญนี้ครับ' };
         }
 
         if (updates.name !== undefined) campaign.name = updates.name;

@@ -11,13 +11,13 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {
-            embed.setDescription('❌ อ๊ะ! ตอนนี้ไม่ได้เปิดเพลงอะไรอยู่เลยค่ะ สเตจเงียบกริบ 😅');
+            embed.setDescription('❌ ตอนนี้ไม่ได้เปิดเพลงอยู่ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const track = player.queue.current;
         if (!track) {
-            embed.setDescription('❌ ไม่พบข้อมูลเพลงค่ะ! ผีหลอกดีเจรึเปล่าเนี่ย 😱');
+            embed.setDescription('❌ ไม่พบข้อมูลเพลงครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

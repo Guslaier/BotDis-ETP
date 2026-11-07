@@ -10,16 +10,16 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ค่ะ จะให้ดีเจหยุดอะไรเอ่ย? 😅');
+            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (player.paused) {
-            embed.setDescription('⚠️ แหมมม เพลงก็หยุดอยู่แล้วนะคะที่รัก จะหยุดซ้ำทำไมเนี่ย! 😂');
+            embed.setDescription('⚠️ เพลงถูกพักไว้อยู่แล้วครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.pause(true);
-        embed.setDescription('⏸️ ขอพักจิบน้ำแป๊บนะคะ! เพลงหยุดชั่วคราวแล้วค่ะ 💋');
+        embed.setDescription('⏸️ หยุดเล่นเพลงชั่วคราวแล้วครับ');
         return interaction.reply({ embeds: [embed] });
     }
 };

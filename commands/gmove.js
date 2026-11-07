@@ -22,7 +22,7 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || player.queue.length === 0) {
-            embed.setDescription('❌ ไม่มีเพลงในคิวให้ย้ายเลยค่ะ ตอนนี้คิวว่างเปล่า 🥺');
+            embed.setDescription('❌ ไม่มีเพลงในคิวให้ย้ายครับ ตอนนี้คิวว่างเปล่า');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -30,12 +30,12 @@ module.exports = {
         const toPos = interaction.options.getInteger('to');
 
         if (fromPos > player.queue.length || toPos > player.queue.length) {
-            embed.setDescription(`❌ ลำดับไม่ถูกต้องค่ะ! ตอนนี้ในคิวมีเพลงรออยู่ **${player.queue.length}** เพลง`);
+            embed.setDescription(`❌ ลำดับไม่ถูกต้องครับ ตอนนี้ในคิวมีเพลงรออยู่ **${player.queue.length}** เพลง`);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         if (fromPos === toPos) {
-            embed.setDescription('❌ ตำแหน่งเดิมกับตำแหน่งใหม่เป็นที่เดียวกันค่ะ ไม่ต้องย้ายน้า~ 😅');
+            embed.setDescription('❌ ตำแหน่งเดิมกับตำแหน่งใหม่เป็นตำแหน่งเดียวกันครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -43,7 +43,7 @@ module.exports = {
         player.queue.splice(fromPos - 1, 1);
         player.queue.splice(toPos - 1, 0, track);
 
-        embed.setDescription(`🔀 ดีเจจัดให้! ย้ายเพลง **[${track.title}](${track.uri})** จากลำดับที่ **${fromPos}** ไปยังลำดับที่ **${toPos}** เรียบร้อยค่ะ 💃✨`);
+        embed.setDescription(`🔀 ย้ายเพลง **[${track.title}](${track.uri})** จากลำดับที่ **${fromPos}** ไปยังลำดับที่ **${toPos}** เรียบร้อยครับ ⚡`);
         return interaction.reply({ embeds: [embed] });
     }
 };

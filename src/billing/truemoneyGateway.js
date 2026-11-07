@@ -50,19 +50,19 @@ class TrueMoneyGateway {
 
         const cd = this.checkCooldown(ip, guildId);
         if (cd.limited) {
-            return { success: false, code: 'COOLDOWN', error: `กรุณารอสักครู่ (${cd.retryAfter} วินาที) ก่อนทำรายการใหม่อีกครั้งค่ะ` };
+            return { success: false, code: 'COOLDOWN', error: `กรุณารอสักครู่ (${cd.retryAfter} วินาที) ก่อนทำรายการใหม่อีกครั้งครับ` };
         }
 
         const voucherCode = this._extractVoucherCode(voucherInput);
         if (!voucherCode || !/^[a-zA-Z0-9_-]{6,64}$/.test(voucherCode)) {
-            return { success: false, code: 'INVALID_FORMAT', error: 'รูปแบบรหัสซองของขวัญไม่ถูกต้อง กรุณาตรวจสอบลิงก์ซองอีกครั้งค่ะ' };
+            return { success: false, code: 'INVALID_FORMAT', error: 'รูปแบบรหัสซองของขวัญไม่ถูกต้อง กรุณาตรวจสอบลิงก์ซองอีกครั้งครับ' };
         }
 
         // Check duplicate voucher in database
         const transactions = dbManager.get('transactions') || {};
         const isDuplicate = Object.values(transactions).some(t => t.voucherCode === voucherCode);
         if (isDuplicate) {
-            return { success: false, code: 'DUPLICATE_VOUCHER', error: 'ซองของขวัญนี้ถูกใช้งานในระบบไปแล้วค่ะ' };
+            return { success: false, code: 'DUPLICATE_VOUCHER', error: 'ซองของขวัญนี้ถูกใช้งานในระบบไปแล้วครับ' };
         }
 
         // Sandbox check
@@ -110,7 +110,7 @@ class TrueMoneyGateway {
                 return resolve({
                     success: false,
                     code: 'WALLET_CONFIG_ERROR',
-                    error: 'ระบบยังไม่ได้ตั้งค่าเบอร์ TrueMoney รับเงิน กรุณาแจ้งแอดมินค่ะ'
+                    error: 'ระบบยังไม่ได้ตั้งค่าเบอร์ TrueMoney รับเงิน กรุณาแจ้งแอดมินครับ'
                 });
             }
 
@@ -160,19 +160,19 @@ class TrueMoneyGateway {
 
                         switch (code) {
                             case 'VOUCHER_OUT_OF_STOCK':
-                                message = 'ซองของขวัญนี้ถูกรับไปหมดแล้วค่ะ';
+                                message = 'ซองของขวัญนี้ถูกรับไปหมดแล้วครับ';
                                 break;
                             case 'VOUCHER_EXPIRED':
-                                message = 'ซองของขวัญนี้หมดอายุแล้วค่ะ';
+                                message = 'ซองของขวัญนี้หมดอายุแล้วครับ';
                                 break;
                             case 'VOUCHER_NOT_FOUND':
                                 message = 'ไม่พบซองของขวัญนี้ หรือลิงก์ไม่ถูกต้อง';
                                 break;
                             case 'CANNOT_GET_OWN_VOUCHER':
-                                message = 'ไม่สามารถรับซองของขวัญที่สร้างจากเบอร์ของระบบได้ค่ะ';
+                                message = 'ไม่สามารถรับซองของขวัญที่สร้างจากเบอร์ของระบบได้ครับ';
                                 break;
                             case 'TARGET_USER_REDEEMED':
-                                message = 'เบอร์นี้ได้รับเงินจากซองนี้ไปแล้วค่ะ';
+                                message = 'เบอร์นี้ได้รับเงินจากซองนี้ไปแล้วครับ';
                                 break;
                             default:
                                 message = parsed.status?.message || 'ทำรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';

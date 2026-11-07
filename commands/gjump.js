@@ -19,27 +19,27 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่เลยค่ะ จะให้แซงคิวใครเอ่ย? 😅');
+            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (player.queue.length === 0) {
-            embed.setDescription('❌ คิวเพลงว่างเปล่าค่ะ ไม่มีใครให้แซงน้า~!');
+            embed.setDescription('❌ คิวเพลงว่างเปล่าครับ ไม่มีเพลงให้แซงคิว');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (position < 1 || position > player.queue.length) {
-            embed.setDescription(`❌ เอ๊ะ! ระบุลำดับคิวผิดรึเปล่าคะ ต้องอยู่ระหว่าง 1 ถึง ${player.queue.length} นะคะ 🧐`);
+            embed.setDescription(`❌ ระบุลำดับคิวไม่ถูกต้องครับ ต้องอยู่ระหว่าง 1 ถึง ${player.queue.length}`);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const trackToJump = player.queue.remove(position - 1);
         if (!trackToJump) {
-            embed.setDescription('❌ ไม่สามารถดึงเพลงออกจากคิวได้ค่ะ');
+            embed.setDescription('❌ ไม่สามารถดึงเพลงออกจากคิวได้ครับ');
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.queue.unshift(trackToJump);
 
-        embed.setDescription(`⬆️ วีไอพีสุดๆ! ดันเพลง **${trackToJump.title}** แซงคิวขึ้นมาเป็นเพลงต่อไปให้แล้วค่ะ 💅✨`);
+        embed.setDescription(`⬆️ Priority Jump! ดันเพลง **${trackToJump.title}** แซงคิวขึ้นมาเป็นเพลงถัดไปเรียบร้อยครับ ⚡`);
         return interaction.reply({ embeds: [embed] });
     }
 };
