@@ -24,9 +24,12 @@ module.exports = {
                 if (msg.author.id !== client.user.id) return false;
                 if (activeCardId && msg.id === activeCardId) return false;
 
-                const hasMusicButtons = msg.components?.some(row =>
-                    row.components?.some(btn => btn.customId?.startsWith('music_'))
-                );
+                const hasMusicButtons = msg.components?.some(comp => {
+                    if (comp.customId?.startsWith('music_')) return true;
+                    if (comp.components?.some(c => c.customId?.startsWith('music_'))) return true;
+                    if (comp.components?.some(c => c.components?.some(btn => btn.customId?.startsWith('music_')))) return true;
+                    return false;
+                });
                 const hasMusicEmbed = msg.embeds?.some(e =>
                     e.author?.name?.includes('Now Playing') || e.title?.includes('Now Playing')
                 );

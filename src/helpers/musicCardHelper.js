@@ -1,4 +1,15 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { 
+    EmbedBuilder, 
+    ActionRowBuilder, 
+    ButtonBuilder, 
+    ButtonStyle, 
+    ContainerBuilder, 
+    SectionBuilder, 
+    ThumbnailBuilder, 
+    TextDisplayBuilder, 
+    SeparatorBuilder, 
+    MessageFlags 
+} = require('discord.js');
 
 function formatDuration(ms) {
     if (!ms || ms < 0 || isNaN(ms)) return '00:00';
@@ -189,9 +200,48 @@ function createNowPlayingCard(player, track, options = {}) {
             .setStyle(ButtonStyle.Danger)
     );
 
+    const isLegacy = (process.env.CARD_STYLE === 'legacy');
+    if (isLegacy) {
+        return {
+            embeds: [embed],
+            components: [row1, row2, row3]
+        };
+    }
+
+    // Modern Discord Components V2: Container layout (Accent colored bar enclosing all text & buttons)
+    const accentColorInt = isPreparing ? 0xFFA500 : (isSupporter ? 0x00FF88 : 0x00B0FF);
+    const contentMarkdown = isPreparing
+        ? `### ⏳ ${player.manager.client.user.username} • Switching Track\n` +
+          `**${safeTitle}**\n\n` +
+          `\`⏳ ${statusText}\`  \`⚡ Buffering...\`\n\n` +
+          `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\`\n\n` +
+          `*🔊 #${channelName}  •  👥 ${membersCount} listening*`
+        : `### [${safeTitle}](${track?.uri || 'https://discord.com'})\n` +
+          `**${safeAuthor}**${requesterTag}\n\n` +
+          `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n` +
+          `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\`\n\n` +
+          `*🔊 #${channelName}  •  👥 ${membersCount} listening*`;
+
+    const section = new SectionBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(contentMarkdown)
+    );
+
+    if (track?.thumbnail && typeof track.thumbnail === 'string' && track.thumbnail.startsWith('http')) {
+        try {
+            section.setThumbnailAccessory(new ThumbnailBuilder().setURL(track.thumbnail));
+        } catch {}
+    }
+
+    const container = new ContainerBuilder()
+        .setAccentColor(accentColorInt)
+        .addSectionComponents(section)
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addActionRowComponents(row1, row2, row3);
+
     return {
-        embeds: [embed],
-        components: [row1, row2, row3]
+        embeds: [],
+        components: [container],
+        flags: [MessageFlags.IsComponentsV2]
     };
 }
 
