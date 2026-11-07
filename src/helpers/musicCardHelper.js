@@ -180,8 +180,18 @@ function createNowPlayingCard(player, track, options = {}) {
             .setStyle(ButtonStyle.Secondary)
     );
 
-    // Row 3: Quick Controls (Volume, Autoplay, Close App)
+    // Row 3: Quick Controls (Add Song, Playlist, Volume, Autoplay, Close App)
     const row3 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('music_add_song')
+            .setEmoji('➕')
+            .setLabel('ขอเพลง')
+            .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+            .setCustomId('music_add_playlist')
+            .setEmoji('📑')
+            .setLabel('เพลย์ลิสต์')
+            .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('music_volume')
             .setEmoji('🔊')

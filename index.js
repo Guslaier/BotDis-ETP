@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { Client, GatewayIntentBits, Options, Collection, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { Client, GatewayIntentBits, Options, Collection, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js');
 const QueueManager = require('./src/QueueManager');
 const cacheManager = require('./src/CacheManager');
 const { createNowPlayingCard, createPreparingCard } = require('./src/helpers/musicCardHelper');
@@ -442,6 +442,36 @@ client.on('interactionCreate', async interaction => {
                 player.destroy();
                 return;
             }
+            case 'music_add_song': {
+                const modal = new ModalBuilder()
+                    .setCustomId('modal_add_song')
+                    .setTitle('➕ ขอเพลง / ค้นหาเพลง');
+
+                const songInput = new TextInputBuilder()
+                    .setCustomId('song_query')
+                    .setLabel('ชื่อเพลง หรือ ลิงก์ (YouTube / SoundCloud / Spotify)')
+                    .setPlaceholder('เช่น Sailor Song หรือ https://youtube.com/watch?v=...')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+
+                modal.addComponents(new ActionRowBuilder().addComponents(songInput));
+                return interaction.showModal(modal);
+            }
+            case 'music_add_playlist': {
+                const modal = new ModalBuilder()
+                    .setCustomId('modal_add_playlist')
+                    .setTitle('📑 เพิ่มเพลย์ลิสต์เพลง');
+
+                const plInput = new TextInputBuilder()
+                    .setCustomId('playlist_query')
+                    .setLabel('ลิงก์เพลย์ลิสต์ (YouTube / SoundCloud)')
+                    .setPlaceholder('https://www.youtube.com/playlist?list=...')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+
+                modal.addComponents(new ActionRowBuilder().addComponents(plInput));
+                return interaction.showModal(modal);
+            }
             case 'vol_30':
             case 'vol_60':
             case 'vol_100':
@@ -459,6 +489,131 @@ client.on('interactionCreate', async interaction => {
                     components: []
                 });
             }
+        }
+    }
+
+    // 1.5 Handle Modal Submissions (Add Song & Add Playlist)
+    if (interaction.isModalSubmit()) {
+        const modalId = interaction.customId;
+        if (modalId === 'modal_add_song' || modalId === 'modal_add_playlist') {
+            const voiceChannel = interaction.member?.voice?.channel;
+            const guildId = interaction.guildId;
+
+            if (!voiceChannel) {
+                return interaction.reply({
+                    embeds: [new EmbedBuilder().setColor('#EF4444').setDescription(i18n.t(guildId, 'VOICE_JOIN_REQUIRED'))],
+                    flags: MessageFlags.Ephemeral
+                });
+            }
+
+            const publicPort = process.env.PUBLIC_WEB_PORT || '11901';
+            const host = process.env.PUBLIC_WEB_URL || `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${publicPort}`;
+            const donateUrl = `${host}/donate?guild=${guildId}&guildId=${guildId}&userId=${interaction.user.id}`;
+            const donateRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (Supporter Stream Lanes)')
+                    .setStyle(ButtonStyle.Link)
+                    .setURL(donateUrl)
+            );
+
+            // Slot Guard Check
+            const slotCheck = subscriptionManager.checkStreamSlot(guildId, kazagumo, client);
+            if (!slotCheck.allowed) {
+                const embed = new EmbedBuilder()
+                    .setColor('#FFD600')
+                    .setTitle('⚠️ ช่องสัญญาณเซิร์ฟเวอร์เต็ม')
+                    .setDescription(slotCheck.message);
+                return interaction.reply({ embeds: [embed], components: [donateRow], flags: MessageFlags.Ephemeral });
+            }
+
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+            const query = modalId === 'modal_add_song'
+                ? interaction.fields.getTextInputValue('song_query')
+                : interaction.fields.getTextInputValue('playlist_query');
+
+            if (!query || !query.trim()) {
+                return interaction.followUp({ content: '❌ กรุณาระบุชื่อเพลงหรือลิงก์ค่ะ', flags: MessageFlags.Ephemeral });
+            }
+
+            const settingsManager = require('./src/helpers/settingsManager');
+            const tierConfig = subscriptionManager.getTierConfig(guildId);
+
+            let player = kazagumo.players.get(guildId);
+            if (!player) {
+                player = await kazagumo.createPlayer({
+                    guildId: guildId,
+                    textId: interaction.channelId,
+                    voiceId: voiceChannel.id,
+                    volume: settingsManager.getGuildVolume(guildId)
+                });
+            }
+
+            if (player.queue.length >= tierConfig.maxQueue) {
+                const embed = new EmbedBuilder()
+                    .setColor('#EF4444')
+                    .setTitle('📋 Queue Limit Reached')
+                    .setDescription(i18n.t(guildId, 'QUEUE_LIMIT_FREE'));
+                return interaction.followUp({ embeds: [embed], components: [donateRow], flags: MessageFlags.Ephemeral });
+            }
+
+            const forcePlaylist = (modalId === 'modal_add_playlist');
+            const result = await kazagumo.search(query.trim(), {
+                requester: interaction.user,
+                forcePlaylist
+            });
+
+            if (!result || !result.tracks || !result.tracks.length) {
+                return interaction.followUp({ content: '❌ หาเพลงไม่เจอ! (ลองพิมพ์ชื่อเพลงสั้นๆ หรือตรวจสอบลิงก์นะคะ)', flags: MessageFlags.Ephemeral });
+            }
+
+            const embed = new EmbedBuilder().setColor('#00FF88');
+
+            if (result.type === 'PLAYLIST') {
+                const addedTracks = [];
+                let skippedOver30Min = 0;
+
+                for (const track of result.tracks) {
+                    if (player.queue.length + addedTracks.length >= tierConfig.maxQueue) break;
+                    if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+                        skippedOver30Min++;
+                        continue;
+                    }
+                    addedTracks.push(track);
+                    player.queue.add(track);
+                }
+
+                let msg = `📋 **${result.playlistName || 'Playlist'}**\n\n${i18n.t(guildId, 'PLAYLIST_ADDED')} (${addedTracks.length} tracks)`;
+                if (skippedOver30Min > 0) {
+                    msg += `\n*(Skipped ${skippedOver30Min} tracks > 30 mins for Free Tier)*`;
+                }
+                embed.setDescription(msg);
+                await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
+            } else {
+                const track = result.tracks[0];
+                if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+                    const durationMin = Math.floor((track.duration || 0) / 60);
+                    embed.setColor('#FFD600')
+                        .setTitle('⏱️ Track Exceeds 30 Minutes')
+                        .setDescription(i18n.t(guildId, 'SONG_TOO_LONG', { duration: `${durationMin} min` }));
+                    return interaction.followUp({ embeds: [embed], components: [donateRow], flags: MessageFlags.Ephemeral });
+                }
+
+                player.queue.add(track);
+                const isPlaying = (player.playing || player._starting);
+                const msgKey = !isPlaying ? 'NOW_PLAYING' : 'ADDED_QUEUE';
+                embed.setDescription(`🎵 **${track.title}**\n\n${i18n.t(guildId, msgKey)}`);
+                await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
+            }
+
+            if (!player.playing && !player._starting && !player.paused) {
+                try {
+                    await player.play();
+                } catch (error) {
+                    console.error('[Modal Play] Play error:', error.message);
+                }
+            }
+            return;
         }
     }
 
