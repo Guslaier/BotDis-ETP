@@ -30,8 +30,11 @@ module.exports = {
                 }
             }
 
-            // อัปเดต Slash Commands ไปยัง Discord
+            // อัปเดต Slash Commands ไปยัง Discord (Global + Guild ปัจจุบัน เพื่อความไวระดับ 0 วิ)
             await client.application.commands.set(newCommandsData);
+            if (interaction.guild) {
+                await interaction.guild.commands.set(newCommandsData);
+            }
 
             embed.setDescription('✅ รีเฟรชคำสั่งให้เรียบร้อยแล้วค่ะ! สมาชิกทุกคนสามารถใช้งานคำสั่งล่าสุดได้ทันที ✨💋');
             return interaction.followUp({ embeds: [embed] });
