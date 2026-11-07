@@ -15,6 +15,7 @@ class NodeRouter extends EventEmitter {
     _initLocalNode() {
         const overrides = dbManager.get('nodesConfig') || {};
         const override = overrides['local-0'];
+        const billingConfig = dbManager.get('billingConfig', 'config') || {};
 
         this.nodes.set('local-0', {
             id: 'local-0',
@@ -23,7 +24,7 @@ class NodeRouter extends EventEmitter {
             host: '127.0.0.1',
             status: 'online',
             activeRooms: 0,
-            maxRooms: override?.maxRooms || parseInt(process.env.MAX_TOTAL_STREAMS || '12', 10),
+            maxRooms: override?.maxRooms || billingConfig.maxTotalStreams || parseInt(process.env.MAX_TOTAL_STREAMS || '4', 10),
             latency: 0,
             lastPing: Date.now(),
             vpn: null

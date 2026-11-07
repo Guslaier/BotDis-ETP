@@ -935,6 +935,8 @@ class AdminServer {
                     maxFreeStreams: maxFree,
                     maxTotalStreams: maxTotal
                 });
+                // Sync local-0 Controller node capacity live
+                await nodeRouter.updateNodeConfig('local-0', { maxRooms: maxTotal });
                 return this._sendJson(res, 200, { success: true, config: updated });
             }
 
@@ -992,6 +994,15 @@ class AdminServer {
                     name: body.name,
                     maxRooms: body.maxRooms
                 });
+                // If modifying local-0, keep billing maxTotalStreams synchronized
+                if (nodeId === 'local-0' && body.maxRooms !== undefined && !isNaN(parseInt(body.maxRooms, 10))) {
+                    const newMaxTotal = parseInt(body.maxRooms, 10);
+                    const currentBilling = subscriptionManager.getConfig();
+                    subscriptionManager.updateConfig({
+                        maxTotalStreams: newMaxTotal,
+                        maxFreeStreams: Math.min(currentBilling.maxFreeStreams || 2, newMaxTotal)
+                    });
+                }
                 return this._sendJson(res, resConfig.success ? 200 : 400, resConfig);
             }
 
