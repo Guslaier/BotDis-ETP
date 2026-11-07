@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 const { execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const Player = require('./Player');
 const proxyManager = require('./helpers/proxyManager');
 const youtubeCircuit = require('./helpers/youtubeCircuit');
@@ -22,7 +23,7 @@ class Track {
         this.title = data.title || 'Unknown Title';
         this.author = data.uploader || data.channel || data.author || data.artist || 'Unknown Artist';
         this.uri = data.url || (data.id ? `https://www.youtube.com/watch?v=${data.id}` : data.uri);
-        this.identifier = data.id || data.identifier || '';
+        this.identifier = data.id || data.identifier || (this.uri ? crypto.createHash('md5').update(this.uri).digest('hex').slice(0, 16) : '');
         this.length = (data.duration ? data.duration * 1000 : (data.length || 0));
         this.duration = data.duration || (this.length ? Math.round(this.length / 1000) : 0);
         this.thumbnail = data.thumbnails && data.thumbnails.length ? data.thumbnails[data.thumbnails.length - 1].url : (data.thumbnail || null);
@@ -367,7 +368,7 @@ class QueueManager extends EventEmitter {
         if (!track) return;
         if (player && player.loop === 'track') return;
 
-        const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
+        const identifier = track.identifier || crypto.createHash('md5').update(track.uri || '').digest('hex').slice(0, 20);
         if (!identifier) return;
 
         const cachePath = path.resolve(cacheDir, `${identifier}.opus`);

@@ -236,7 +236,7 @@ class CacheManager {
             }
         }
 
-        const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
+        const identifier = track.identifier || crypto.createHash('md5').update(track.uri || '').digest('hex').slice(0, 20);
         const targetPath = this.getTrackPath(identifier);
 
         // 1. Play from cached file if present (<0.1s latency)
@@ -506,11 +506,13 @@ class CacheManager {
     _streamFromRemoteNode(node, track, seekSeconds = 0, volume = 100, onSpawn = null, filter = 'off', bitrate = '64k') {
         const http = require('http');
         return new Promise((resolve, reject) => {
-            const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
+            const identifier = track.identifier || crypto.createHash('md5').update(track.uri || '').digest('hex').slice(0, 20);
+            const durationSec = track.duration || (track.length ? Math.round(track.length / 1000) : 0);
             const queryParams = new URLSearchParams({
                 uri: track.uri,
                 title: track.title || '',
                 identifier: identifier,
+                duration: String(durationSec),
                 seek: String(seekSeconds),
                 volume: String(volume),
                 filter: String(filter),
@@ -567,7 +569,7 @@ class CacheManager {
      * Download and cache track on-disk.
      */
     async prepareTrack(track, isBackground = false, onSpawn = null) {
-        const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
+        const identifier = track.identifier || crypto.createHash('md5').update(track.uri || '').digest('hex').slice(0, 20);
         const trackHash = this.getTrackHash(identifier);
         const targetPath = this.getTrackPath(identifier);
 

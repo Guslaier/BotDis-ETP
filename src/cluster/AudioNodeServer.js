@@ -2,6 +2,7 @@ require('dotenv').config();
 const http = require('http');
 const url = require('url');
 const os = require('os');
+const crypto = require('crypto');
 const cacheManager = require('../CacheManager');
 const proxyManager = require('../helpers/proxyManager');
 
@@ -159,7 +160,7 @@ class AudioNodeServer {
                 const query = parsedUrl.query;
                 const uri = query.uri;
                 const title = query.title ? decodeURIComponent(query.title) : 'Track';
-                const identifier = query.identifier || (uri ? Buffer.from(uri).toString('hex').slice(0, 20) : null);
+                const identifier = query.identifier || (uri ? crypto.createHash('md5').update(uri).digest('hex').slice(0, 20) : null);
                 if (uri && identifier && !cacheManager.isCached(identifier)) {
                     console.log(`[AudioNode] Background pre-caching next song: "${title}" (${identifier})`);
                     cacheManager.prepareTrack({ uri, identifier, title }, true).catch(() => {});
@@ -184,7 +185,7 @@ class AudioNodeServer {
                 const filter = query.filter || 'off';
                 const bitrate = query.bitrate || '64k';
                 const title = query.title ? decodeURIComponent(query.title) : 'Track';
-                const identifier = query.identifier || Buffer.from(uri).toString('hex').slice(0, 20);
+                const identifier = query.identifier || crypto.createHash('md5').update(uri).digest('hex').slice(0, 20);
 
                 this.activeStreams++;
                 console.log(`[AudioNode] Stream requested: "${title}" (${uri}) (Active: ${this.activeStreams}/${this.maxRooms})`);
@@ -225,9 +226,13 @@ class AudioNodeServer {
                             filter,
                             bitrate
                         );
-                        // Trigger background caching for future replays
+                        // Delay background caching by 5s so it doesn't fight live stream for initial buffer
                         if (seekSeconds === 0) {
-                            cacheManager.prepareTrack(track, true).catch(() => {});
+                            setTimeout(() => {
+                                if (!isTerminated && !cacheManager.isCached(identifier)) {
+                                    cacheManager.prepareTrack(track, true).catch(() => {});
+                                }
+                            }, 5000).unref();
                         }
                     }
 

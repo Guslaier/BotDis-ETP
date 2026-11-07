@@ -1,5 +1,6 @@
 const { execFile } = require('child_process');
 const path = require('path');
+const crypto = require('crypto');
 const proxyManager = require('./proxyManager');
 
 class LyricsHelper {
@@ -28,7 +29,7 @@ class LyricsHelper {
 
     async getLyrics(track) {
         if (!track) return null;
-        const identifier = track.identifier || Buffer.from(track.uri || '').toString('hex').slice(0, 20);
+        const identifier = track.identifier || crypto.createHash('md5').update(track.uri || '').digest('hex').slice(0, 20);
 
         // 1. In-memory Cache check
         if (this.cache.has(identifier)) {

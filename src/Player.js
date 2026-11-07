@@ -9,6 +9,7 @@ const {
     StreamType 
 } = require('@discordjs/voice');
 const prism = require('prism-media');
+const crypto = require('crypto');
 const CacheManager = require('./CacheManager');
 const settingsManager = require('./helpers/settingsManager');
 const subscriptionManager = require('./billing/subscriptionManager');
@@ -938,7 +939,7 @@ class Player {
 
     _triggerNodePrecache(track) {
         if (!track || !track.uri) return;
-        const identifier = track.identifier || Buffer.from(track.uri).toString('hex').slice(0, 20);
+        const identifier = track.identifier || crypto.createHash('md5').update(track.uri || '').digest('hex').slice(0, 20);
         if (this.node && this.node.type === 'remote' && this.node.status === 'online') {
             const http = require('http');
             const q = new URLSearchParams({
