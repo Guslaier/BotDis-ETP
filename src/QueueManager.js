@@ -118,7 +118,6 @@ class QueueManager extends EventEmitter {
                 const activeProxy = (!isSoundCloud && !proxyManager.isVpnActive()) ? proxyManager.getYouTubeProxy() : null;
 
                 if (!isSoundCloud) {
-                    args.push('--extractor-args', 'youtube:player_client=android,web');
                     const netArgs = proxyManager.getNetworkArgs();
                     if (netArgs.length > 0) {
                         args.push(...netArgs);

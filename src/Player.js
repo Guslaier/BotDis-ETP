@@ -393,8 +393,9 @@ class Player {
 
             const nodeRouter = require('./cluster/NodeRouter');
             const isSupporter = subscriptionManager.isSupporter(this.guildId);
-            if (!this.node || this.node.status !== 'online') {
-                this.node = nodeRouter.selectBestNode(this.guildId, isSupporter);
+            if (!this.node || this.node.status !== 'online' || this.node.type === 'local') {
+                const bestNode = nodeRouter.selectBestNode(this.guildId, isSupporter);
+                if (bestNode) this.node = bestNode;
             }
 
             // Direct real-time streaming with early process tracker

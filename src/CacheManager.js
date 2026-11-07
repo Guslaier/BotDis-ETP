@@ -191,7 +191,6 @@ class CacheManager {
         const useIPv6 = process.env.USE_IPV6 === 'true';
 
         if (!isSoundCloud) {
-            args.push('--extractor-args', 'youtube:player_client=android,web');
             const netArgs = proxyManager.getNetworkArgs();
             if (netArgs.length > 0) {
                 args.push(...netArgs);

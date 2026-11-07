@@ -36,7 +36,7 @@ class YouTubeCircuit {
     static isBotBlock(text) {
         if (!text) return false;
         const str = typeof text === 'string' ? text : text.toString();
-        return /Sign in to confirm|not a bot|unusual traffic|HTTP Error 429|captcha/i.test(str);
+        return /Sign in to confirm|not a bot|unusual traffic|HTTP Error 429|HTTP Error 403|Forbidden|captcha/i.test(str);
     }
 
     startProbe(binPath, getProxyFn) {
