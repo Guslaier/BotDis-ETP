@@ -266,6 +266,12 @@ class SubscriptionManager extends EventEmitter {
             sub.expiresAt = now + addedMs;
         }
 
+        // Lock maximum accumulated subscription ceiling to 365 days (1 year)
+        const maxDurationMs = 365 * 24 * 3600 * 1000;
+        if (sub.expiresAt > now + maxDurationMs) {
+            sub.expiresAt = now + maxDurationMs;
+        }
+
         sub.plan = 'SUPPORTER';
         sub.source = isSandbox ? 'SANDBOX_DONATION' : 'DONATION';
         sub.cumulativePaidBaht = (sub.cumulativePaidBaht || 0) + amountBaht;
@@ -292,8 +298,8 @@ class SubscriptionManager extends EventEmitter {
             referrerGuildId = referrer.guildId;
             referrerGuildName = referrer.guildName;
 
-            // Check if cumulative donation reaches price30Days threshold
-            if (!sub.referralRewardTriggered && sub.cumulativePaidBaht >= price30Days) {
+            // Enforce minimum 29 THB voucher threshold before awarding referral bonus days
+            if (!sub.referralRewardTriggered && sub.cumulativePaidBaht >= Math.max(29, price30Days) && amountBaht >= 29) {
                 if ((referrer.referralBonusMonths || 0) < maxReferralMonths) {
                     const refBonusMs = 30 * 24 * 3600 * 1000;
                     if (referrer.plan === 'SUPPORTER' && referrer.expiresAt > now) {

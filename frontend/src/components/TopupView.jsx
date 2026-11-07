@@ -9,6 +9,7 @@ export default function TopupView({ lang, onToast }) {
   const [userId, setUserId] = useState('');
   const [guildData, setGuildData] = useState(null);
   const [loadingGuild, setLoadingGuild] = useState(false);
+  const [formTab, setFormTab] = useState('voucher'); // 'voucher' | 'promo'
 
   // Forms
   const [voucher, setVoucher] = useState('');
@@ -21,8 +22,8 @@ export default function TopupView({ lang, onToast }) {
   // Read URL query params on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const g = params.get('guildId') || '';
-    const u = params.get('userId') || '';
+    const g = params.get('guildId') || params.get('guild') || params.get('guild_id') || '';
+    const u = params.get('userId') || params.get('user') || params.get('user_id') || '';
     const ref = params.get('ref') || params.get('referral') || '';
     if (g) setGuildId(g);
     if (u) setUserId(u);
@@ -95,11 +96,11 @@ export default function TopupView({ lang, onToast }) {
       });
       const data = await res.json();
       if (data.success) {
-        onToast('success', lang === 'th' ? 'เติมเงินสำเร็จ!' : 'Topup Successful!', lang === 'th' ? `เพิ่มวันใช้งาน +${data.addedDays} วัน (ยอด ${data.amount} บาท)` : `Added +${data.addedDays} days (${data.amount} THB)`);
+        onToast('success', lang === 'th' ? 'ร่วมสนับสนุนสำเร็จ!' : 'Support Successful!', lang === 'th' ? `ปลดล็อกวันผู้สนับสนุน +${data.addedDays} วัน (ยอด ${data.amount} บาท)` : `Added +${data.addedDays} Supporter days (${data.amount} THB)`);
         setVoucher('');
         verifyGuild(guildId, userId);
       } else {
-        onToast('error', lang === 'th' ? 'เติมเงินไม่สำเร็จ' : 'Topup Failed', data.error || 'Voucher invalid');
+        onToast('error', lang === 'th' ? 'ทำรายการไม่สำเร็จ' : 'Transaction Failed', data.error || 'Voucher invalid');
       }
     } catch (err) {
       onToast('error', 'Error', err.message);
@@ -391,68 +392,162 @@ export default function TopupView({ lang, onToast }) {
           )}
         </div>
 
-        {/* Right Column: TrueMoney Voucher Topup Form */}
+        {/* Right Column: Support & Voucher Form */}
         <div className="glass-panel" style={{ padding: 24 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={18} style={{ color: 'var(--cyber-pink)' }} />
-            <span>{lang === 'th' ? 'เติมเงินด้วยซองของขวัญ TrueMoney' : 'TrueMoney Gift Voucher'}</span>
+            <span>{lang === 'th' ? 'ร่วมสนับสนุนค่าเซิร์ฟเวอร์' : 'Server Support & Contribution'}</span>
           </h2>
 
-          <form onSubmit={handleTopup}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Gift Voucher Link)' : 'Gift Voucher URL'}
-              </label>
-              <input
-                type="text"
-                placeholder="https://gift.truemoney.com/campaign/?v=..."
-                value={voucher}
-                onChange={(e) => setVoucher(e.target.value)}
-                required
-              />
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
-                {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Create voucher set to 1 recipient in TrueMoney app'}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
-              </label>
-              <input
-                type="text"
-                placeholder="REF-XXXXXX"
-                value={referralCode}
-                onChange={(e) => {
-                  const val = e.target.value.toUpperCase();
-                  setReferralCode(val);
-                  verifyReferral(val);
-                }}
-              />
-              {referrerName && (
-                <div style={{ fontSize: 11, color: 'var(--slime-green)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <CheckCircle2 size={12} />
-                  <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (รับโบนัสคนละ +7 วัน)` : `Referrer: ${referrerName} (+7 days bonus)`}</span>
-                </div>
-              )}
-            </div>
-
+          {/* Support Method Tabs */}
+          <div style={{
+            display: 'flex',
+            gap: 6,
+            marginBottom: 20,
+            background: 'rgba(255, 255, 255, 0.04)',
+            padding: 4,
+            borderRadius: 12,
+            border: '1px solid var(--card-border)'
+          }}>
             <button
-              type="submit"
-              disabled={submittingTopup}
-              className="btn btn-pink"
-              style={{ width: '100%', padding: '12px 18px', fontSize: 14 }}
+              type="button"
+              onClick={() => setFormTab('voucher')}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: 'none',
+                background: formTab === 'voucher' ? 'var(--cyber-pink)' : 'transparent',
+                color: formTab === 'voucher' ? '#FFF' : 'var(--text-sub)',
+                fontWeight: formTab === 'voucher' ? 700 : 500,
+                fontSize: 12,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6
+              }}
             >
-              {submittingTopup ? (
-                <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและเติมเงิน...' : 'Verifying Voucher...'}</span>
-              ) : (
-                <>
-                  <Sparkles size={16} />
-                  <span>{lang === 'th' ? 'ยืนยันการเติมเงินทันที' : 'Redeem Voucher Now'}</span>
-                </>
-              )}
+              <Sparkles size={14} />
+              <span>{lang === 'th' ? 'ซองของขวัญ TrueMoney' : 'TrueMoney Voucher'}</span>
             </button>
-          </form>
+            <button
+              type="button"
+              onClick={() => setFormTab('promo')}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: 'none',
+                background: formTab === 'promo' ? 'var(--slime-green)' : 'transparent',
+                color: formTab === 'promo' ? '#080B10' : 'var(--text-sub)',
+                fontWeight: formTab === 'promo' ? 700 : 500,
+                fontSize: 12,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6
+              }}
+            >
+              <Gift size={14} />
+              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Drop)' : 'Promo Code'}</span>
+            </button>
+          </div>
+
+          {formTab === 'voucher' ? (
+            <form onSubmit={handleTopup}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Gift Voucher Link)' : 'Gift Voucher URL'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://gift.truemoney.com/campaign/?v=..."
+                  value={voucher}
+                  onChange={(e) => setVoucher(e.target.value)}
+                  required
+                />
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Create voucher set to 1 recipient in TrueMoney app'}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="REF-XXXXXX"
+                  value={referralCode}
+                  onChange={(e) => {
+                    const val = e.target.value.toUpperCase();
+                    setReferralCode(val);
+                    verifyReferral(val);
+                  }}
+                />
+                {referrerName && (
+                  <div style={{ fontSize: 11, color: 'var(--slime-green)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <CheckCircle2 size={12} />
+                    <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (รับโบนัสคนละ +7 วันเมื่อยอด 29บ. ขึ้นไป)` : `Referrer: ${referrerName} (+7 days bonus on 29+ THB)`}</span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingTopup}
+                className="btn btn-pink"
+                style={{ width: '100%', padding: '12px 18px', fontSize: 14 }}
+              >
+                {submittingTopup ? (
+                  <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและร่วมสนับสนุน...' : 'Verifying Voucher...'}</span>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    <span>{lang === 'th' ? 'ยืนยันการร่วมสนับสนุน' : 'Confirm Server Support'}</span>
+                  </>
+                )}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleRedeemPromo}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'รหัสโค้ดกิจกรรม (Early-Bird Drop Code)' : 'Promo Code'}
+                </label>
+                <input
+                  type="text"
+                  placeholder={lang === 'th' ? 'กรอกรหัสแคมเปญ เช่น EARLY30' : 'Enter promo code...'}
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  required
+                />
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                  {lang === 'th' ? 'รหัสโปรโมชันแจกสิทธิ์ผู้สนับสนุนเซิร์ฟเวอร์ฟรี 30 วัน' : 'Redeem limited campaign code for 30 free Supporter days'}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingPromo}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '12px 18px', fontSize: 14 }}
+              >
+                {submittingPromo ? (
+                  <span>{lang === 'th' ? 'กำลังตรวจสอบสิทธิ์...' : 'Claiming...'}</span>
+                ) : (
+                  <>
+                    <Gift size={16} />
+                    <span>{lang === 'th' ? 'ยืนยันรับสิทธิ์โปรโมชัน' : 'Claim Promo Perk'}</span>
+                  </>
+                )}
+              </button>
+            </form>
+          )}
 
           {/* Pricing Rate Tag */}
           <div style={{
@@ -467,7 +562,7 @@ export default function TopupView({ lang, onToast }) {
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <span>{lang === 'th' ? 'อัตราค่าบริการมาตรฐาน:' : 'Standard Pricing:'}</span>
+            <span>{lang === 'th' ? 'เรตผู้สนับสนุนมาตรฐาน:' : 'Standard Supporter Rate:'}</span>
             <strong style={{ color: '#FFF' }}>29 บาท = 30 วัน (Supporter)</strong>
           </div>
         </div>
@@ -501,7 +596,7 @@ export default function TopupView({ lang, onToast }) {
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <CheckCircle2 size={14} style={{ color: 'var(--slime-green)' }} />
-                <span>{lang === 'th' ? 'รองรับเพลงจาก YouTube และ SoundCloud' : 'Supports YouTube & SoundCloud music'}</span>
+                <span>{lang === 'th' ? 'รองรับลิงก์สตรีมเสียงและวิดีโอชั้นนำ (นกแดง / เมฆส้ม)' : 'Supports leading audio & video platforms'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
                 <AlertCircle size={14} />
@@ -539,6 +634,12 @@ export default function TopupView({ lang, onToast }) {
               <span style={{ fontWeight: 700, fontSize: 14, color: '#FFF' }}>{lang === 'th' ? '29 บาท / 30 วัน' : '29 THB / 30 Days'}</span>
             </div>
             <ul style={{ listStyle: 'none', fontSize: 12.5, color: '#FFF', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6, borderBottom: '1px solid rgba(0, 255, 136, 0.15)' }}>
+                <ShieldCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                <strong style={{ color: 'var(--slime-green)', fontSize: 13 }}>
+                  {lang === 'th' ? 'ปลดล็อกสิทธิ์ใช้งานร่วมกันทั้งเซิร์ฟเวอร์ (ไม่ต้องจ่ายรายคน)' : 'Unlocks perks for the entire server (No per-user fees)'}
+                </strong>
+              </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Zap size={14} style={{ color: 'var(--slime-green)' }} />
                 <strong>{lang === 'th' ? 'คุณภาพเสียงคมชัดสูงพิเศษ (96 kbps Studio HQ)' : 'Pristine audio quality (96 kbps Studio HQ)'}</strong>
@@ -565,6 +666,27 @@ export default function TopupView({ lang, onToast }) {
               </li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      {/* Terms of Service & Legal Mere Conduit Disclaimer */}
+      <div style={{
+        padding: '16px 20px',
+        borderRadius: 12,
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid var(--card-border)',
+        color: 'var(--text-dim)',
+        fontSize: 11.5,
+        lineHeight: 1.6,
+        textAlign: 'center'
+      }}>
+        <div style={{ fontWeight: 600, color: 'var(--text-sub)', marginBottom: 4 }}>
+          {lang === 'th' ? 'ข้อกำหนดและเงื่อนไข (Terms of Service & Disclaimer)' : 'Terms of Service & Disclaimer'}
+        </div>
+        <div>
+          {lang === 'th'
+            ? 'ระบบทำหน้าที่เป็นเพียงท่อส่งผ่านข้อมูลชั่วคราว (Mere Conduit) โดยไม่เก็บไฟล์สื่อถาวรบนเซิร์ฟเวอร์ ไม่รับประกันสถานะออนไลน์ 100% เงินสนับสนุนเป็นการร่วมสมทบทุนค่าใช้จ่ายเซิร์ฟเวอร์โดยสมัครใจ และไม่สามารถขอคืนได้ทุกกรณี'
+            : 'This service operates strictly as a transient conduit (Mere Conduit) without persistent storage of media files. 100% uptime is not guaranteed. Voluntary contributions help offset operational server costs and are non-refundable.'}
         </div>
       </div>
     </div>
