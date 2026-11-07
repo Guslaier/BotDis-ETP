@@ -46,59 +46,63 @@ class OnboardingHelper {
 
         const embed = new EmbedBuilder()
             .setColor('#00FF88')
-            .setTitle(`🎉 ยินดีต้อนรับสู่ ${botName} — ระบบเปิดเพลงคุณภาพสูง!`)
-            .setDescription(`สวัสดีชาว **${guild.name}**! ขอบคุณที่เลือกใช้งานบอทเพลงคุณภาพสตูดิโอ (Opus 96k) เบสแน่น เสียงคมชัด พร้อมระบบคิวและออโต้เพลย์อัจฉริยะ 🎧🟢\n\nโปรดเลือก **ภาษาการใช้งาน** ของเซิร์ฟเวอร์ และดูสิทธิประโยชน์ผู้สนับสนุนด้านล่างได้เลยค่ะ`)
+            .setTitle(`🎉 Welcome to ${botName}! • ยินดีต้อนรับสู่ ${botName}!`)
+            .setDescription(`Hello **${guild.name}**! Thank you for inviting **${botName}** — your high-performance, studio-grade (Opus 96k) music companion.\n\nสวัสดีทุกคนใน **${guild.name}**! ขอบคุณที่เลือกใช้บริการบอทเพลงคุณภาพระดับสตูดิโอ (Opus 96k) เบสแน่น เสียงคมชัด พร้อมระบบคิวเพลงและออโต้เพลย์อัจฉริยะ 🎧🟢\n\n**Select your preferred server language below / เลือกภาษาที่ต้องการใช้งานด้านล่าง:**`)
             .setThumbnail(client.user?.displayAvatarURL() || null)
             .addFields(
                 {
-                    name: '🌐 1. เลือกภาษาการใช้งาน (Select Language)',
-                    value: 'กดปุ่มด้านล่างเพื่อตั้งค่าภาษาของบอทในเซิร์ฟเวอร์นี้ (เปลี่ยนภายหลังได้ด้วย `/glang`)\n• **ไทย (TH)** หรือ **English (EN)**',
-                    inline: false
-                },
-                {
-                    name: '🎵 2. คำสั่งเริ่มต้นใช้งาน (Quick Start)',
+                    name: '🌐 1. Language Configuration / ตั้งค่าภาษา',
                     value: [
-                        '• `/gplay <เพลง/ลิงก์>` — เปิดเพลงทันใจ (YouTube / SoundCloud / Spotify)',
-                        '• `/gvolume <0-150>` — ปรับระดับเสียงเพลงแบบ Real-time',
-                        '• `/gnowplaying` — แผงควบคุมและดูข้อมูลเพลงที่กำลังเล่น',
-                        '• `/ghelp` — ดูรายการคำสั่งทั้งหมดของบอท'
+                        'Click below to set the bot communication language:',
+                        'กดปุ่มด้านล่างเพื่อเลือกภาษาที่บอทจะใช้สื่อสารในเซิร์ฟเวอร์นี้ (เปลี่ยนได้ตลอดด้วย `/glang`):',
+                        '• **🇬🇧 English (EN)** หรือ **🇹🇭 ภาษาไทย (TH)**'
                     ].join('\n'),
                     inline: false
                 },
                 {
-                    name: '💖 3. สิทธิ์พิเศษผู้สนับสนุน (VIP Supporter Perks)',
+                    name: '🎵 2. Quick Start / คำสั่งเริ่มต้น',
                     value: [
-                        '⚡ **Priority Lane** — ช่องสัญญาณด่วน การันตีเข้าเล่นทันที ไม่ติดคิว',
-                        '🎵 **Extended Queue** — คิวสูงสุด 50 เพลง & เพลย์ลิสต์ 25 เพลง',
-                        '📻 **Unlimited Stream** — สตรีมเพลงและคลิปยาวได้ไม่จำกัดเวลา',
-                        '🎛️ **Audio FX** — ปรับแต่งเสียง Equalizer (`/gfilter` BassBoost ฯลฯ)',
-                        '🔄 **Autoplay Engine** — ระบบเปิดเพลงต่อเนื่องอัตโนมัติ',
-                        '🎧 **Studio Quality** — ถ่ายทอดเสียงคมชัดระดับ Opus 96k Studio HQ'
+                        '• `/gplay <song/URL>` — Play music from YouTube, SoundCloud, or Spotify',
+                        '• `/gvolume <0-150>` — Adjust stage volume in real-time',
+                        '• `/gnowplaying` — Interactive playback dashboard',
+                        '• `/ghelp` — Complete commands documentation'
+                    ].join('\n'),
+                    inline: false
+                },
+                {
+                    name: '💎 3. Supporter VIP Perks / สิทธิพิเศษผู้สนับสนุน',
+                    value: [
+                        '⚡ **Priority Lane** — Instant stream slot, no waiting in line',
+                        '🎵 **Extended Queue** — Up to 50 songs & 25 playlist items',
+                        '📻 **Unlimited Stream** — Stream tracks and live broadcasts without length limits',
+                        '🎛️ **Audio FX** — BassBoost & Equalizer filters (`/gfilter`)',
+                        '🔄 **Autoplay Engine** — Automatic continuous music streaming',
+                        '🎧 **Studio Quality** — Pristine Opus 96k Studio HQ audio'
                     ].join('\n'),
                     inline: false
                 }
             )
-            .setFooter({ text: `${botName} • High-Performance Audio Engine | สนับสนุนเริ่มต้นเพียง 29฿/เดือน` });
+            .setFooter({ text: `${botName} • High-Performance Audio Engine | Support starts at 29฿/month` });
 
         const langRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId('welcome_lang_th')
-                .setLabel('🇹🇭 ภาษาไทย (Thai)')
-                .setStyle(ButtonStyle.Success),
-            new ButtonBuilder()
                 .setCustomId('welcome_lang_en')
                 .setLabel('🇬🇧 English (EN)')
-                .setStyle(ButtonStyle.Primary)
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId('welcome_lang_th')
+                .setLabel('🇹🇭 ภาษาไทย (Thai)')
+                .setStyle(ButtonStyle.Success)
         );
 
         const actionRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 ร่วมสนับสนุน (VIP Supporter)')
+                .setLabel('💖 VIP Supporter Portal')
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl),
             new ButtonBuilder()
                 .setCustomId('welcome_help_guide')
-                .setLabel('📖 คู่มือคำสั่ง (Quick Guide)')
+                .setLabel('📖 Quick Commands Guide')
                 .setStyle(ButtonStyle.Secondary)
         );
 
@@ -107,8 +111,16 @@ class OnboardingHelper {
 
     async handleGuildCreate(client, guild) {
         try {
-            console.log(`[GuildJoin] Bot joined new guild: ${guild.name} (${guild.id}) - Members: ${guild.memberCount}`);
+            console.log(`[GuildJoin] Bot joined new guild: ${guild.name} (${guild.id}) - Locale: ${guild.preferredLocale || 'unknown'}`);
             
+            // Auto-detect initial language if not already configured
+            const settings = settingsManager.getGuildSettings(guild.id);
+            if (!settings.language) {
+                const autoLang = (guild.preferredLocale && guild.preferredLocale.toLowerCase().startsWith('th')) ? 'th' : 'en';
+                settingsManager.setGuildLanguage(guild.id, autoLang);
+                console.log(`[GuildJoin] Auto-detected language for ${guild.name}: ${autoLang}`);
+            }
+
             // Wait 1.5s for guild permissions & channels cache to settle
             await new Promise(r => setTimeout(r, 1500));
 

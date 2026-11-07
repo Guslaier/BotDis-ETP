@@ -72,8 +72,8 @@ class I18nHelper {
 
     t(guildId, key, vars = {}) {
         const lang = this.getLang(guildId);
-        const localeDict = dictionary[lang] || dictionary.th;
-        let text = localeDict[key] || dictionary.th[key] || key;
+        const localeDict = dictionary[lang] || dictionary.en || dictionary.th;
+        let text = localeDict[key] || dictionary.en?.[key] || dictionary.th?.[key] || key;
 
         for (const [k, v] of Object.entries(vars)) {
             text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);

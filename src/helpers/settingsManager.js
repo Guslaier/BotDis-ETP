@@ -80,14 +80,24 @@ class SettingsManager {
         return settings.autoplay;
     }
 
-    getGuildLanguage(guildId) {
+    getGuildLanguage(guildId, guild = null) {
         const settings = this.getGuildSettings(guildId);
-        return settings.language === 'en' ? 'en' : 'th';
+        if (settings.language === 'en' || settings.language === 'th') {
+            return settings.language;
+        }
+
+        // Auto-detect based on Guild preferredLocale if available
+        if (guild && guild.preferredLocale) {
+            return guild.preferredLocale.toLowerCase().startsWith('th') ? 'th' : 'en';
+        }
+
+        // Default fallback: English (International standard)
+        return 'en';
     }
 
     setGuildLanguage(guildId, language) {
-        if (!guildId) return 'th';
-        const valid = (language === 'en' || language === 'th') ? language : 'th';
+        if (!guildId) return 'en';
+        const valid = (language === 'en' || language === 'th') ? language : 'en';
         const settings = this.getGuildSettings(guildId);
         settings.language = valid;
         this.cache.set(guildId, settings);
