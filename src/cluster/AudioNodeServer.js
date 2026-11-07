@@ -22,7 +22,7 @@ class AudioNodeServer {
         this.id = process.env.NODE_ID || `node-${os.hostname()}`;
         this.name = process.env.NODE_NAME || `AudioNode-${this.port}`;
         this.authSecret = process.env.NODE_AUTH_SECRET || null;
-        this.maxRooms = parseInt(process.env.MAX_TOTAL_STREAMS || '15', 10);
+        this.maxRooms = parseInt(process.env.NODE_MAX_ROOMS || process.env.MAX_TOTAL_STREAMS || '100', 10);
         this.activeStreams = 0;
         this.isDraining = false;
         this.server = null;

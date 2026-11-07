@@ -11,8 +11,8 @@ module.exports = {
     {
       name: 'goolix-node',
       script: 'src/cluster/AudioNodeServer.js',
-      node_args: '--expose-gc --max-old-space-size=160',
-      max_memory_restart: '220M',
+      node_args: '--expose-gc --max-old-space-size=4096',
+      max_memory_restart: '6G',
       autorestart: true,
       watch: false
     }
