@@ -1,11 +1,19 @@
 -- ==============================================================================
--- DISLAVA / GOOLIX MUSIC BOT - SUPABASE POSTGRESQL INITIALIZATION SCHEMA
+-- DISLAVA / GOOLIX MUSIC BOT - RELATIONAL DATABASE SCHEMA (SUPABASE POSTGRESQL)
 -- ==============================================================================
 
--- 1. Server Subscriptions & VIP Tier
-CREATE TABLE IF NOT EXISTS public.subscriptions (
+-- 1. Master Discord Guilds Table
+CREATE TABLE IF NOT EXISTS public.guilds (
     guild_id VARCHAR(32) PRIMARY KEY,
-    guild_name TEXT,
+    name TEXT NOT NULL,
+    icon TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Guild Subscriptions & Supporter Status (Foreign Key -> guilds.guild_id)
+CREATE TABLE IF NOT EXISTS public.subscriptions (
+    guild_id VARCHAR(32) PRIMARY KEY REFERENCES public.guilds(guild_id) ON DELETE CASCADE,
     plan VARCHAR(32) DEFAULT 'FREE',
     expires_at BIGINT DEFAULT 0,
     referral_code VARCHAR(32) UNIQUE,
@@ -17,9 +25,9 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Guild Settings (Volume, Language, Autoplay)
+-- 3. Guild Audio Settings (Foreign Key -> guilds.guild_id)
 CREATE TABLE IF NOT EXISTS public.guild_settings (
-    guild_id VARCHAR(32) PRIMARY KEY,
+    guild_id VARCHAR(32) PRIMARY KEY REFERENCES public.guilds(guild_id) ON DELETE CASCADE,
     language VARCHAR(10) DEFAULT 'en',
     volume INT DEFAULT 100,
     autoplay BOOLEAN DEFAULT FALSE,
@@ -27,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.guild_settings (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. User Music Favorites
+-- 4. User Music Favorites (Independent User Entity)
 CREATE TABLE IF NOT EXISTS public.favorites (
     user_id VARCHAR(32) PRIMARY KEY,
     tracks JSONB DEFAULT '[]'::jsonb,
@@ -35,10 +43,10 @@ CREATE TABLE IF NOT EXISTS public.favorites (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. TrueMoney Wallet Topup Transactions
+-- 5. TrueMoney Topup Transactions (Foreign Key -> guilds.guild_id)
 CREATE TABLE IF NOT EXISTS public.transactions (
     id VARCHAR(64) PRIMARY KEY,
-    guild_id VARCHAR(32),
+    guild_id VARCHAR(32) REFERENCES public.guilds(guild_id) ON DELETE SET NULL,
     user_id VARCHAR(32),
     amount NUMERIC(10, 2) DEFAULT 0,
     voucher_url TEXT,
@@ -46,7 +54,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Promotional Campaigns & Early-Bird Drop Codes
+-- 6. Promotional Campaigns & Early-Bird Drop Codes
 CREATE TABLE IF NOT EXISTS public.campaigns (
     code VARCHAR(64) PRIMARY KEY,
     title TEXT,
@@ -57,20 +65,25 @@ CREATE TABLE IF NOT EXISTS public.campaigns (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. High-Performance Indexing
+-- 7. High-Performance Indexing (Optimized Foreign Keys & Filters)
 CREATE INDEX IF NOT EXISTS idx_subscriptions_expires_at ON public.subscriptions (expires_at);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_referral_code ON public.subscriptions (referral_code);
 CREATE INDEX IF NOT EXISTS idx_transactions_guild_id ON public.transactions (guild_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions (user_id);
+CREATE INDEX IF NOT EXISTS idx_guild_settings_lang ON public.guild_settings (language);
 
--- 7. Row Level Security (RLS) Configuration
+-- 8. Row Level Security (RLS) Configuration
+ALTER TABLE public.guilds ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.guild_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campaigns ENABLE ROW LEVEL SECURITY;
 
--- 8. Service Role Policies (Full Backend Access)
+-- 9. Service Role Policies (Full Backend Access for Bot)
+DROP POLICY IF EXISTS "Service Role Guilds" ON public.guilds;
+CREATE POLICY "Service Role Guilds" ON public.guilds FOR ALL USING (true);
+
 DROP POLICY IF EXISTS "Service Role Subscriptions" ON public.subscriptions;
 CREATE POLICY "Service Role Subscriptions" ON public.subscriptions FOR ALL USING (true);
 
@@ -86,7 +99,10 @@ CREATE POLICY "Service Role Transactions" ON public.transactions FOR ALL USING (
 DROP POLICY IF EXISTS "Service Role Campaigns" ON public.campaigns;
 CREATE POLICY "Service Role Campaigns" ON public.campaigns FOR ALL USING (true);
 
--- 9. Public Read Policies (Allow Public Portal Verification)
+-- 10. Public Read Policies (Allow Web Verification Without Service Key)
+DROP POLICY IF EXISTS "Public Read Guilds" ON public.guilds;
+CREATE POLICY "Public Read Guilds" ON public.guilds FOR SELECT USING (true);
+
 DROP POLICY IF EXISTS "Public Read Subscriptions" ON public.subscriptions;
 CREATE POLICY "Public Read Subscriptions" ON public.subscriptions FOR SELECT USING (true);
 
