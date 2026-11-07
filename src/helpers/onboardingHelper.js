@@ -42,7 +42,7 @@ class OnboardingHelper {
         const botName = client.user?.username || 'GOOLIX';
         const publicPort = process.env.PUBLIC_WEB_PORT || '11901';
         const host = process.env.PUBLIC_WEB_URL || `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${publicPort}`;
-        const donateUrl = `${host}/donate?guildId=${guild.id}`;
+        const donateUrl = `${host}/donate?guild=${guild.id}&guildId=${guild.id}`;
 
         const embed = new EmbedBuilder()
             .setColor('#00FF88')

@@ -48,8 +48,8 @@ module.exports = {
     },
     run: async (client, interaction, kazagumo) => {
         const subCommand = interaction.options.getSubcommand() || 'status';
-        const guildId = interaction.guild.id;
-        const guildName = interaction.guild.name;
+        const guildId = interaction.guildId || interaction.guild?.id;
+        const guildName = interaction.guild?.name || 'Unknown Guild';
         const userId = interaction.user.id;
 
         const sub = subscriptionManager.getGuildSubscription(guildId, guildName);
@@ -58,7 +58,7 @@ module.exports = {
 
         const publicPort = process.env.PUBLIC_WEB_PORT || '11901';
         const host = process.env.PUBLIC_WEB_URL || `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${publicPort}`;
-        const donateUrl = `${host}/donate?guildId=${guildId}&userId=${userId}`;
+        const donateUrl = `${host}/donate?guild=${guildId}&guildId=${guildId}&userId=${userId}`;
 
         if (subCommand === 'status') {
             const botName = client.user?.username || 'GOOLIX';
@@ -134,8 +134,24 @@ module.exports = {
             const voucher = interaction.options.getString('voucher');
             const referral = interaction.options.getString('referral');
 
+            const cleanVoucher = (voucher || '').trim();
+            if (!cleanVoucher.startsWith('https://gift.truemoney.com')) {
+                const result = subscriptionManager.redeemCode(guildId, guildName, userId, cleanVoucher);
+                const embed = new EmbedBuilder();
+                if (result.success) {
+                    embed.setColor('#00E676')
+                        .setTitle('🎉 ปลดล็อกสิทธิ์สำเร็จ!')
+                        .setDescription(`เซิร์ฟเวอร์ **${guildName}** ได้รับสิทธิ์ผู้สนับสนุนจากรอบ **${result.campaignName}** เพิ่ม **+${result.addedDays} วัน** เรียบร้อยแล้วค่ะ!\n\n(สิทธิ์ในรอบนี้คงเหลือ: ${result.remainingClaims} เซิร์ฟเวอร์)`);
+                } else {
+                    embed.setColor('#EF4444')
+                        .setTitle('❌ ใช้โค้ดไม่สำเร็จ')
+                        .setDescription(result.error || 'รหัสโค้ดไม่ถูกต้องหรือสิทธิ์เต็มแล้วค่ะ');
+                }
+                return interaction.followUp({ embeds: [embed] });
+            }
+
             const isSandbox = (config.paymentMode === 'sandbox');
-            const redeemResult = await truemoneyGateway.redeemVoucher(voucher, {
+            const redeemResult = await truemoneyGateway.redeemVoucher(cleanVoucher, {
                 ip: 'discord-client',
                 guildId,
                 isSandbox
@@ -161,7 +177,7 @@ module.exports = {
 
             let bonusText = '';
             if (proc.referralBonusAwarded) {
-                bonusText = `\n🎁 **โบนัสพิเศษ:** เซิร์ฟเวอร์เพื่อนของคุณ (**${proc.referrerGuildName}**) ได้รับวันสนับสนุนฟรี **+30 วัน** เช่นกันค่ะ!`;
+                bonusText = `\n🎁 **โบนัสพิเศษ:** เซิร์ฟเวอร์เพื่อนของคุณ (**${proc.referrerGuildName}**) และเซิร์ฟเวอร์นี้ ได้รับวันสนับสนุนฟรีเพิ่ม **+${proc.addedBonusDays || 7} วัน** เช่นกันค่ะ!`;
             }
 
             embed.setColor('#00E676')

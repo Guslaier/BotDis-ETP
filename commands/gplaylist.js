@@ -36,7 +36,7 @@ module.exports = {
 
         const publicPort = process.env.PUBLIC_WEB_PORT || '11901';
         const host = process.env.PUBLIC_WEB_URL || `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${publicPort}`;
-        const donateUrl = `${host}/donate?guildId=${guildId}&userId=${interaction.user.id}`;
+        const donateUrl = `${host}/donate?guild=${guildId}&guildId=${guildId}&userId=${interaction.user.id}`;
         const donateRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (Supporter Stream Lanes)')

@@ -204,6 +204,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       if (resJson.success) {
         onToast('success', lang === 'th' ? 'เปลี่ยนสถานะ Drain สำเร็จ' : 'Drain Status Updated');
         fetchData();
+      } else {
+        onToast('error', lang === 'th' ? 'ไม่สามารถเปิดโหมด Drain ได้' : 'Cannot Drain Node', resJson.error);
       }
     } catch (err) {
       onToast('error', 'Error', err.message);

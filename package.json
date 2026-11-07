@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node --expose-gc --max-old-space-size=160 index.js",
+    "start": "node --expose-gc --max-old-space-size=80 index.js",
     "node": "node --expose-gc --max-old-space-size=4096 src/cluster/AudioNodeServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

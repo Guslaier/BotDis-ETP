@@ -417,16 +417,39 @@ class AdminServer {
             const { guildId, userId, voucher, referralCode } = body;
 
             if (!guildId || !voucher) {
-                return this._sendJson(res, 400, { success: false, error: 'ข้อมูลไม่ครบถ้วน กรุณาระบุรหัสซองค่ะ' });
+                return this._sendJson(res, 400, { success: false, error: 'ข้อมูลไม่ครบถ้วน กรุณาระบุรหัสซองหรือโค้ดค่ะ' });
             }
 
+            const cleanVoucher = (voucher || '').trim();
             const guild = this.client.guilds.cache.get(guildId);
             const guildName = guild ? guild.name : 'Unknown Guild';
+
+            // Check if input is a TrueMoney voucher link or an Early-Bird Drop / Campaign Code
+            if (!cleanVoucher.startsWith('https://gift.truemoney.com')) {
+                const redeemResult = subscriptionManager.redeemCode(guildId, guildName, userId || 'unknown', cleanVoucher);
+                if (!redeemResult.success) {
+                    return this._sendJson(res, 400, {
+                        success: false,
+                        error: redeemResult.error || 'รหัสโค้ดไม่ถูกต้อง หรือสิทธิ์เต็มแล้วค่ะ'
+                    });
+                }
+
+                const updatedSub = subscriptionManager.getGuildSubscription(guildId);
+                return this._sendJson(res, 200, {
+                    success: true,
+                    isCampaignCode: true,
+                    amount: 0,
+                    addedDays: redeemResult.addedDays,
+                    campaignName: redeemResult.campaignName,
+                    remainingClaims: redeemResult.remainingClaims,
+                    sub: updatedSub
+                });
+            }
 
             const config = subscriptionManager.getConfig();
             const isSandbox = (config.paymentMode === 'sandbox');
 
-            const redeemResult = await truemoneyGateway.redeemVoucher(voucher, {
+            const redeemResult = await truemoneyGateway.redeemVoucher(cleanVoucher, {
                 ip,
                 guildId,
                 isSandbox
@@ -1068,7 +1091,7 @@ class AdminServer {
             if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/drain') && req.method === 'POST') {
                 const nodeId = pathname.split('/')[4];
                 const resDrain = await nodeRouter.toggleDrain(nodeId);
-                return this._sendJson(res, 200, resDrain);
+                return this._sendJson(res, resDrain.success ? 200 : 400, resDrain);
             }
 
             if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/config') && req.method === 'POST') {

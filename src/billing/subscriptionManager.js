@@ -24,7 +24,7 @@ class SubscriptionManager extends EventEmitter {
             phoneNumber: process.env.TMW_PHONE_NUMBER || '',
             referralEnabled: true,
             referralMinTopup: 29,
-            referralRewardDays: 30,
+            referralRewardDays: 7,
             referralExpiresAt: null
         };
         for (const [k, v] of Object.entries(defaults)) {
@@ -260,7 +260,7 @@ class SubscriptionManager extends EventEmitter {
         const maxReferralMonths = config.maxReferralMonths || 6;
         const referralEnabled = config.referralEnabled !== false;
         const referralMinTopup = typeof config.referralMinTopup === 'number' ? config.referralMinTopup : 29;
-        const referralRewardDays = typeof config.referralRewardDays === 'number' ? config.referralRewardDays : 30;
+        const referralRewardDays = typeof config.referralRewardDays === 'number' ? config.referralRewardDays : 7;
         const referralExpiresAt = config.referralExpiresAt || null;
 
         const sub = this.getGuildSubscription(guildId, guildName);
@@ -275,7 +275,8 @@ class SubscriptionManager extends EventEmitter {
         }
 
         // Lock maximum accumulated subscription ceiling to 365 days (1 year)
-        const maxDurationMs = 365 * 24 * 3600 * 1000;
+        const MAX_ACCUMULATED_DAYS = 365;
+        const maxDurationMs = MAX_ACCUMULATED_DAYS * 24 * 3600 * 1000;
         if (sub.expiresAt > now + maxDurationMs) {
             sub.expiresAt = now + maxDurationMs;
         }
@@ -302,25 +303,40 @@ class SubscriptionManager extends EventEmitter {
             referrer = allSubs[sub.referredByGuildId];
         }
 
-        if (isSeasonActive && referrer && referrer.guildId !== guildId) {
+        // Enforce anti-farming & anti-self referral:
+        // Must have valid referralCode, amountBaht >= 29, cleanRef !== sub.referralCode, referrer !== targetGuild
+        const minReferralThreshold = Math.max(29, referralMinTopup);
+        if (isSeasonActive && referrer && referrer.guildId !== guildId && cleanRef && cleanRef !== sub.referralCode) {
             sub.referredByGuildId = referrer.guildId;
             referrerGuildId = referrer.guildId;
             referrerGuildName = referrer.guildName;
 
-            // Enforce configurable minimum topup threshold before awarding referral bonus days
-            if (!sub.referralRewardTriggered && amountBaht >= referralMinTopup && sub.cumulativePaidBaht >= referralMinTopup) {
+            // Enforce minimum 29 THB threshold before awarding referral bonus days
+            if (!sub.referralRewardTriggered && amountBaht >= minReferralThreshold && sub.cumulativePaidBaht >= minReferralThreshold) {
                 if ((referrer.referralBonusMonths || 0) < maxReferralMonths) {
-                    const refBonusMs = referralRewardDays * 24 * 3600 * 1000;
+                    const bonusDays = referralRewardDays || 7;
+                    const refBonusMs = bonusDays * 24 * 3600 * 1000;
+
+                    // 1) Add bonus days to Referrer Guild
                     if (referrer.plan === 'SUPPORTER' && referrer.expiresAt > now) {
                         referrer.expiresAt += refBonusMs;
                     } else {
                         referrer.expiresAt = now + refBonusMs;
+                    }
+                    if (referrer.expiresAt > now + maxDurationMs) {
+                        referrer.expiresAt = now + maxDurationMs;
                     }
                     referrer.plan = 'SUPPORTER';
                     referrer.referralBonusMonths = (referrer.referralBonusMonths || 0) + 1;
                     referrer.referralCount = (referrer.referralCount || 0) + 1;
                     referrer.updatedAt = now;
                     dbManager.set('subscriptions', referrer.guildId, referrer);
+
+                    // 2) Add bonus days to Target Guild (+7 days / bonusDays)
+                    sub.expiresAt += refBonusMs;
+                    if (sub.expiresAt > now + maxDurationMs) {
+                        sub.expiresAt = now + maxDurationMs;
+                    }
 
                     sub.referralRewardTriggered = true;
                     referralBonusAwarded = true;
@@ -354,6 +370,7 @@ class SubscriptionManager extends EventEmitter {
             transaction,
             addedDays,
             referralBonusAwarded,
+            addedBonusDays: referralBonusAwarded ? (referralRewardDays || 7) : 0,
             referrerGuildName
         });
 
@@ -363,6 +380,7 @@ class SubscriptionManager extends EventEmitter {
             transaction,
             addedDays,
             referralBonusAwarded,
+            addedBonusDays: referralBonusAwarded ? (referralRewardDays || 7) : 0,
             referrerGuildName
         };
     }
@@ -393,6 +411,9 @@ class SubscriptionManager extends EventEmitter {
             if (sub.earlyBirdUsed) {
                 return { success: false, error: 'เซิร์ฟเวอร์นี้เคยรับสิทธิ์ Early-Bird ไปแล้วค่ะ (จำกัด 1 สิทธิ์ต่อเซิร์ฟเวอร์)' };
             }
+            if (Array.isArray(campaign.claimedGuilds) && campaign.claimedGuilds.some(c => c.guildId === guildId)) {
+                return { success: false, error: 'เซิร์ฟเวอร์นี้เคยรับสิทธิ์จากโค้ดแคมเปญนี้ไปแล้วค่ะ (จำกัด 1 สิทธิ์ต่อเซิร์ฟเวอร์)' };
+            }
             if (campaign.claimedCount >= campaign.maxClaims) {
                 return { success: false, error: `สิทธิ์สำหรับรอบ ${campaign.name} เต็มแล้วค่ะ (${campaign.claimedCount}/${campaign.maxClaims})` };
             }
@@ -405,6 +426,13 @@ class SubscriptionManager extends EventEmitter {
                 sub.expiresAt += addedMs;
             } else {
                 sub.expiresAt = now + addedMs;
+            }
+
+            // Lock maximum accumulated subscription ceiling to 365 days
+            const MAX_ACCUMULATED_DAYS = 365;
+            const maxDurationMs = MAX_ACCUMULATED_DAYS * 24 * 3600 * 1000;
+            if (sub.expiresAt > now + maxDurationMs) {
+                sub.expiresAt = now + maxDurationMs;
             }
 
             sub.plan = 'SUPPORTER';

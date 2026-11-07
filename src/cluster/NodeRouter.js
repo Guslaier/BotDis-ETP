@@ -473,6 +473,17 @@ class NodeRouter extends EventEmitter {
         const node = this.nodes.get(nodeId);
         if (!node) return { success: false, error: 'Node not found' };
 
+        // Prevent draining if this is the only online node in the cluster
+        if (node.status !== 'draining') {
+            const onlineCount = Array.from(this.nodes.values()).filter(n => n.status === 'online').length;
+            if (onlineCount <= 1) {
+                return {
+                    success: false,
+                    error: 'ไม่สามารถเปิดโหมด Drain ได้เนื่องจากมีโหนดออนไลน์เหลือเพียง 1 โหนดในคลัสเตอร์ (At least 1 node must remain online)'
+                };
+            }
+        }
+
         if (node.type === 'remote') {
             return new Promise((resolve) => {
                 const req = http.request({
