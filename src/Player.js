@@ -961,7 +961,17 @@ class Player {
             req.on('error', () => {});
             req.end();
         } else if (!CacheManager.isCached(identifier)) {
-            CacheManager.prepareTrack(track, true).catch(() => {});
+            CacheManager.prepareTrack(track, true).then((res) => {
+                // If pre-fetch was preempted/aborted and this room is still playing, retry after 8 seconds
+                if (res === null && !this._destroyed && !this._isStopping && this.playing) {
+                    setTimeout(() => {
+                        if (!this._destroyed && !this._isStopping && this.playing && !CacheManager.isCached(identifier)) {
+                            console.log(`[Player:Autoplay] Rescheduling preempted pre-cache for: "${track.title}"`);
+                            CacheManager.prepareTrack(track, true).catch(() => {});
+                        }
+                    }, 8000).unref();
+                }
+            }).catch(() => {});
         }
     }
 
