@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, CheckCircle2, AlertCircle, Gift, Server, ShieldCheck, 
-  Clock, ArrowRight, Share2, Copy, Zap, Music2, Sliders, Award
+  Clock, ArrowRight, Share2, Copy, Zap, Music2, Sliders, Award,
+  FileText, X
 } from 'lucide-react';
 
 export default function TopupView({ lang, onToast }) {
@@ -10,6 +11,7 @@ export default function TopupView({ lang, onToast }) {
   const [guildData, setGuildData] = useState(null);
   const [loadingGuild, setLoadingGuild] = useState(false);
   const [formTab, setFormTab] = useState('voucher'); // 'voucher' | 'promo'
+  const [showTosModal, setShowTosModal] = useState(false);
 
   // Forms
   const [voucher, setVoucher] = useState('');
@@ -669,26 +671,293 @@ export default function TopupView({ lang, onToast }) {
         </div>
       </div>
 
-      {/* Terms of Service & Legal Mere Conduit Disclaimer */}
+      {/* Short Terms of Service & Legal Disclaimer */}
       <div style={{
-        padding: '16px 20px',
-        borderRadius: 12,
+        padding: '18px 22px',
+        borderRadius: 14,
         background: 'rgba(255, 255, 255, 0.02)',
         border: '1px solid var(--card-border)',
-        color: 'var(--text-dim)',
-        fontSize: 11.5,
-        lineHeight: 1.6,
-        textAlign: 'center'
+        color: 'var(--text-sub)',
+        fontSize: 12,
+        lineHeight: 1.65,
+        marginTop: 10
       }}>
-        <div style={{ fontWeight: 600, color: 'var(--text-sub)', marginBottom: 4 }}>
-          {lang === 'th' ? 'ข้อกำหนดและเงื่อนไข (Terms of Service & Disclaimer)' : 'Terms of Service & Disclaimer'}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+          paddingBottom: 10,
+          borderBottom: '1px solid var(--card-border)',
+          flexWrap: 'wrap',
+          gap: 10
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 13, color: '#FFF' }}>
+            <FileText size={16} style={{ color: 'var(--slime-green)' }} />
+            <span>{lang === 'th' ? 'ข้อกำหนดและเงื่อนไขการสนับสนุน (Disclaimer & Terms of Use)' : 'Terms of Service & Disclaimer'}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowTosModal(true)}
+            style={{
+              background: 'rgba(0, 255, 136, 0.08)',
+              border: '1px solid rgba(0, 255, 136, 0.25)',
+              color: 'var(--slime-green)',
+              borderRadius: 8,
+              padding: '4px 10px',
+              fontSize: 11.5,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.2s'
+            }}
+          >
+            <span>{lang === 'th' ? 'อ่านข้อตกลงฉบับเต็ม' : 'Read Full Terms'}</span>
+            <ArrowRight size={13} />
+          </button>
         </div>
-        <div>
-          {lang === 'th'
-            ? 'ระบบทำหน้าที่เป็นเพียงท่อส่งผ่านข้อมูลชั่วคราว (Mere Conduit) โดยไม่เก็บไฟล์สื่อถาวรบนเซิร์ฟเวอร์ ไม่รับประกันสถานะออนไลน์ 100% เงินสนับสนุนเป็นการร่วมสมทบทุนค่าใช้จ่ายเซิร์ฟเวอร์โดยสมัครใจ และไม่สามารถขอคืนได้ทุกกรณี'
-            : 'This service operates strictly as a transient conduit (Mere Conduit) without persistent storage of media files. 100% uptime is not guaranteed. Voluntary contributions help offset operational server costs and are non-refundable.'}
-        </div>
+
+        <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8, color: 'var(--text-dim)', fontSize: 11.5 }}>
+          <li>
+            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'สถานะผู้ส่งผ่านข้อมูล:' : 'Data Forwarder Status:'}</strong>{' '}
+            {lang === 'th'
+              ? 'GOOLIX ทำหน้าที่เป็นเพียงตัวกลางส่งผ่านสัญญาณเสียงแบบชั่วคราว (Data Forwarder) ไปยัง Discord โดยไม่มีการเก็บรวบรวมหรือบันทึกไฟล์สื่อถาวรไว้บนเซิร์ฟเวอร์'
+              : 'GOOLIX operates strictly as a transient data forwarder (Mere Conduit) to Discord without retaining or hosting permanent media files.'}
+          </li>
+          <li>
+            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'การร่วมสนับสนุนค่าเซิร์ฟเวอร์:' : 'Server Contribution:'}</strong>{' '}
+            {lang === 'th'
+              ? 'การทำรายการผ่านซองของขวัญ TrueMoney เป็นการร่วมสนับสนุนค่าบำรุงรักษาเซิร์ฟเวอร์โดยสมัครใจ (ผูกสิทธิ์ตาม Guild ID ให้ใช้งานได้ทั้งเซิร์ฟเวอร์) เมื่อระบบเพิ่มวันใช้งานแล้ว ไม่สามารถขอคืนเงินหรือโอนย้ายสิทธิ์ข้ามเซิร์ฟเวอร์ได้ในทุกกรณี'
+              : 'TrueMoney voucher redemptions are voluntary server contributions bound to the target Guild ID. Once processed, contributions are strictly non-refundable and non-transferable.'}
+          </li>
+          <li>
+            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'ความเสถียรของระบบ:' : 'System Reliability:'}</strong>{' '}
+            {lang === 'th'
+              ? 'ระบบให้บริการตามสภาพจริง (As-Is) ไม่รับประกันการออนไลน์ 100% ตลอด 24 ชั่วโมง และขอสงวนสิทธิ์ในการตัดสายอัตโนมัติเมื่อไม่มีผู้ฟังในห้องเสียง ปิดปรับปรุงชั่วคราว หรือระงับสิทธิ์เซิร์ฟเวอร์ที่ใช้งานผิดปกติโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
+              : 'Service is provided on an "As-Is" basis with no guarantee of uninterrupted 24/7 uptime. We reserve the right to auto-disconnect empty channels, perform maintenance, or suspend abusive guilds without prior notice.'}
+          </li>
+        </ol>
       </div>
+
+      {/* Full Terms of Service Modal Dialog */}
+      {showTosModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
+          background: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20
+        }} onClick={() => setShowTosModal(false)}>
+          <div style={{
+            background: '#0D1117',
+            border: '1px solid var(--card-border)',
+            borderRadius: 16,
+            width: '100%',
+            maxWidth: 720,
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.8), 0 0 20px rgba(0, 255, 136, 0.1)',
+            overflow: 'hidden'
+          }} onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '18px 24px',
+              borderBottom: '1px solid var(--card-border)',
+              background: 'rgba(255, 255, 255, 0.02)'
+            }}>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 16, color: '#FFF' }}>
+                  {lang === 'th' ? 'ข้อตกลงและเงื่อนไขการใช้งาน (Terms of Service)' : 'Terms of Service (Full Agreement)'}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>
+                  {lang === 'th' ? 'GOOLIX Audio Engine • อัปเดตล่าสุด: พฤศจิกายน 2026' : 'GOOLIX Audio Engine • Last Updated: November 2026'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTosModal(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--card-border)',
+                  color: 'var(--text-sub)',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{
+              padding: '24px',
+              overflowY: 'auto',
+              fontSize: 12.5,
+              lineHeight: 1.7,
+              color: 'var(--text-sub)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20
+            }}>
+              <p style={{ margin: 0, color: 'var(--text-dim)', fontStyle: 'italic', paddingBottom: 12, borderBottom: '1px solid var(--card-border)' }}>
+                {lang === 'th'
+                  ? 'การใช้งานบอทและการทำรายการบนหน้าเว็บไซต์ของ GOOLIX ถือว่าผู้ใช้งานได้อ่าน เข้าใจ และยอมรับข้อตกลงดังต่อไปนี้ทุกประการ:'
+                  : 'By using the GOOLIX bot and web portal, you acknowledge that you have read, understood, and agreed to all terms below:'}
+              </p>
+
+              {/* Section 1 */}
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                  {lang === 'th'
+                    ? '1. สถานะตัวกลางส่งผ่านข้อมูลและเนื้อหา (Mere Conduit & Content Disclaimer)'
+                    : '1. Mere Conduit & Content Disclaimer'}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                  <div>
+                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ไม่มีการจัดเก็บไฟล์ถาวร:' : '• No Permanent Storage:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ระบบทำงานในฐานะท่อส่งผ่านข้อมูลชั่วคราว (Transmission Buffer) จากแหล่งต้นทางที่ผู้ใช้งานเป็นผู้ระบุคำสั่งไปยังห้องเสียงของ Discord เท่านั้น ไม่มีการจัดเก็บ ดัดแปลง หรือเผยแพร่ไฟล์เสียงและวิดีโอไว้ในฐานข้อมูลถาวร (ระบบแคชทำงานแบบชั่วคราวเพื่อลดความหน่วงของเครือข่ายและถูกลบออกอัตโนมัติ)'
+                      : 'The system functions solely as a transient transmission buffer routing stream data requested by users directly to Discord voice channels. No media files are permanently hosted, altered, or distributed.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ความรับผิดชอบต่อเนื้อหา:' : '• Content Responsibility:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ผู้ใช้งานเป็นผู้รับผิดชอบต่อลิงก์และคำค้นหาที่สั่งให้บอทประมวลผลแต่เพียงผู้เดียว ทางผู้พัฒนาไม่สามารถตรวจสอบหรือควบคุมเนื้อหาต้นทางจากผู้ให้บริการภายนอกได้ และไม่มีส่วนรับผิดชอบต่อเนื้อหาที่ถูกส่งต่อไปยังเซิร์ฟเวอร์ของผู้ใช้งาน'
+                      : 'Users bear sole legal responsibility for all media queries dispatched to the bot. Developers do not curate external content and assume no liability for relayed streams.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2 */}
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                  {lang === 'th'
+                    ? '2. เงื่อนไขการร่วมสนับสนุนและสิทธิประโยชน์ (Supporter & Billing Terms)'
+                    : '2. Supporter & Billing Terms'}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                  <div>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• ลักษณะการสนับสนุน:' : '• Voluntary Nature:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ยอดเงินที่ทำรายการผ่านลิงก์ซองของขวัญ TrueMoney เป็นการร่วมบริจาคสนับสนุนค่าเช่าเซิร์ฟเวอร์และแบนด์วิธเพื่อขับเคลื่อนคอมมูนิตี้ ไม่ใช่การซื้อขายสินค้าหรือบริการเชิงพาณิชย์'
+                      : 'Redemptions via TrueMoney vouchers represent voluntary community contributions toward server hosting and bandwidth infrastructure, not commercial retail transactions.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• สิทธิ์ระดับเซิร์ฟเวอร์ (Server-Wide Access):' : '• Server-Wide Access:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'สิทธิพิเศษของผู้สนับสนุน (Supporter) จะผูกกับรหัสเซิร์ฟเวอร์ (Guild ID) ที่ระบุเท่านั้น สมาชิกทุกคนในเซิร์ฟเวอร์ดังกล่าวสามารถรับสิทธิ์ร่วมกันได้ทันที โดยไม่สามารถขอเปลี่ยนหรือโอนย้ายวันใช้งานไปยังเซิร์ฟเวอร์อื่นได้ในทุกกรณี'
+                      : 'Supporter privileges bind exclusively to the specified Guild ID and extend to all members in that guild. Perks cannot be transferred to alternative servers.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• การคำนวณและการทบวันใช้งาน:' : '• Duration Stacking:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ระบบคำนวณวันใช้งานตามสัดส่วนยอดเงินจริง (อัตราอ้างอิง 29 บาท = 30 วัน) หากทำรายการซ้ำก่อนวันหมดอายุ ระบบจะบวกทบเวลาต่อท้ายจากวันหมดอายุเดิมให้ตามจริงโดยไม่ตัดวันคงเหลือทิ้ง (จำกัดการสะสมวันใช้งานสูงสุดไม่เกิน 365 วันต่อเซิร์ฟเวอร์)'
+                      : 'Durations calculate pro-rata based on contributions (nominal rate: 29 THB = 30 days). Consecutive contributions stack cumulatively up to a maximum safety ceiling of 365 days.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• เงื่อนไขรหัสชวนเพื่อนและโค้ดกิจกรรม:' : '• Referral & Drop Codes:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'โบนัสวันใช้งานพิเศษ (+7 วันสำหรับผู้ชวนและผู้ถูกชวน) จะทำงานเมื่อเซิร์ฟเวอร์ผู้ถูกชวนทำรายการสนับสนุนด้วยซองของขวัญที่มียอดตั้งแต่ 29 บาทขึ้นไป เท่านั้น ส่วนโค้ดกิจกรรม (Early-Bird Drop) จำกัดสิทธิ์การใช้งาน 1 โค้ดต่อ 1 เซิร์ฟเวอร์และมีจำนวนจำกัดตามรอบที่กำหนด'
+                      : 'Referral rewards (+7 bonus days) trigger only on contributions of 29 THB or greater. Early-Bird Drop codes are single-use per server and strictly quota-governed.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• นโยบายไม่คืนเงิน (No Refund Policy):' : '• No Refund Policy:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'เมื่อระบบทำการรับซองของขวัญและอนุมัติวันใช้งานเข้าสู่ระบบสำเร็จแล้ว ไม่สามารถขอคืนเงิน ยกเลิก หรือแลกเปลี่ยนเป็นสิ่งอื่นได้ในทุกกรณี'
+                      : 'Once a voucher is successfully redeemed and days are credited, all contributions are strictly non-refundable and irrevocable.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3 */}
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                  {lang === 'th'
+                    ? '3. การจำกัดความรับผิดชอบและความพร้อมใช้งาน (Availability & Liability)'
+                    : '3. Availability & Liability'}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                  <div>
+                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การรับประกันสถานะออนไลน์:' : '• Uptime Warranty:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ทางทีมพัฒนาพยายามดูแลให้ระบบทำงานได้อย่างราบรื่นที่สุด แต่ไม่รับประกันว่าบอทจะออนไลน์ตลอด 24 ชั่วโมงโดยไม่มีอาการกระตุกหรือดีเลย์ เนื่องจากคุณภาพสัญญาณขึ้นอยู่กับเซิร์ฟเวอร์ต้นทาง ระบบ Discord Gateway และโควตาเครือข่ายในแต่ละช่วงเวลา'
+                      : 'While the team strives for maximum stability, continuous 24/7 uninterrupted uptime cannot be guaranteed due to dependencies on Discord gateways and upstream providers.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การปรับปรุงและยุติบริการ:' : '• Maintenance & Suspension:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ทีมพัฒนาขอสงวนสิทธิ์ในการรีสตาร์ทโหนด ปิดปรับปรุงระบบชั่วคราว ปรับเปลี่ยนโควตาช่องสัญญาณ หรือยุติการให้บริการเมื่อใดก็ได้โดยไม่จำเป็นต้องแจ้งให้ทราบล่วงหน้า'
+                      : 'We reserve the right to deploy maintenance updates, adjust audio buffer parameters, or modify service endpoints without prior notification.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• ความปลอดภัยของเซิร์ฟเวอร์:' : '• Indemnification:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ทีมพัฒนาไม่รับผิดชอบต่อความเสียหายใดๆ ที่อาจเกิดขึ้นกับเซิร์ฟเวอร์ Discord หรือบัญชีของผู้ใช้งานจากการนำบอทไปติดตั้งใช้งาน'
+                      : 'The development team shall not be held liable for any damages, strikes, or penalties incurred on Discord guilds or accounts.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4 */}
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                  {lang === 'th'
+                    ? '4. นโยบายการใช้งานที่เหมาะสม (Fair Use & Anti-Abuse Policy)'
+                    : '4. Fair Use & Anti-Abuse Policy'}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                  <div>
+                    <strong style={{ color: '#F87171' }}>{lang === 'th' ? '• การจัดการทรัพยากรอัตโนมัติ:' : '• Automated Resource Governance:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'เพื่อรักษาคุณภาพเสียงของส่วนรวม ระบบจะตัดการเชื่อมต่อจากห้องเสียงอัตโนมัติหากไม่มีผู้ฟังอยู่ในห้อง หรือมีการเปิดสตรีมต่อเนื่องยาวนานเกินเกณฑ์ที่กำหนดโดยไม่มีการโต้ตอบ'
+                      : 'To conserve cluster resources, the bot will auto-disconnect from empty voice channels or prolonged unmonitored streams.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: '#F87171' }}>{lang === 'th' ? '• การระงับสิทธิ์ (Ban Policy):' : '• Abuse & Ban Policy:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ห้ามใช้บอทหรือสคริปต์อัตโนมัติเฝ้าห้องเพื่อดึงแบนด์วิธตลอด 24 ชั่วโมง ห้ามยิงคำสั่งรัวเพื่อก่อกวนระบบ (Spam/Flood) และห้ามอาศัยช่องโหว่ในการปั๊มวันใช้งานฟรี หากระบบตรวจพบการกระทำดังกล่าว ทีมพัฒนาขอสงวนสิทธิ์ในการระงับการใช้งานเซิร์ฟเวอร์นั้นถาวร (Ban Guild) และยกเลิกวันใช้งานคงเหลือทั้งหมดทันทีโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
+                      : 'Automated 24/7 socket idling, command flooding, and exploitation of promotional codes are strictly prohibited. Violating guilds are subject to immediate permanent guild bans and forfeiture of remaining days.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '14px 24px',
+              borderTop: '1px solid var(--card-border)',
+              background: 'rgba(255, 255, 255, 0.02)',
+              display: 'flex',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowTosModal(false)}
+                className="btn btn-primary"
+                style={{ padding: '8px 20px', fontSize: 13 }}
+              >
+                {lang === 'th' ? 'เข้าใจและยอมรับข้อตกลง' : 'I Understand & Agree'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
