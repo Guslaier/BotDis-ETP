@@ -404,19 +404,19 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       <div style={{
         display: 'flex',
         alignItems: 'center',
+        flexWrap: 'wrap',
         gap: 8,
         borderBottom: '1px solid var(--card-border)',
         paddingBottom: 12,
-        marginBottom: 24,
-        overflowX: 'auto'
+        marginBottom: 24
       }}>
         {[
-          { id: 'nodes', label: lang === 'th' ? '🌐 โหนดประมวลผลเสียง (Cluster)' : 'Audio Nodes', icon: <Server size={15} /> },
-          { id: 'streams', label: `${lang === 'th' ? '🎵 ห้องที่กำลังเล่น' : 'Live Streams'} (${data?.players?.length || 0})`, icon: <Radio size={15} /> },
-          { id: 'guilds', label: lang === 'th' ? '🏰 จัดการเซิร์ฟเวอร์ (Subscriptions)' : 'Guilds', icon: <Shield size={15} /> },
-          { id: 'drops', label: lang === 'th' ? '🎁 แคมเปญ Early-Bird' : 'Drops', icon: <Plus size={15} /> },
-          { id: 'tx', label: lang === 'th' ? '📋 ประวัติธุรกรรม (Transactions)' : 'Audit Log', icon: <Activity size={15} /> },
-          { id: 'settings', label: lang === 'th' ? '⚙️ ตั้งค่าระบบ (Settings)' : 'Settings', icon: <Settings size={15} /> }
+          { id: 'nodes', label: lang === 'th' ? 'โหนดประมวลผลเสียง (Cluster)' : 'Audio Nodes', icon: <Server size={15} /> },
+          { id: 'streams', label: `${lang === 'th' ? 'ห้องที่กำลังเล่น' : 'Live Streams'} (${data?.players?.length || 0})`, icon: <Radio size={15} /> },
+          { id: 'guilds', label: lang === 'th' ? 'จัดการเซิร์ฟเวอร์ (Subscriptions)' : 'Guilds', icon: <Shield size={15} /> },
+          { id: 'drops', label: lang === 'th' ? 'แคมเปญ Early-Bird' : 'Drops', icon: <Plus size={15} /> },
+          { id: 'tx', label: lang === 'th' ? 'ประวัติธุรกรรม (Audit Log)' : 'Transactions', icon: <Activity size={15} /> },
+          { id: 'settings', label: lang === 'th' ? 'ตั้งค่าระบบ (Settings)' : 'Settings', icon: <Settings size={15} /> }
         ].map(t => (
           <button
             key={t.id}
