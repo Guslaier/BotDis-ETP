@@ -89,6 +89,7 @@ module.exports = {
                     name: isEn ? '🛡️ System & Localization' : '🛡️ หมวดข้อมูล & ตั้งค่าภาษา (System & Settings)',
                     value: isEn ? [
                         '`/glang` - Switch server bot language (Thai 🇹🇭 / English 🇬🇧)',
+                        '`/gwelcome` - Show welcome onboarding card & language switcher',
                         '`/gnowplaying` - View interactive now-playing dashboard card',
                         '`/gcleancard` - Clean up lingering music cards in text channel',
                         '`/glyrics` - Search and display song lyrics',
@@ -98,6 +99,7 @@ module.exports = {
                         '`/ghelp` - Open this manual'
                     ].join('\n') : [
                         '`/glang` - เปลี่ยนภาษาการสื่อสารของบอท (ภาษาไทย 🇹🇭 / English 🇬🇧)',
+                        '`/gwelcome` - แสดงการ์ดแนะนำตัว แผงเลือกภาษา และสิทธิ์ Supporter',
                         '`/gnowplaying` - ดูการ์ดเพลงและแผงปุ่มควบคุม Now Playing',
                         '`/gcleancard` - กวาดล้างการ์ดเพลงเก่าหรือการ์ดที่ค้างอยู่ในห้องแชท',
                         '`/glyrics` - ค้นหาและดูเนื้อเพลง',

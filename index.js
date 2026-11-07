@@ -9,6 +9,7 @@ const favoriteManager = require('./src/helpers/favoriteManager');
 const AdminServer = require('./src/web/AdminServer');
 const subscriptionManager = require('./src/billing/subscriptionManager');
 const i18n = require('./src/helpers/i18nHelper');
+const onboardingHelper = require('./src/helpers/onboardingHelper');
 
 const client = new Client({
     intents: [
@@ -170,6 +171,10 @@ client.on('clientReady', async () => {
     subscriptionManager.startHeartbeatSweep(client, kazagumo);
 });
 
+client.on('guildCreate', async guild => {
+    await onboardingHelper.handleGuildCreate(client, guild);
+});
+
 client.on('guildDelete', guild => {
     console.log(`[GuildLeave] Bot removed from guild: ${guild.name} (${guild.id})`);
 });
@@ -193,9 +198,12 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // 1. Handle interactive music player buttons
+    // 1. Handle interactive buttons (Onboarding & Music Player)
     if (interaction.isButton()) {
         const customId = interaction.customId;
+        if (customId.startsWith('welcome_')) {
+            return onboardingHelper.handleButton(interaction, client);
+        }
         if (!customId.startsWith('music_') && !customId.startsWith('vol_')) return;
 
         const player = kazagumo.players.get(interaction.guildId);
