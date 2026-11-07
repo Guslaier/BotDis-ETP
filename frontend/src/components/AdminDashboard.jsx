@@ -3,7 +3,7 @@ import {
   Shield, Server, HardDrive, Wifi, Activity, Cpu, RotateCw, 
   Trash2, Play, Square, FastForward, Search, Plus, Ban, CheckCircle, 
   AlertTriangle, Settings, RefreshCw, Power, Radio, Sliders, ExternalLink,
-  Users, Globe, MapPin, Cloud, Save, Gift
+  Users, Globe, MapPin, Cloud, Save, Gift, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 export default function AdminDashboard({ lang, token, setToken, onToast }) {
@@ -14,6 +14,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
 
   // Search & Filter
   const [guildSearch, setGuildSearch] = useState('');
+  const [nodeSearchTerm, setNodeSearchTerm] = useState('');
 
   // Modals
   const [banModal, setBanModal] = useState(null); // { guildId, guildName }
@@ -400,6 +401,18 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const nodesList = data?.nodes || [];
   const selectedNode = nodesList.find(n => n.id === selectedNodeId) || nodesList[0] || null;
 
+  const filteredNodes = nodesList.filter(n => {
+    if (!nodeSearchTerm.trim()) return true;
+    const term = nodeSearchTerm.toLowerCase();
+    return (
+      (n.name && n.name.toLowerCase().includes(term)) ||
+      (n.id && n.id.toLowerCase().includes(term)) ||
+      (n.host && n.host.toLowerCase().includes(term)) ||
+      (n.type && n.type.toLowerCase().includes(term)) ||
+      (n.status && n.status.toLowerCase().includes(term))
+    );
+  });
+
   return (
     <div style={{ maxWidth: 1280, margin: '24px auto', padding: '0 20px' }} className="fade-in">
       {/* Top Controller Overview Bar */}
@@ -524,55 +537,128 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       {/* --- TAB 1: AUDIO PROCESSING NODES (CLUSTER & TELEMETRY) --- */}
       {activeSubTab === 'nodes' && (
         <div className="fade-in">
-          {/* Node Selector Tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-sub)' }}>
-              {lang === 'th' ? 'เลือกโหนดประมวลผลเสียง:' : 'Select Audio Node:'}
-            </span>
-            {nodesList.map(node => (
-              <button
-                key={node.id}
-                onClick={() => setSelectedNodeId(node.id)}
-                style={{
+          {/* Scalable Node Controller Bar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            marginBottom: 20,
+            flexWrap: 'wrap',
+            background: 'rgba(17, 22, 32, 0.75)',
+            padding: '12px 18px',
+            borderRadius: 12,
+            border: '1px solid var(--card-border)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', flex: 1, minWidth: 280 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-sub)', fontSize: 13, fontWeight: 700 }}>
+                <Server size={16} style={{ color: 'var(--slime-green)' }} />
+                <span>{lang === 'th' ? 'เลือกโหนดประมวลผลเสียง:' : 'Select Audio Node:'}</span>
+              </div>
+
+              {/* Scalable Dropdown Selector */}
+              <div style={{ minWidth: 260, maxWidth: 380, flex: 1 }}>
+                <select
+                  value={selectedNode?.id || ''}
+                  onChange={(e) => setSelectedNodeId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 14px',
+                    borderRadius: 9,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    background: '#0B0F17',
+                    border: '1px solid var(--card-border)',
+                    color: '#FFF',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  {nodesList.map(node => (
+                    <option key={node.id} value={node.id}>
+                      {node.status === 'online' ? '[ONLINE]' : node.status === 'draining' ? '[DRAIN]' : '[OFFLINE]'} {node.name || node.id} ({node.type?.toUpperCase()}) — {node.activeRooms || 0}/{node.maxRooms} Rooms
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Quick Prev / Next Switchers */}
+              {nodesList.length > 1 && (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button
+                    onClick={() => {
+                      const idx = nodesList.findIndex(n => n.id === selectedNode?.id);
+                      const prevIdx = (idx - 1 + nodesList.length) % nodesList.length;
+                      setSelectedNodeId(nodesList[prevIdx].id);
+                    }}
+                    className="btn btn-sm"
+                    style={{ padding: '6px 8px', borderRadius: 8 }}
+                    title={lang === 'th' ? 'โหนดก่อนหน้า' : 'Previous Node'}
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const idx = nodesList.findIndex(n => n.id === selectedNode?.id);
+                      const nextIdx = (idx + 1) % nodesList.length;
+                      setSelectedNodeId(nodesList[nextIdx].id);
+                    }}
+                    className="btn btn-sm"
+                    style={{ padding: '6px 8px', borderRadius: 8 }}
+                    title={lang === 'th' ? 'โหนดถัดไป' : 'Next Node'}
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+
+              {/* Selected Node Status Pill */}
+              {selectedNode && (
+                <div style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 8,
-                  padding: '8px 14px',
-                  borderRadius: 10,
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid var(--card-border)',
+                  fontSize: 12
+                }}>
+                  <span style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: selectedNode.status === 'online' ? 'var(--slime-green)' : (selectedNode.status === 'draining' ? 'var(--accent-yellow)' : 'var(--danger)')
+                  }} />
+                  <span style={{ fontWeight: 700, color: selectedNode.status === 'online' ? 'var(--slime-green)' : '#FFF' }}>
+                    {selectedNode.status?.toUpperCase()}
+                  </span>
+                  <span style={{ color: 'var(--text-dim)' }}>•</span>
+                  <span style={{ color: 'var(--text-sub)' }}>{selectedNode.activeRooms || 0}/{selectedNode.maxRooms} Rooms</span>
+                  <span style={{ color: 'var(--text-dim)' }}>•</span>
+                  <span style={{ color: 'var(--text-sub)' }}>{selectedNode.latency >= 0 ? `${selectedNode.latency}ms` : 'Local'}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Add Node Action Button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={() => setAddNodeModal(true)}
+                className="btn btn-sm btn-primary"
+                style={{
+                  borderRadius: 9,
+                  padding: '8px 16px',
                   fontSize: 12.5,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: selectedNodeId === node.id ? '1px solid var(--slime-green)' : '1px solid var(--card-border)',
-                  background: selectedNodeId === node.id ? 'rgba(0, 255, 136, 0.15)' : 'rgba(17, 22, 32, 0.8)',
-                  color: selectedNodeId === node.id ? 'var(--slime-green)' : 'var(--text-sub)',
-                  boxShadow: selectedNodeId === node.id ? '0 0 14px var(--slime-glow)' : 'none'
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6
                 }}
               >
-                <span style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: node.status === 'online' ? 'var(--slime-green)' : (node.status === 'draining' ? 'var(--accent-yellow)' : 'var(--danger)')
-                }} />
-                <span>{node.name || node.id}</span>
-                <span style={{ fontSize: 10, opacity: 0.7, textTransform: 'uppercase' }}>
-                  ({node.type})
-                </span>
+                <Plus size={14} />
+                <span>{lang === 'th' ? 'เพิ่มโหนด (Add Node)' : 'Add Node'}</span>
               </button>
-            ))}
-
-            <button
-              onClick={() => setAddNodeModal(true)}
-              className="btn btn-sm btn-primary"
-              style={{
-                borderRadius: 10,
-                padding: '8px 14px',
-                fontSize: 12.5
-              }}
-            >
-              <Plus size={14} />
-              <span>{lang === 'th' ? 'เพิ่มโหนด (Add Node)' : 'Add Node'}</span>
-            </button>
+            </div>
           </div>
 
           {selectedNode ? (
@@ -731,10 +817,33 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
 
           {/* All Nodes Cluster Table */}
           <div className="glass-panel" style={{ padding: 20 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Server size={16} style={{ color: 'var(--slime-green)' }} />
-              <span>{lang === 'th' ? 'รายชื่อโหนดในคลัสเตอร์ทั้งหมด' : 'Cluster Nodes Status'}</span>
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Server size={16} style={{ color: 'var(--slime-green)' }} />
+                <span>{lang === 'th' ? `รายชื่อโหนดในคลัสเตอร์ทั้งหมด (${nodesList.length})` : `Cluster Nodes (${nodesList.length})`}</span>
+              </h3>
+
+              {/* Node Search Bar for Scalable Cluster Management */}
+              <div style={{ position: 'relative', width: 260, maxWidth: '100%' }}>
+                <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
+                <input
+                  type="text"
+                  value={nodeSearchTerm}
+                  onChange={(e) => setNodeSearchTerm(e.target.value)}
+                  placeholder={lang === 'th' ? 'ค้นหาโหนด (ชื่อ, IP, ประเภท)...' : 'Filter nodes by name, IP...'}
+                  style={{
+                    width: '100%',
+                    padding: '7px 12px 7px 30px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    background: '#0B0F17',
+                    border: '1px solid var(--card-border)',
+                    color: '#FFF',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
 
             <div style={{ overflowX: 'auto' }}>
               <table className="custom-table">
@@ -752,65 +861,82 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {nodesList.map(n => (
-                    <tr key={n.id}>
-                      <td style={{ fontWeight: 700, color: '#FFF' }}>{n.name || n.id}</td>
-                      <td>
-                        <span style={{
-                          fontSize: 10,
-                          padding: '2px 8px',
-                          borderRadius: 6,
-                          background: n.type === 'remote' ? 'rgba(0, 210, 255, 0.15)' : 'rgba(255, 255, 255, 0.08)',
-                          color: n.type === 'remote' ? 'var(--accent-blue)' : '#FFF'
-                        }}>
-                          {n.type.toUpperCase()}
-                        </span>
-                      </td>
-                      <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{n.host}:{n.port || 2333}</td>
-                      <td>
-                        <span style={{
-                          fontWeight: 700,
-                          fontSize: 11,
-                          color: n.status === 'online' ? 'var(--slime-green)' : (n.status === 'draining' ? 'var(--accent-yellow)' : 'var(--danger)')
-                        }}>
-                          ● {n.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: 11.5 }}>
-                        {n.cpu || '-'} • {n.ram || '-'}
-                      </td>
-                      <td style={{ fontWeight: 700 }}>
-                        <span style={{ color: 'var(--slime-green)' }}>{n.activeRooms || 0}</span> / {n.maxRooms || 15}
-                      </td>
-                      <td style={{ fontSize: 11.5 }}>
-                        {n.activeSpawns || 0}/{n.maxSpawns || 2} (Q: {n.queuedSpawns || 0})
-                      </td>
-                      <td style={{ fontSize: 11.5 }}>
-                        {n.latency >= 0 ? `${n.latency} ms` : '-'}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button
-                            onClick={() => setSelectedNodeId(n.id)}
-                            className="btn btn-sm"
-                            style={{ padding: '4px 8px', fontSize: 11 }}
-                          >
-                            {lang === 'th' ? 'เลือกดู' : 'Inspect'}
-                          </button>
-                          {n.type === 'remote' && (
-                            <button
-                              onClick={() => handleDeleteNode(n.id, n.name)}
-                              className="btn btn-sm btn-danger"
-                              style={{ padding: '4px 8px', fontSize: 11 }}
-                              title="Delete Node"
-                            >
-                              <Trash2 size={11} />
-                            </button>
-                          )}
-                        </div>
+                  {filteredNodes.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-dim)', fontSize: 13 }}>
+                        {lang === 'th' ? 'ไม่พบโหนดที่ตรงกับคำค้นหา' : 'No matching nodes found'}
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredNodes.map(n => (
+                      <tr 
+                        key={n.id}
+                        onClick={() => setSelectedNodeId(n.id)}
+                        style={{
+                          cursor: 'pointer',
+                          background: selectedNodeId === n.id ? 'rgba(0, 255, 136, 0.08)' : undefined,
+                          borderLeft: selectedNodeId === n.id ? '3px solid var(--slime-green)' : '3px solid transparent',
+                          transition: 'background 0.15s ease'
+                        }}
+                      >
+                        <td style={{ fontWeight: 700, color: '#FFF' }}>{n.name || n.id}</td>
+                        <td>
+                          <span style={{
+                            fontSize: 10,
+                            padding: '2px 8px',
+                            borderRadius: 6,
+                            background: n.type === 'remote' ? 'rgba(0, 210, 255, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+                            color: n.type === 'remote' ? 'var(--accent-blue)' : '#FFF'
+                          }}>
+                            {n.type?.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{n.host}:{n.port || 2333}</td>
+                        <td>
+                          <span style={{
+                            fontWeight: 700,
+                            fontSize: 11,
+                            color: n.status === 'online' ? 'var(--slime-green)' : (n.status === 'draining' ? 'var(--accent-yellow)' : 'var(--danger)')
+                          }}>
+                            ● {n.status?.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 11.5 }}>
+                          {n.cpu || '-'} • {n.ram || '-'}
+                        </td>
+                        <td style={{ fontWeight: 700 }}>
+                          <span style={{ color: 'var(--slime-green)' }}>{n.activeRooms || 0}</span> / {n.maxRooms || 15}
+                        </td>
+                        <td style={{ fontSize: 11.5 }}>
+                          {n.activeSpawns || 0}/{n.maxSpawns || 2} (Q: {n.queuedSpawns || 0})
+                        </td>
+                        <td style={{ fontSize: 11.5 }}>
+                          {n.latency >= 0 ? `${n.latency} ms` : '-'}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => setSelectedNodeId(n.id)}
+                              className="btn btn-sm"
+                              style={{ padding: '4px 8px', fontSize: 11 }}
+                            >
+                              {lang === 'th' ? 'เลือกดู' : 'Inspect'}
+                            </button>
+                            {n.type === 'remote' && (
+                              <button
+                                onClick={() => handleDeleteNode(n.id, n.name)}
+                                className="btn btn-sm btn-danger"
+                                style={{ padding: '4px 8px', fontSize: 11 }}
+                                title="Delete Node"
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
