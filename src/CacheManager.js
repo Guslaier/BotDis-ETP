@@ -57,6 +57,13 @@ class CacheManager {
         if (!fs.existsSync(this.cacheDir)) {
             fs.mkdirSync(this.cacheDir, { recursive: true });
         }
+        this._ensureExecutable();
+    }
+
+    _ensureExecutable() {
+        if (process.platform !== 'win32' && fs.existsSync(this.binPath)) {
+            try { fs.chmodSync(this.binPath, 0o755); } catch {}
+        }
     }
 
     getTrackHash(identifier) {
@@ -118,6 +125,7 @@ class CacheManager {
         const useIPv6 = process.env.USE_IPV6 === 'true';
 
         if (!isSoundCloud) {
+            args.push('--extractor-args', 'youtube:player_client=android,web');
             const netArgs = proxyManager.getNetworkArgs();
             if (netArgs.length > 0) {
                 args.push(...netArgs);
@@ -285,6 +293,7 @@ class CacheManager {
     _spawnPipedStream(track, sourceUri, seekSeconds = 0, volume = 100, isFallback = false, onSpawn = null, filter = 'off', bitrate = '64k') {
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
+            this._ensureExecutable();
             const ytdlpArgs = this._buildYtDlpArgs(sourceUri, true);
             const ytdlpProc = spawn(this.binPath, ytdlpArgs, { windowsHide: true });
 
@@ -581,6 +590,7 @@ class CacheManager {
         }
 
         const downloadPromise = (async () => {
+            this._ensureExecutable();
             const outTemplate = path.join(this.cacheDir, `${trackHash}.%(ext)s`);
             const isYouTube = !track.uri?.includes('soundcloud.com');
 

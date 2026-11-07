@@ -59,6 +59,9 @@ class YouTubeCircuit {
         if (this._probing) return;
         this._probing = true;
         try {
+            if (process.platform !== 'win32' && fs.existsSync(binPath)) {
+                try { fs.chmodSync(binPath, 0o755); } catch {}
+            }
             const proxy = typeof getProxyFn === 'function' ? getProxyFn() : null;
             const netArg = proxy ? (proxy.startsWith('--') ? proxy : `--proxy "${proxy}"`) : '';
             const cmd = `"${binPath}" --no-warnings --socket-timeout 5 --no-playlist -g "https://www.youtube.com/watch?v=dQw4w9WgXcQ" ${netArg}`;

@@ -10,6 +10,13 @@ const settingsManager = require('./helpers/settingsManager');
 const binPath = path.resolve(__dirname, process.platform === 'win32' ? '../bin/yt-dlp.exe' : '../bin/yt-dlp');
 const cacheDir = path.resolve(__dirname, '../music_cache');
 
+function ensureExecutable(targetPath) {
+    if (process.platform !== 'win32' && fs.existsSync(targetPath)) {
+        try { fs.chmodSync(targetPath, 0o755); } catch {}
+    }
+}
+ensureExecutable(binPath);
+
 class Track {
     constructor(data, requester) {
         this.title = data.title || 'Unknown Title';
@@ -110,6 +117,7 @@ class QueueManager extends EventEmitter {
                 const activeProxy = (!isSoundCloud && !proxyManager.isVpnActive()) ? proxyManager.getYouTubeProxy() : null;
 
                 if (!isSoundCloud) {
+                    args.push('--extractor-args', 'youtube:player_client=android,web');
                     const netArgs = proxyManager.getNetworkArgs();
                     if (netArgs.length > 0) {
                         args.push(...netArgs);
@@ -126,6 +134,7 @@ class QueueManager extends EventEmitter {
 
                 const startTime = Date.now();
                 const timeoutMs = isPlaylist ? 25000 : 10000;
+                ensureExecutable(binPath);
                 execFile(binPath, args, { maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs, killSignal: 'SIGKILL', windowsHide: true }, (err, stdout, stderr) => {
                     this._activeSearches--;
                     this._processNextSearch();

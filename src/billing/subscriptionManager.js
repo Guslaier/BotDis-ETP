@@ -543,13 +543,13 @@ class SubscriptionManager extends EventEmitter {
 
         console.log('[AutoUpdater] Executing scheduled daily yt-dlp update (04:00 AM)...');
         execFile(binPath, ['-U'], { timeout: 60000 }, (err, stdout, stderr) => {
+            if (process.platform !== 'win32') {
+                try { fs.chmodSync(binPath, 0o755); } catch {}
+            }
             if (err) {
                 console.warn('[AutoUpdater] yt-dlp update failed:', err.message);
             } else {
                 console.log('[AutoUpdater] yt-dlp update output:', (stdout || stderr || '').trim());
-                if (process.platform !== 'win32') {
-                    try { fs.chmodSync(binPath, 0o755); } catch {}
-                }
             }
         });
     }

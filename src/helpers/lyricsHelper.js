@@ -116,6 +116,10 @@ class LyricsHelper {
 
             args.push(uri);
 
+            if (process.platform !== 'win32' && fs.existsSync(this.binPath)) {
+                try { fs.chmodSync(this.binPath, 0o755); } catch {}
+            }
+
             execFile(this.binPath, args, { maxBuffer: 4 * 1024 * 1024, timeout: 12000, windowsHide: true }, (err, stdout) => {
                 if (err || !stdout) return resolve(null);
                 try {

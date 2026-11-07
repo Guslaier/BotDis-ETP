@@ -311,6 +311,9 @@ class SmartProxyPool {
     async testProxyYouTube(proxyUrl, timeoutMs = 7000) {
         const start = Date.now();
         try {
+            if (process.platform !== 'win32' && fs.existsSync(this.binPath)) {
+                try { fs.chmodSync(this.binPath, 0o755); } catch {}
+            }
             const netArg = proxyUrl.startsWith('--') ? proxyUrl : `--proxy "${proxyUrl}"`;
             const cmd = `"${this.binPath}" --no-warnings --socket-timeout 5 --no-playlist -g "https://www.youtube.com/watch?v=dQw4w9WgXcQ" ${netArg}`;
             const { stdout } = await execAsync(cmd, { timeout: timeoutMs });
