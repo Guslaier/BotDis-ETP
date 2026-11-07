@@ -484,7 +484,7 @@ export default function TopupView({ lang, onToast }) {
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: 16
         }}>
-          {/* Free Tier */}
+          {/* General / Free Tier */}
           <div style={{
             background: 'rgba(8, 11, 16, 0.5)',
             border: '1px solid var(--card-border)',
@@ -493,25 +493,37 @@ export default function TopupView({ lang, onToast }) {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-sub)' }}>{lang === 'th' ? 'ทั่วไป' : 'STANDARD'}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>0 บาท</span>
+              <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{lang === 'th' ? '0 บาท / ฟรีตลอดชีพ' : '0 THB / Lifetime Free'}</span>
             </div>
             <ul style={{ listStyle: 'none', fontSize: 12.5, color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircle2 size={14} style={{ color: 'var(--slime-green)' }} /> 64 kbps Audio Quality
+                <CheckCircle2 size={14} style={{ color: 'var(--slime-green)' }} />
+                <span>{lang === 'th' ? 'คุณภาพเสียงระดับมาตรฐาน (64 kbps)' : 'Standard audio quality (64 kbps)'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircle2 size={14} style={{ color: 'var(--slime-green)' }} /> YouTube & SoundCloud
+                <CheckCircle2 size={14} style={{ color: 'var(--slime-green)' }} />
+                <span>{lang === 'th' ? 'รองรับเพลงจาก YouTube และ SoundCloud' : 'Supports YouTube & SoundCloud music'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
-                <AlertCircle size={14} /> โควตาสตรีมจำกัด (แชร์ช่องสัญญาณ)
+                <AlertCircle size={14} />
+                <span>{lang === 'th' ? 'คิวเพลงสูงสุด 10 เพลง (เพลย์ลิสต์ 5 เพลง)' : 'Queue limit 10 songs (5 per playlist)'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
-                <AlertCircle size={14} /> ไม่รองรับฟิลเตอร์ปรับแต่งเสียง
+                <AlertCircle size={14} />
+                <span>{lang === 'th' ? 'ความยาวคลิปไม่เกิน 30 นาทีต่อเพลง' : 'Maximum track duration 30 minutes'}</span>
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
+                <AlertCircle size={14} />
+                <span>{lang === 'th' ? 'แชร์ช่องสัญญาณทั่วไป (หากเต็มต้องรอคิว)' : 'Shared stream slots (subject to wait time)'}</span>
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
+                <AlertCircle size={14} />
+                <span>{lang === 'th' ? 'ไม่รองรับระบบ Equalizer และ Autoplay' : 'No Equalizer filters or continuous Autoplay'}</span>
               </li>
             </ul>
           </div>
 
-          {/* Supporter */}
+          {/* Supporter Tier */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(0, 255, 136, 0.08) 0%, rgba(17, 22, 32, 0.95) 100%)',
             border: '1px solid var(--slime-green)',
@@ -525,24 +537,32 @@ export default function TopupView({ lang, onToast }) {
                 <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--slime-green)' }}>SUPPORTER</span>
                 <span className="slime-badge" style={{ marginLeft: 8, fontSize: 10 }}>RECOMMENDED</span>
               </div>
-              <span style={{ fontWeight: 700, fontSize: 14, color: '#FFF' }}>29฿ / 30 วัน</span>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#FFF' }}>{lang === 'th' ? '29 บาท / 30 วัน' : '29 THB / 30 Days'}</span>
             </div>
             <ul style={{ listStyle: 'none', fontSize: 12.5, color: '#FFF', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Zap size={14} style={{ color: 'var(--slime-green)' }} />
-                <strong>96 kbps Studio Quality (เสียงคมชัดสูงสุด)</strong>
+                <strong>{lang === 'th' ? 'คุณภาพเสียงคมชัดสูงพิเศษ (96 kbps Studio HQ)' : 'Pristine audio quality (96 kbps Studio HQ)'}</strong>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Music2 size={14} style={{ color: 'var(--slime-green)' }} />
-                <span>การันตีสล็อตสตรีมเสียงเฉพาะ Supporter ไม่ต้องรอคิว</span>
+                <span>{lang === 'th' ? 'ช่องสัญญาณด่วนพิเศษ (Priority Slot) เปิดเพลงได้ทันที ไม่ต้องรอคิว' : 'Guaranteed Priority Slot — instant playback, zero waiting'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Sliders size={14} style={{ color: 'var(--slime-green)' }} />
-                <span>Audio Filters: Bass Boost, 8D Audio, Nightcore, Pop</span>
+                <Clock size={14} style={{ color: 'var(--slime-green)' }} />
+                <span>{lang === 'th' ? 'ฟังเพลงและไลฟ์สดยาวได้ไม่จำกัดความยาว (เกิน 30 นาทีได้)' : 'Unlimited playback length for long tracks and live streams'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Award size={14} style={{ color: 'var(--slime-green)' }} />
-                <span>Fast-track Stream Guard Bypass</span>
+                <span>{lang === 'th' ? 'ขยายคิวเพลงสูงสุด 50 เพลง (เพลย์ลิสต์ครั้งละ 25 เพลง)' : 'Expanded queue up to 50 songs (25 songs per playlist)'}</span>
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Sliders size={14} style={{ color: 'var(--slime-green)' }} />
+                <span>{lang === 'th' ? 'ปลดล็อกตัวปรับแต่งเสียง Equalizer (Bass Boost, Nightcore, Pop ฯลฯ)' : 'Unlock Equalizer audio presets (Bass Boost, Nightcore, Pop)'}</span>
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Sparkles size={14} style={{ color: 'var(--slime-green)' }} />
+                <span>{lang === 'th' ? 'ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) ปาร์ตี้ไม่มีสะดุด' : 'Intelligent continuous Autoplay when queue ends'}</span>
               </li>
             </ul>
           </div>
