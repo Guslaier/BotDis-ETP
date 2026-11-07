@@ -3,12 +3,12 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gremove',
-        description: 'ลบเพลงออกจากคิวตามตำแหน่ง',
+        description: 'Remove a track from queue by position number',
         options: [
             {
                 name: 'position',
                 type: 4, // INTEGER
-                description: 'ลำดับคิวของเพลงที่ต้องการลบ',
+                description: 'Queue position number of the track to remove',
                 required: true,
             },
         ],

@@ -4,12 +4,12 @@ const i18n = require('../src/helpers/i18nHelper');
 module.exports = {
     data: {
         name: 'gseek',
-        description: 'กรอเพลงไปยังเวลาที่กำหนด (เช่น 01:30 หรือ 90)',
+        description: 'Seek to a specific timestamp in current track',
         options: [
             {
                 name: 'time',
                 type: 3, // STRING
-                description: 'เวลาที่ต้องการกรอไป (เช่น 01:30 หรือระบุเป็นวินาที)',
+                description: 'Timestamp to seek to (e.g. 01:30 or seconds)',
                 required: true,
             },
         ],

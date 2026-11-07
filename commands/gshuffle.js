@@ -3,7 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gshuffle',
-        description: 'สุ่มลำดับคิวเพลง',
+        description: 'Shuffle and randomize order of queued tracks',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

@@ -4,13 +4,13 @@ const settingsManager = require('../src/helpers/settingsManager');
 module.exports = {
     data: {
         name: 'gvolume',
-        description: 'ปรับหรือดูระดับเสียงของบอท (บันทึกค่าไว้ใช้ถาวร)',
+        description: 'Adjust or view stage playback volume (0-150)',
         default_member_permissions: '8',
         options: [
             {
                 name: 'amount',
                 type: 4, // INTEGER
-                description: 'ระดับเสียง 0 - 150 (ปล่อยว่างเพื่อดูระดับเสียงปัจจุบัน)',
+                description: 'Volume level 0-150 (Leave empty to view current)',
                 required: false,
             }
         ]

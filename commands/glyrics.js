@@ -4,7 +4,7 @@ const lyricsHelper = require('../src/helpers/lyricsHelper');
 module.exports = {
     data: {
         name: 'glyrics',
-        description: 'ค้นหาเนื้อเพลงที่กำลังเล่นอยู่',
+        description: 'Search and display lyrics for currently playing track',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

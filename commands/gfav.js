@@ -5,25 +5,25 @@ const settingsManager = require('../src/helpers/settingsManager');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gfav')
-        .setDescription('จัดการเพลงโปรดของคุณ (Favorites)')
+        .setDescription('Manage your favorite tracks (Favorites)')
         .addSubcommand(sub =>
             sub.setName('add')
-                .setDescription('บันทึกเพลงที่กำลังเล่นอยู่ลงในรายการโปรด')
+                .setDescription('Save currently playing track to your favorites')
         )
         .addSubcommand(sub =>
             sub.setName('list')
-                .setDescription('ดูรายการเพลงโปรดทั้งหมดของคุณ')
+                .setDescription('View all your saved favorite tracks')
         )
         .addSubcommand(sub =>
             sub.setName('play')
-                .setDescription('เปิดเล่นเพลงโปรดทั้งหมดของคุณเข้าคิว')
+                .setDescription('Load and play all your favorite tracks')
         )
         .addSubcommand(sub =>
             sub.setName('remove')
-                .setDescription('ลบเพลงออกจากรายการเพลงโปรด')
+                .setDescription('Remove a track from your favorites list')
                 .addIntegerOption(opt =>
                     opt.setName('number')
-                        .setDescription('ลำดับเพลงในรายการโปรดที่ต้องการลบ')
+                        .setDescription('Position number in your favorites list to remove')
                         .setRequired(true)
                         .setMinValue(1)
                 )

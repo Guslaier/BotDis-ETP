@@ -4,10 +4,10 @@ const { formatDuration } = require('../src/helpers/musicCardHelper');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gforward')
-        .setDescription('กรอเพลงเดินหน้าตามจำนวนวินาทีที่ต้องการ')
+        .setDescription('Fast-forward playback by specified seconds')
         .addIntegerOption(opt =>
             opt.setName('seconds')
-                .setDescription('จำนวนวินาทีที่ต้องการกรอไปข้างหน้า (เช่น 10, 30)')
+                .setDescription('Number of seconds to fast-forward (e.g. 10, 30)')
                 .setRequired(true)
                 .setMinValue(1)
         ),

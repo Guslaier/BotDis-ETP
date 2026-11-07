@@ -4,7 +4,7 @@ const i18n = require('../src/helpers/i18nHelper');
 module.exports = {
     data: {
         name: 'gresume',
-        description: 'เล่นเพลงต่อจากที่หยุดไว้ (Resume paused track)',
+        description: 'Resume paused music playback',
     },
     run: async (client, interaction, kazagumo) => {
         const guildId = interaction.guild.id;

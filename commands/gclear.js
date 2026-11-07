@@ -3,7 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gclear',
-        description: 'ล้างคิวเพลงที่รออยู่ทั้งหมด',
+        description: 'Clear all upcoming tracks from the queue',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

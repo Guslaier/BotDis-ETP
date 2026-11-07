@@ -3,7 +3,7 @@ const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gping')
-        .setDescription('เช็คความหน่วงและการตอบสนองของบอท (Ping)'),
+        .setDescription('Check bot latency and gateway WebSocket ping'),
 
     run: async (client, interaction) => {
         const sent = await interaction.reply({ content: '🏓 กำลังวัดความเร็วปิงนะคะ...', fetchReply: true });

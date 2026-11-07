@@ -3,7 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gprevious',
-        description: 'ย้อนกลับไปเล่นเพลงที่เพิ่งจบไป',
+        description: 'Replay the previous track that just finished',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

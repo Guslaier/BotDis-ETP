@@ -3,7 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gstop',
-        description: 'หยุดเล่นและล้างคิวเพลง',
+        description: 'Stop playback, clear queue, and leave voice channel',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

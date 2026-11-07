@@ -6,18 +6,18 @@ const i18n = require('../src/helpers/i18nHelper');
 module.exports = {
     data: {
         name: 'gplaylist',
-        description: 'เล่นเพลย์ลิสต์จาก นกแดง หรือ เมฆส้ม (เพิ่มทุกเพลงลงในคิว)',
+        description: 'Load full playlist from YouTube or SoundCloud into queue',
         options: [
             {
                 name: 'query',
                 type: 3, // STRING
-                description: 'ชื่อเพลย์ลิสต์ หรือ ลิ้งก์ Playlist (นกแดง, Mix, เมฆส้ม)',
+                description: 'Playlist URL or search query',
                 required: true,
             },
             {
                 name: 'limit',
                 type: 4, // INTEGER
-                description: 'จำนวนเพลงสูงสุดที่จะดึงเข้าคิว (Free: 1-5 เพลง, VIP: 1-25 เพลง)',
+                description: 'Maximum tracks to import into queue (Free: 1-5, VIP: 1-25)',
                 required: false,
                 min_value: 1,
                 max_value: 25,

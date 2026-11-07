@@ -3,7 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gpause',
-        description: 'หยุดเล่นเพลงชั่วคราว',
+        description: 'Pause current music playback',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

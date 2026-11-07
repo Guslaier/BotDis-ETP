@@ -4,10 +4,10 @@ const { formatDuration } = require('../src/helpers/musicCardHelper');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gbackward')
-        .setDescription('กรอย้อนกลับตามจำนวนวินาทีที่ต้องการ')
+        .setDescription('Rewind playback by specified seconds')
         .addIntegerOption(opt =>
             opt.setName('seconds')
-                .setDescription('จำนวนวินาทีที่ต้องการกรอย้อนกลับ (เช่น 10, 30)')
+                .setDescription('Number of seconds to rewind (e.g. 10, 30)')
                 .setRequired(true)
                 .setMinValue(1)
         ),

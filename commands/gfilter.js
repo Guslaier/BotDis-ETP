@@ -5,20 +5,20 @@ const i18n = require('../src/helpers/i18nHelper');
 module.exports = {
     data: {
         name: 'gfilter',
-        description: 'ปรับแต่งโทนเสียง Equalizer (เฉพาะเซิร์ฟเวอร์ผู้สนับสนุน VIP)',
+        description: 'Apply audio Equalizer and tone filters (VIP Supporter)',
         options: [
             {
                 name: 'mode',
                 type: 3, // STRING
-                description: 'เลือกโทนเสียงที่ต้องการ',
+                description: 'Select audio equalizer preset',
                 required: true,
                 choices: [
-                    { name: 'ปิดเสียงปรุงแต่ง (Off - Original)', value: 'off' },
-                    { name: 'เบสหนักแน่น (Bass Boost)', value: 'bassboost' },
-                    { name: 'ไนท์คอร์ (Nightcore - Fast & Pitch)', value: 'nightcore' },
-                    { name: 'โทนป็อปใส (Pop Vocal)', value: 'pop' },
-                    { name: 'ฟังสบาย ผ่อนคลาย (Soft Relax)', value: 'soft' },
-                    { name: 'เวเปอร์เวฟ (Vaporwave - Slowed)', value: 'vaporwave' }
+                    { name: 'Off (Original Sound)', value: 'off' },
+                    { name: 'Bass Boost (Deep Bass)', value: 'bassboost' },
+                    { name: 'Nightcore (Fast & Pitch)', value: 'nightcore' },
+                    { name: 'Pop Vocal (Clear Voices)', value: 'pop' },
+                    { name: 'Soft Relax (Warm Acoustic)', value: 'soft' },
+                    { name: 'Vaporwave (Slowed & Reverb)', value: 'vaporwave' }
                 ]
             }
         ]

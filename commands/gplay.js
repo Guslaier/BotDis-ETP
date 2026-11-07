@@ -6,24 +6,24 @@ const i18n = require('../src/helpers/i18nHelper');
 module.exports = {
     data: {
         name: 'gplay',
-        description: 'เล่นเพลงจาก นกแดง / นกเขียว หรือพิมพ์ชื่อเพลง',
+        description: 'Play music from YouTube, Spotify, SoundCloud, or title search',
         options: [
             {
                 name: 'query',
                 type: 3, // STRING
-                description: 'ชื่อเพลง หรือ ลิ้งก์ นกแดง / นกเขียว',
+                description: 'Song title, artist name, or URL (YouTube / Spotify / SoundCloud)',
                 required: true,
             },
             {
                 name: 'top',
                 type: 5, // BOOLEAN
-                description: 'เล่นเพลงนี้เป็นคิวต่อไป (แซงคิว)',
+                description: 'Play this track next up in queue (Priority jump)',
                 required: false,
             },
             {
                 name: 'playlist',
                 type: 5, // BOOLEAN
-                description: 'โหลดทั้งเพลย์ลิสต์ถ้าลิ้งก์มี playlist/mix (ค่าเริ่มต้น: เล่นเฉพาะเพลงนี้)',
+                description: 'Import entire playlist if link contains a mix or playlist',
                 required: false,
             },
         ],

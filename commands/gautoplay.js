@@ -5,7 +5,7 @@ const subscriptionManager = require('../src/billing/subscriptionManager');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gautoplay')
-        .setDescription('เปิดหรือปิดการเล่นเพลงต่อเนื่องอัตโนมัติเมื่อคิวหมด (Autoplay)'),
+        .setDescription('Toggle smart continuous autoplay when queue ends (VIP Supporter)'),
 
     run: async (client, interaction, kazagumo) => {
         const guildId = interaction.guild.id;

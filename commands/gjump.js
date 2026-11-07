@@ -3,12 +3,12 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gjump',
-        description: 'ดันเพลงในคิวขึ้นมาเล่นเป็นเพลงต่อไป (แซงคิว)',
+        description: 'Move a track in queue to play next up (Priority Jump)',
         options: [
             {
                 name: 'position',
                 type: 4, // INTEGER
-                description: 'ลำดับของเพลงในคิวที่ต้องการแซงคิว',
+                description: 'Queue position number of the track to jump',
                 required: true,
             },
         ],

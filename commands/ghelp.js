@@ -4,7 +4,7 @@ const settingsManager = require('../src/helpers/settingsManager');
 module.exports = {
     data: {
         name: 'ghelp',
-        description: 'ดูคู่มือและคำสั่งทั้งหมดของบอท GOOLIX (Commands & Guide)',
+        description: 'View full bot commands manual and documentation',
     },
     run: async (client, interaction) => {
         const guildId = interaction.guild?.id;

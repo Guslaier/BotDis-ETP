@@ -6,12 +6,12 @@ const i18n = require('../src/helpers/i18nHelper');
 module.exports = {
     data: {
         name: 'gskipplay',
-        description: 'ข้ามเพลงปัจจุบันแล้วเล่นเพลงใหม่ที่ระบุทันที (Skip current & play query now)',
+        description: 'Skip current track and immediately play new query',
         options: [
             {
                 name: 'query',
                 type: 3, // STRING
-                description: 'ชื่อเพลง หรือ ลิ้งก์ นกแดง / นกเขียว ที่ต้องการเล่น',
+                description: 'Song title, artist, or music URL to play now',
                 required: true,
             },
         ],

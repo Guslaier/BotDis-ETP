@@ -3,17 +3,17 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gloop',
-        description: 'วนลูปเพลง',
+        description: 'Set repeat loop mode for current track or queue',
         options: [
             {
                 name: 'mode',
                 type: 3, // STRING
-                description: 'เลือกโหมดการวนลูป',
+                description: 'Select loop mode',
                 required: true,
                 choices: [
-                    { name: 'ปิดลูป (Off)', value: 'none' },
-                    { name: 'วนเพลงนี้ (Track)', value: 'track' },
-                    { name: 'วนทั้งคิว (Queue)', value: 'queue' }
+                    { name: 'Off (Disable Repeat)', value: 'none' },
+                    { name: 'Track (Repeat Current Track)', value: 'track' },
+                    { name: 'Queue (Repeat Entire Queue)', value: 'queue' }
                 ]
             }
         ]

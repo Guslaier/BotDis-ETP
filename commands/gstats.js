@@ -4,7 +4,7 @@ const os = require('os');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gstats')
-        .setDescription('ดูข้อมูลสถิติและการทำงานของระบบบอท'),
+        .setDescription('View bot telemetry, cluster nodes, and system health'),
 
     run: async (client, interaction, kazagumo) => {
         const mem = process.memoryUsage();

@@ -3,7 +3,7 @@ const { MessageFlags } = require('discord.js');
 module.exports = {
     data: {
         name: 'gcleancard',
-        description: 'กวาดล้างการ์ดเพลงเก่าหรือการ์ดที่ค้างอยู่ในห้องนี้',
+        description: 'Clean up lingering or duplicate music cards in this channel',
     },
     run: async (client, interaction, kazagumo) => {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });

@@ -5,28 +5,28 @@ const truemoneyGateway = require('../src/billing/truemoneyGateway');
 module.exports = {
     data: {
         name: 'gdonate',
-        description: 'สนับสนุนค่าเซิร์ฟเวอร์ & ตรวจสอบสถานะ Supporter',
+        description: 'Server supporter perks, VIP status, and donation',
         options: [
             {
                 name: 'status',
                 type: 1, // SUB_COMMAND
-                description: 'ตรวจสอบสถานะผู้สนับสนุน และรหัสชวนเพื่อนของเซิร์ฟเวอร์นี้'
+                description: 'Check server supporter status and referral code'
             },
             {
                 name: 'support',
                 type: 1, // SUB_COMMAND
-                description: 'ร่วมสนับสนุนค่าเซิร์ฟเวอร์ผ่านซองของขวัญ TrueMoney Wallet',
+                description: 'Support server via TrueMoney Wallet gift voucher',
                 options: [
                     {
                         name: 'voucher',
                         type: 3, // STRING
-                        description: 'ลิงก์ซองของขวัญอั่งเปา TrueMoney Wallet หรือรหัสซอง',
+                        description: 'TrueMoney Wallet voucher link or code',
                         required: true
                     },
                     {
                         name: 'referral',
                         type: 3, // STRING
-                        description: 'โค้ดชวนเพื่อน (REF-XXXXXX) เพื่อช่วยต่อวันฟรีให้เพื่อน',
+                        description: 'Referral code (REF-XXXXXX) to extend bonus days',
                         required: false
                     }
                 ]
@@ -34,12 +34,12 @@ module.exports = {
             {
                 name: 'redeem',
                 type: 1, // SUB_COMMAND
-                description: 'กรอกโค้ดแคมเปญ Early-Bird หรือโค้ดรับสิทธิ์ฟรี',
+                description: 'Redeem Early-Bird campaign code or gift key',
                 options: [
                     {
                         name: 'code',
                         type: 3, // STRING
-                        description: 'รหัสโค้ด เช่น GOOLIX-DROP1',
+                        description: 'Redemption code (e.g. GOOLIX-DROP1)',
                         required: true
                     }
                 ]

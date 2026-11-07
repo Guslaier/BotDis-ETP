@@ -3,16 +3,16 @@ const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gmove')
-        .setDescription('ย้ายตำแหน่งเพลงในคิว')
+        .setDescription('Move a track position in queue')
         .addIntegerOption(opt =>
             opt.setName('from')
-                .setDescription('ลำดับเพลงปัจจุบันในคิวที่ต้องการย้าย')
+                .setDescription('Current position number of track in queue')
                 .setRequired(true)
                 .setMinValue(1)
         )
         .addIntegerOption(opt =>
             opt.setName('to')
-                .setDescription('ตำแหน่งใหม่ที่ต้องการนำไปวาง')
+                .setDescription('Destination position number in queue')
                 .setRequired(true)
                 .setMinValue(1)
         ),

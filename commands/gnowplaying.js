@@ -4,7 +4,7 @@ const { createNowPlayingCard } = require('../src/helpers/musicCardHelper');
 module.exports = {
     data: {
         name: 'gnowplaying',
-        description: 'ดูการ์ดเพลงและปุ่มควบคุมเพลงที่กำลังเล่นอยู่',
+        description: 'Display current track player card and interactive controls',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

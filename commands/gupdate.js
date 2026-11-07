@@ -5,7 +5,7 @@ const { EmbedBuilder, MessageFlags } = require('discord.js');
 module.exports = {
     data: {
         name: 'gupdate',
-        description: 'โหลดคำสั่งใหม่และอัปเดต Slash Commands ทั้งหมด'
+        description: 'Reload command modules and sync Slash Commands to Discord'
     },
     run: async (client, interaction, kazagumo) => {
         const embed = new EmbedBuilder().setColor('#FF69B4');

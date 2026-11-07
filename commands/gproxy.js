@@ -5,29 +5,29 @@ const youtubeCircuit = require('../src/helpers/youtubeCircuit');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gproxy')
-        .setDescription('จัดการและตรวจสอบระบบ Smart Proxy Pool & Blacklist')
+        .setDescription('Manage and inspect Smart Proxy Pool and Blacklist')
         .addSubcommand(sub =>
             sub.setName('status')
-                .setDescription('ดูสถานะ Smart Proxy Pool และ Blacklist')
+                .setDescription('View Smart Proxy Pool status and active circuit')
         )
         .addSubcommand(sub =>
             sub.setName('test')
-                .setDescription('ทดสอบ Proxy ปัจจุบันกับ นกแดง Anti-Bot ทันที')
+                .setDescription('Test current proxy against YouTube anti-bot protections')
         )
         .addSubcommand(sub =>
             sub.setName('blacklist')
-                .setDescription('ดูรายชื่อ Proxy ที่ติด Blacklist')
+                .setDescription('View list of currently blacklisted proxy IPs')
         )
         .addSubcommand(sub =>
             sub.setName('clear')
-                .setDescription('ล้าง Blacklist ทั้งหมด')
+                .setDescription('Clear all blacklisted proxy entries')
         )
         .addSubcommand(sub =>
             sub.setName('switch')
-                .setDescription('สลับไปใช้เซิร์ฟเวอร์ VPN SG ตัวถัดไปใน Pool (Auto-Failover / Manual Switch)')
+                .setDescription('Switch to next VPN server node in pool (Auto-Failover)')
                 .addStringOption(opt =>
                     opt.setName('server')
-                        .setDescription('ชื่อเซิร์ฟเวอร์ที่ต้องการ (เช่น sg-free-15 หรือปล่อยว่างเพื่อไปตัวถัดไป)')
+                        .setDescription('Specific server name (e.g. sg-free-15 or leave empty for next)')
                         .setRequired(false)
                 )
         ),

@@ -3,7 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     data: {
         name: 'gskip',
-        description: 'ข้ามเพลงที่กำลังเล่นอยู่',
+        description: 'Skip currently playing track to the next one',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

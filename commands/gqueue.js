@@ -3,7 +3,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentTyp
 module.exports = {
     data: {
         name: 'gqueue',
-        description: 'ดูคิวเพลงที่กำลังรอเล่น',
+        description: 'View current song queue and upcoming playlist',
     },
     run: async (client, interaction, kazagumo) => {
         const player = kazagumo.players.get(interaction.guild.id);

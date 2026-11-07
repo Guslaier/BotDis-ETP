@@ -5,16 +5,16 @@ const i18n = require('../src/helpers/i18nHelper');
 module.exports = {
     data: {
         name: 'glang',
-        description: 'เปลี่ยนภาษาการสื่อสารของบอท GOOLIX (Change bot language: Thai / English)',
+        description: 'Configure server bot language (English / Thai)',
         options: [
             {
                 name: 'language',
                 type: 3, // STRING
-                description: 'เลือกภาษา / Choose language',
+                description: 'Choose server bot language',
                 required: true,
                 choices: [
-                    { name: '🇹🇭 ภาษาไทย (Thai)', value: 'th' },
-                    { name: '🇬🇧 English (EN)', value: 'en' }
+                    { name: 'English (EN)', value: 'en' },
+                    { name: 'Thai (TH) - ภาษาไทย', value: 'th' }
                 ]
             }
         ]

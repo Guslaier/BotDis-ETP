@@ -3,7 +3,7 @@ const onboardingHelper = require('../src/helpers/onboardingHelper');
 module.exports = {
     data: {
         name: 'gwelcome',
-        description: 'แสดงข้อความแนะนำตัวบอท ปุ่มเลือกภาษา และแนะนำสิทธิ์ Supporter (Welcome & Onboarding Card)'
+        description: 'Display onboarding welcome card and language selector'
     },
     run: async (client, interaction) => {
         const card = onboardingHelper.createWelcomeCard(client, interaction.guild);
