@@ -443,34 +443,50 @@ client.on('interactionCreate', async interaction => {
                 return;
             }
             case 'music_add_song': {
-                const modal = new ModalBuilder()
-                    .setCustomId('modal_add_song')
-                    .setTitle('➕ ขอเพลง / ค้นหาเพลง');
+                try {
+                    const modal = new ModalBuilder()
+                        .setCustomId('modal_add_song')
+                        .setTitle('➕ ขอเพลง / ค้นหาเพลง');
 
-                const songInput = new TextInputBuilder()
-                    .setCustomId('song_query')
-                    .setLabel('ชื่อเพลง หรือ ลิงก์เพลง (YouTube/Spotify)')
-                    .setPlaceholder('เช่น Sailor Song หรือ https://youtube.com/watch?v=...')
-                    .setStyle(TextInputStyle.Short)
-                    .setRequired(true);
+                    const songInput = new TextInputBuilder()
+                        .setCustomId('song_query')
+                        .setLabel('ชื่อเพลง หรือ ลิงก์เพลง')
+                        .setPlaceholder('เช่น Sailor Song หรือ https://youtube.com/watch?v=...')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true);
 
-                modal.addComponents(new ActionRowBuilder().addComponents(songInput));
-                return interaction.showModal(modal);
+                    modal.addComponents(new ActionRowBuilder().addComponents(songInput));
+                    return await interaction.showModal(modal);
+                } catch (err) {
+                    console.error('[music_add_song] Modal error:', err);
+                    if (!interaction.replied && !interaction.deferred) {
+                        return interaction.reply({ content: '❌ ไม่สามารถเปิดหน้าต่างขอเพลงได้ครับ กรุณาลองใหม่อีกครั้ง', flags: MessageFlags.Ephemeral }).catch(() => {});
+                    }
+                }
+                return;
             }
             case 'music_add_playlist': {
-                const modal = new ModalBuilder()
-                    .setCustomId('modal_add_playlist')
-                    .setTitle('📑 เพิ่มเพลย์ลิสต์เพลง');
+                try {
+                    const modal = new ModalBuilder()
+                        .setCustomId('modal_add_playlist')
+                        .setTitle('📑 เพิ่มเพลย์ลิสต์เพลง');
 
-                const plInput = new TextInputBuilder()
-                    .setCustomId('playlist_query')
-                    .setLabel('ลิงก์เพลย์ลิสต์ (YouTube / SoundCloud)')
-                    .setPlaceholder('https://www.youtube.com/playlist?list=...')
-                    .setStyle(TextInputStyle.Short)
-                    .setRequired(true);
+                    const plInput = new TextInputBuilder()
+                        .setCustomId('playlist_query')
+                        .setLabel('ลิงก์เพลย์ลิสต์เพลง')
+                        .setPlaceholder('https://www.youtube.com/playlist?list=...')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true);
 
-                modal.addComponents(new ActionRowBuilder().addComponents(plInput));
-                return interaction.showModal(modal);
+                    modal.addComponents(new ActionRowBuilder().addComponents(plInput));
+                    return await interaction.showModal(modal);
+                } catch (err) {
+                    console.error('[music_add_playlist] Modal error:', err);
+                    if (!interaction.replied && !interaction.deferred) {
+                        return interaction.reply({ content: '❌ ไม่สามารถเปิดหน้าต่างเพลย์ลิสต์ได้ครับ กรุณาลองใหม่อีกครั้ง', flags: MessageFlags.Ephemeral }).catch(() => {});
+                    }
+                }
+                return;
             }
             case 'vol_30':
             case 'vol_60':

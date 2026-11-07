@@ -180,7 +180,7 @@ function createNowPlayingCard(player, track, options = {}) {
             .setStyle(ButtonStyle.Secondary)
     );
 
-    // Row 3: Quick Controls (Add Song, Playlist, Volume, Autoplay, Close App)
+    // Row 3: Quick Controls inside container (Add Song, Playlist, Volume, Autoplay)
     const row3 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_add_song')
@@ -202,7 +202,11 @@ function createNowPlayingCard(player, track, options = {}) {
             .setCustomId('music_autoplay')
             .setEmoji('📻')
             .setLabel(player.autoplay ? 'Autoplay On' : 'Autoplay Off')
-            .setStyle(player.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary),
+            .setStyle(player.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary)
+    );
+
+    // Row 4: Controls outside container (Close App / Stop Player)
+    const rowOutside = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_stop')
             .setEmoji('🛑')
@@ -214,7 +218,7 @@ function createNowPlayingCard(player, track, options = {}) {
     if (isLegacy) {
         return {
             embeds: [embed],
-            components: [row1, row2, row3]
+            components: [row1, row2, row3, rowOutside]
         };
     }
 
@@ -250,7 +254,7 @@ function createNowPlayingCard(player, track, options = {}) {
 
     return {
         embeds: [],
-        components: [container],
+        components: [container, rowOutside],
         flags: [MessageFlags.IsComponentsV2]
     };
 }
