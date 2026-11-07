@@ -27,7 +27,7 @@ class Track {
         this.length = (data.duration ? data.duration * 1000 : (data.length || 0));
         this.duration = data.duration || (this.length ? Math.round(this.length / 1000) : 0);
         this.thumbnail = data.thumbnails && data.thumbnails.length ? data.thumbnails[data.thumbnails.length - 1].url : (data.thumbnail || null);
-        this.isStream = data.is_live || false;
+        this.isStream = data.is_live === true || data.live_status === 'is_live' || this.duration === 0 || this.title.includes('🔴');
         this.requester = requester;
     }
 }

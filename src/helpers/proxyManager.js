@@ -59,15 +59,7 @@ class ProxyManager {
     getVpnSourceIp() {
         if (!this.vpnEnabled) return null;
 
-        if (process.env.VPN_SOURCE_IP) {
-            return process.env.VPN_SOURCE_IP.trim();
-        }
-        try {
-            if (fs.existsSync('/root/vpn/vpn_ip.txt')) {
-                const ip = fs.readFileSync('/root/vpn/vpn_ip.txt', 'utf8').trim();
-                if (ip) return ip;
-            }
-        } catch {}
+        // Check active network interfaces first to guarantee the IP is actually bound to kernel
         try {
             const ifaces = os.networkInterfaces();
             for (const name of Object.keys(ifaces)) {
@@ -77,6 +69,23 @@ class ProxyManager {
                 }
             }
         } catch {}
+
+        if (process.env.VPN_SOURCE_IP) {
+            const staticIp = process.env.VPN_SOURCE_IP.trim();
+            const ifaces = os.networkInterfaces();
+            const exists = Object.values(ifaces).some(list => list.some(x => x.address === staticIp));
+            if (exists) return staticIp;
+        }
+
+        try {
+            if (fs.existsSync('/root/vpn/vpn_ip.txt')) {
+                const ip = fs.readFileSync('/root/vpn/vpn_ip.txt', 'utf8').trim();
+                const ifaces = os.networkInterfaces();
+                const exists = Object.values(ifaces).some(list => list.some(x => x.address === ip));
+                if (exists) return ip;
+            }
+        } catch {}
+
         return null;
     }
 

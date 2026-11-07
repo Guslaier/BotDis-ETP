@@ -387,15 +387,11 @@ class CacheManager {
 
         const maxCacheDurationSec = parseInt(process.env.MAX_CACHE_DURATION_SEC || '1800', 10); // 30 minutes threshold
 
-        // 1. Live Pipe Mode: stream directly via live pipe (<2.5s start latency)
-        if (streamMode === 'pipe') {
-            console.log(`[CacheManager:Stream] Live pipe stream for "${track.title}" (Mode: pipe, Duration: ${durationSec}s, Seek: ${seekSeconds}s)`);
-            return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
-        }
+        const isLive = track.isStream || durationSec <= 0 || track.title?.includes('🔴');
 
-        // 2. Auto Mode: Direct live pipe ONLY for truly long tracks (>30 min) or infinite live streams
-        if (streamMode === 'auto' && (track.isStream || durationSec > maxCacheDurationSec)) {
-            console.log(`[CacheManager:Stream] Live pipe stream for long/live track "${track.title}" (Mode: auto, Duration: ${durationSec}s, Seek: ${seekSeconds}s)`);
+        // 1. Live streams or infinite feeds MUST ALWAYS pipe directly (Never attempt to cache infinite feeds to disk)
+        if (isLive || streamMode === 'pipe' || (streamMode === 'auto' && durationSec > maxCacheDurationSec)) {
+            console.log(`[CacheManager:Stream] Live pipe stream for ${isLive ? 'LIVE' : 'long'} track "${track.title}" (Mode: ${streamMode}, Duration: ${durationSec}s, Seek: ${seekSeconds}s)`);
             return this._spawnPipedStream(track, track.uri, seekSeconds, volume, false, onSpawn, filter, bitrate);
         }
 
@@ -437,8 +433,11 @@ class CacheManager {
             const ytdlpArgs = this._buildYtDlpArgs(sourceUri, true, null, seekSeconds);
             const ytdlpProc = spawn(this.binPath, ytdlpArgs, { windowsHide: true });
 
+            const durationSec = track.duration || (track.length ? Math.round(track.length / 1000) : 0);
+            const isLive = track.isStream || durationSec <= 0 || track.title?.includes('🔴');
             const filterChain = this._buildAudioFilterChain(volume, filter);
-            const useDirectPassthrough = isYouTube && !filterChain;
+            // YouTube Live streams use HLS AAC (not WebM Opus), so they must route through FFmpeg to transcode to Opus
+            const useDirectPassthrough = isYouTube && !filterChain && !isLive;
 
             const threadQueueSize = process.env.THREAD_QUEUE_SIZE || '1024';
             const opusBitrate = bitrate || process.env.OPUS_BITRATE || '64k';
