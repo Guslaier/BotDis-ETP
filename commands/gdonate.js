@@ -56,7 +56,8 @@ module.exports = {
         const isSupporter = subscriptionManager.isSupporter(guildId);
         const config = subscriptionManager.getConfig();
 
-        const host = process.env.PUBLIC_WEB_URL || `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${process.env.WEB_PORT || '11901'}`;
+        const publicPort = process.env.PUBLIC_WEB_PORT || '11901';
+        const host = process.env.PUBLIC_WEB_URL || `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${publicPort}`;
         const donateUrl = `${host}/donate?guildId=${guildId}&userId=${userId}`;
 
         if (subCommand === 'status') {
