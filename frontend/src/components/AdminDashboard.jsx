@@ -3,7 +3,8 @@ import {
   Shield, Server, HardDrive, Wifi, Activity, Cpu, RotateCw, 
   Trash2, Play, Square, FastForward, Search, Plus, Ban, CheckCircle, 
   AlertTriangle, Settings, RefreshCw, Power, Radio, Sliders, ExternalLink,
-  Users, Globe, MapPin, Cloud, Save, Gift, ChevronLeft, ChevronRight
+  Users, Globe, MapPin, Cloud, Save, Gift, ChevronLeft, ChevronRight,
+  Calendar, Minus, ArrowRight
 } from 'lucide-react';
 
 export default function AdminDashboard({ lang, token, setToken, onToast }) {
@@ -20,6 +21,14 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [banModal, setBanModal] = useState(null); // { guildId, guildName }
   const [banDays, setBanDays] = useState(7);
   const [banReason, setBanReason] = useState('ละเมิดข้อกำหนดการใช้งาน');
+
+  // Custom Adjust Days Modal State
+  const [adjustDaysModal, setAdjustDaysModal] = useState(null); // { guildId, guildName, expiresAt, isSupporter }
+  const [adjustMode, setAdjustMode] = useState('offset'); // 'offset' | 'date'
+  const [adjustType, setAdjustType] = useState('add'); // 'add' | 'deduct'
+  const [adjustDaysValue, setAdjustDaysValue] = useState(7);
+  const [adjustDateValue, setAdjustDateValue] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
 
   const [editNodeModal, setEditNodeModal] = useState(null); // node obj
   const [nodeNameInput, setNodeNameInput] = useState('');
@@ -250,7 +259,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   };
 
   // Guild Subscription Actions
-  const handleAdjustGuildDays = async (guildId, days) => {
+  const handleAdjustGuildDays = async (guildId, days, reason = '') => {
     try {
       const res = await fetch(`/api/admin/guilds/${guildId}`, {
         method: 'POST',
@@ -258,11 +267,67 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ addDays: days, plan: days < 0 ? 'FREE' : 'SUPPORTER' })
+        body: JSON.stringify({ addDays: days, reason })
       });
       const resJson = await res.json();
       if (resJson.success) {
         onToast('success', lang === 'th' ? 'ปรับวันใช้งานสำเร็จ' : 'Days Adjusted');
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleResetGuild = async (guildId) => {
+    try {
+      const res = await fetch(`/api/admin/guilds/${guildId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'reset' })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'รีเซ็ตสถานะเป็น FREE สำเร็จ' : 'Reset to FREE successfully');
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleConfirmCustomAdjust = async () => {
+    if (!adjustDaysModal) return;
+    try {
+      let bodyData = {};
+      if (adjustMode === 'offset') {
+        const numDays = Math.max(1, parseInt(adjustDaysValue, 10) || 1);
+        const delta = adjustType === 'add' ? numDays : -numDays;
+        bodyData = { addDays: delta, reason: adjustReason || undefined };
+      } else {
+        const targetMs = new Date(adjustDateValue).getTime();
+        if (isNaN(targetMs)) {
+          onToast('error', 'Invalid Date', lang === 'th' ? 'กรุณาระบุวันที่ที่ถูกต้อง' : 'Please select a valid date');
+          return;
+        }
+        bodyData = { action: 'set', targetExpiry: targetMs, reason: adjustReason || undefined };
+      }
+
+      const res = await fetch(`/api/admin/guilds/${adjustDaysModal.guildId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyData)
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'ปรับวันใช้งานสำเร็จ' : 'Days Adjusted Successfully');
+        setAdjustDaysModal(null);
         fetchData();
       }
     } catch (err) {
@@ -1097,25 +1162,57 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                       {g.referralCode || '-'}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
+                      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                         <button
                           onClick={() => handleAdjustGuildDays(g.guildId, 7)}
                           className="btn btn-sm"
-                          style={{ padding: '3px 8px', fontSize: 11 }}
+                          style={{ padding: '3px 7px', fontSize: 11 }}
+                          title={lang === 'th' ? 'เพิ่ม 7 วันทันที' : 'Add 7 days'}
                         >
                           +7d
                         </button>
                         <button
                           onClick={() => handleAdjustGuildDays(g.guildId, 30)}
                           className="btn btn-sm btn-primary"
-                          style={{ padding: '3px 8px', fontSize: 11 }}
+                          style={{ padding: '3px 7px', fontSize: 11 }}
+                          title={lang === 'th' ? 'เพิ่ม 30 วันทันที' : 'Add 30 days'}
                         >
                           +30d
                         </button>
                         <button
-                          onClick={() => handleAdjustGuildDays(g.guildId, -1)}
+                          onClick={() => {
+                            setAdjustDaysModal(g);
+                            setAdjustMode('offset');
+                            setAdjustType('add');
+                            setAdjustDaysValue(7);
+                            setAdjustReason('');
+                            setAdjustDateValue(g.expiresAt && g.expiresAt > Date.now() ? new Date(g.expiresAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+                          }}
+                          className="btn btn-sm"
+                          style={{
+                            padding: '3px 8px',
+                            fontSize: 11,
+                            background: 'rgba(0, 210, 255, 0.12)',
+                            border: '1px solid var(--accent-blue)',
+                            color: 'var(--accent-blue)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3
+                          }}
+                          title={lang === 'th' ? 'ปรับแต่งวันใช้งานแบบกำหนดเอง (เพิ่ม/หักวัน หรือกำหนดวันที่)' : 'Custom adjustment (Add/Deduct/Set Date)'}
+                        >
+                          <Sliders size={11} />
+                          <span>{lang === 'th' ? 'กำหนดเอง' : 'Custom'}</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(lang === 'th' ? `ยืนยันรีเซ็ตวันใช้งานของ ${g.guildName} เป็น FREE?` : `Reset ${g.guildName} to FREE?`)) {
+                              handleResetGuild(g.guildId);
+                            }
+                          }}
                           className="btn btn-sm btn-danger"
-                          style={{ padding: '3px 8px', fontSize: 11 }}
+                          style={{ padding: '3px 7px', fontSize: 11 }}
+                          title={lang === 'th' ? 'รีเซ็ตสถานะเป็น FREE ทันที' : 'Reset to FREE'}
                         >
                           Reset
                         </button>
@@ -1542,6 +1639,292 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           </div>
         </div>
       )}
+      {/* --- CUSTOM ADJUST DAYS MODAL --- */}
+      {adjustDaysModal && (() => {
+        const now = Date.now();
+        const isCurrentlySupporter = adjustDaysModal.expiresAt && adjustDaysModal.expiresAt > now;
+        const currentRemainingDays = isCurrentlySupporter ? Math.ceil((adjustDaysModal.expiresAt - now) / (1000 * 60 * 60 * 24)) : 0;
+        const baseTime = isCurrentlySupporter ? adjustDaysModal.expiresAt : now;
+
+        let previewExpiry = 0;
+        let previewRemainingDays = 0;
+        if (adjustMode === 'offset') {
+          const numDays = Math.max(1, parseInt(adjustDaysValue, 10) || 1);
+          const deltaMs = (adjustType === 'add' ? numDays : -numDays) * 24 * 3600 * 1000;
+          previewExpiry = baseTime + deltaMs;
+          previewRemainingDays = previewExpiry > now ? Math.ceil((previewExpiry - now) / (1000 * 60 * 60 * 24)) : 0;
+        } else {
+          const targetMs = new Date(adjustDateValue).getTime();
+          previewExpiry = !isNaN(targetMs) ? targetMs : 0;
+          previewRemainingDays = previewExpiry > now ? Math.ceil((previewExpiry - now) / (1000 * 60 * 60 * 24)) : 0;
+        }
+
+        const willBeDowngraded = previewExpiry <= now;
+
+        return (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999,
+            padding: 16
+          }}>
+            <div className="glass-panel" style={{ width: 480, maxWidth: '100%', padding: 24, borderRadius: 16 }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: 'rgba(0, 210, 255, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--accent-blue)'
+                }}>
+                  <Sliders size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#FFF' }}>
+                    {lang === 'th' ? 'ปรับแต่งวันใช้งาน (Custom Adjust Days)' : 'Custom Adjust Days'}
+                  </h3>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                    {adjustDaysModal.guildName} <span style={{ fontFamily: 'monospace', opacity: 0.7 }}>({adjustDaysModal.guildId})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Expiry Info Card */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--card-border)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                marginBottom: 18,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                  {lang === 'th' ? 'สถานะปัจจุบัน:' : 'Current Status:'}
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: isCurrentlySupporter ? 'var(--slime-green)' : 'var(--text-dim)' }}>
+                  {isCurrentlySupporter ? `VIP SUPPORTER (${currentRemainingDays} วัน • หมดอายุ: ${new Date(adjustDaysModal.expiresAt).toLocaleDateString('th-TH')})` : 'FREE (ยังไม่มีวันใช้งาน)'}
+                </span>
+              </div>
+
+              {/* Adjustment Mode Selector */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 16 }}>
+                <button
+                  type="button"
+                  onClick={() => { setAdjustMode('offset'); setAdjustType('add'); }}
+                  className="btn btn-sm"
+                  style={{
+                    padding: '8px 10px',
+                    fontSize: 12,
+                    borderRadius: 8,
+                    background: adjustMode === 'offset' && adjustType === 'add' ? 'rgba(0, 255, 136, 0.15)' : 'rgba(17, 22, 32, 0.6)',
+                    border: adjustMode === 'offset' && adjustType === 'add' ? '1px solid var(--slime-green)' : '1px solid var(--card-border)',
+                    color: adjustMode === 'offset' && adjustType === 'add' ? 'var(--slime-green)' : 'var(--text-sub)',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4
+                  }}
+                >
+                  <Plus size={13} />
+                  <span>{lang === 'th' ? 'เพิ่มวัน (Add)' : 'Add Days'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setAdjustMode('offset'); setAdjustType('deduct'); }}
+                  className="btn btn-sm"
+                  style={{
+                    padding: '8px 10px',
+                    fontSize: 12,
+                    borderRadius: 8,
+                    background: adjustMode === 'offset' && adjustType === 'deduct' ? 'rgba(255, 75, 75, 0.15)' : 'rgba(17, 22, 32, 0.6)',
+                    border: adjustMode === 'offset' && adjustType === 'deduct' ? '1px solid var(--danger)' : '1px solid var(--card-border)',
+                    color: adjustMode === 'offset' && adjustType === 'deduct' ? 'var(--danger)' : 'var(--text-sub)',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4
+                  }}
+                >
+                  <Minus size={13} />
+                  <span>{lang === 'th' ? 'หักวัน (Deduct)' : 'Deduct Days'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAdjustMode('date')}
+                  className="btn btn-sm"
+                  style={{
+                    padding: '8px 10px',
+                    fontSize: 12,
+                    borderRadius: 8,
+                    background: adjustMode === 'date' ? 'rgba(0, 210, 255, 0.15)' : 'rgba(17, 22, 32, 0.6)',
+                    border: adjustMode === 'date' ? '1px solid var(--accent-blue)' : '1px solid var(--card-border)',
+                    color: adjustMode === 'date' ? 'var(--accent-blue)' : 'var(--text-sub)',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4
+                  }}
+                >
+                  <Calendar size={13} />
+                  <span>{lang === 'th' ? 'ระบุวันที่ (Date)' : 'Set Date'}</span>
+                </button>
+              </div>
+
+              {/* Input Controls */}
+              {adjustMode === 'offset' ? (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                    {adjustType === 'add' ? (lang === 'th' ? 'จำนวนวันที่ต้องการเพิ่ม (วัน)' : 'Days to Add') : (lang === 'th' ? 'จำนวนวันที่ต้องการหักออก (วัน)' : 'Days to Deduct')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    value={adjustDaysValue}
+                    onChange={(e) => setAdjustDaysValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      background: '#0B0F17',
+                      border: `1px solid ${adjustType === 'add' ? 'var(--slime-green)' : 'var(--danger)'}`,
+                      color: '#FFF'
+                    }}
+                  />
+                  {/* Quick Chips Presets */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                    {(adjustType === 'add' ? [1, 3, 7, 14, 30, 60, 90] : [1, 3, 7, 14, 30]).map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setAdjustDaysValue(val)}
+                        className="btn btn-sm"
+                        style={{
+                          padding: '3px 8px',
+                          fontSize: 11,
+                          borderRadius: 6,
+                          background: adjustDaysValue === val ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid var(--card-border)'
+                        }}
+                      >
+                        {adjustType === 'add' ? `+${val}d` : `-${val}d`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                    {lang === 'th' ? 'เลือกวันหมดอายุใหม่' : 'Select New Expiry Date'}
+                  </label>
+                  <input
+                    type="date"
+                    value={adjustDateValue}
+                    onChange={(e) => setAdjustDateValue(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      fontSize: 14,
+                      background: '#0B0F17',
+                      border: '1px solid var(--accent-blue)',
+                      color: '#FFF'
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Live Preview Box */}
+              <div style={{
+                background: willBeDowngraded ? 'rgba(255, 75, 75, 0.08)' : 'rgba(0, 255, 136, 0.06)',
+                border: `1px solid ${willBeDowngraded ? 'var(--danger)' : 'var(--slime-green)'}`,
+                borderRadius: 10,
+                padding: '12px 14px',
+                marginBottom: 16
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: willBeDowngraded ? 'var(--danger)' : 'var(--slime-green)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'ผลลัพธ์หลังการปรับ (Live Preview):' : 'Adjustment Preview:'}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#FFF' }}>
+                  <span>{isCurrentlySupporter ? `${currentRemainingDays} วัน` : 'FREE'}</span>
+                  <ArrowRight size={14} style={{ color: 'var(--text-sub)' }} />
+                  <span style={{ color: willBeDowngraded ? 'var(--danger)' : 'var(--slime-green)', fontWeight: 800 }}>
+                    {willBeDowngraded ? (lang === 'th' ? 'FREE (หมดอายุทันที)' : 'Expired -> FREE') : `${previewRemainingDays} วัน (${new Date(previewExpiry).toLocaleDateString('th-TH')})`}
+                  </span>
+                </div>
+                {willBeDowngraded && (
+                  <div style={{ fontSize: 11, color: 'var(--danger)', marginTop: 6 }}>
+                    {lang === 'th' ? '⚠️ วันที่ผลลัพธ์น้อยกว่าปัจจุบัน เซิร์ฟเวอร์จะถูกลดระดับเป็น FREE ทันที' : '⚠️ Resulting date is past/zero. Server will downgrade to FREE.'}
+                  </div>
+                )}
+              </div>
+
+              {/* Reason Input */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'บันทึกเหตุผล (Reason / Audit Note)' : 'Reason / Audit Note'}
+                </label>
+                <input
+                  type="text"
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                  placeholder={lang === 'th' ? 'เช่น ชดเชยระบบ, หักวันคืนเงิน, เพิ่มโบนัส...' : 'e.g., Compensation, Refund, Bonus...'}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    background: '#0B0F17',
+                    border: '1px solid var(--card-border)',
+                    color: '#FFF'
+                  }}
+                />
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setAdjustDaysModal(null)}
+                  className="btn btn-sm"
+                  style={{ padding: '8px 16px', borderRadius: 8 }}
+                >
+                  {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmCustomAdjust}
+                  className={`btn btn-sm ${adjustType === 'deduct' || willBeDowngraded ? 'btn-danger' : 'btn-primary'}`}
+                  style={{ padding: '8px 18px', borderRadius: 8, fontWeight: 700 }}
+                >
+                  {lang === 'th' ? 'ยืนยันการปรับวัน' : 'Apply Adjustment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

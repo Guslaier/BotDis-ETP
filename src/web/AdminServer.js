@@ -3,6 +3,7 @@ const url = require('url');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 const authManager = require('../auth/authManager');
 const subscriptionManager = require('../billing/subscriptionManager');
 const truemoneyGateway = require('../billing/truemoneyGateway');
@@ -764,28 +765,119 @@ class AdminServer {
             if ((pathname.startsWith('/api/admin/subscriptions/') || pathname.startsWith('/api/admin/guilds/')) && req.method === 'POST') {
                 const guildId = pathname.split('/')[4];
                 const body = await this._parseBody(req);
-                const days = parseInt(body.addDays !== undefined ? body.addDays : body.days, 10) || 0;
-
                 const sub = subscriptionManager.getGuildSubscription(guildId);
+                const guild = this.client?.guilds?.cache?.get(guildId);
+                if (guild && !sub.guildName) {
+                    sub.guildName = guild.name;
+                }
                 const now = Date.now();
-                if (body.plan === 'FREE' || days < 0) {
+
+                // 1. Explicit Reset to FREE
+                if (body.action === 'reset' || body.plan === 'FREE') {
                     sub.expiresAt = 0;
                     sub.plan = 'FREE';
                     sub.audioFilter = 'off';
                     dbManager.set('subscriptions', guildId, sub);
                     subscriptionManager.downgradeGuildToFree(guildId, this.kazagumo);
-                } else if (days > 0) {
-                    if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
-                        sub.expiresAt += days * 24 * 3600 * 1000;
-                    } else {
-                        sub.expiresAt = now + days * 24 * 3600 * 1000;
-                    }
-                    sub.plan = 'SUPPORTER';
-                    sub.source = 'ADMIN_GRANT';
-                    dbManager.set('subscriptions', guildId, sub);
-                } else {
-                    dbManager.set('subscriptions', guildId, sub);
+
+                    const txId = `tx_admin_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+                    dbManager.set('transactions', txId, {
+                        id: txId,
+                        guildId,
+                        guildName: sub.guildName || guild?.name || guildId,
+                        userId: admin?.sub || 'admin',
+                        amount: 0,
+                        daysAdded: 0,
+                        plan: 'FREE',
+                        timestamp: Date.now(),
+                        expiresAt: 0,
+                        voucherCode: 'ADMIN_RESET',
+                        reason: body.reason || 'รีเซ็ตสถานะเป็น FREE',
+                        status: 'COMPLETED'
+                    });
+                    return this._sendJson(res, 200, { success: true, sub });
                 }
+
+                // 2. Set Exact Target Expiry Date (targetExpiry timestamp)
+                if (body.action === 'set' && body.targetExpiry) {
+                    const target = parseInt(body.targetExpiry, 10);
+                    if (target <= now) {
+                        sub.expiresAt = 0;
+                        sub.plan = 'FREE';
+                        sub.audioFilter = 'off';
+                        dbManager.set('subscriptions', guildId, sub);
+                        subscriptionManager.downgradeGuildToFree(guildId, this.kazagumo);
+                    } else {
+                        sub.expiresAt = target;
+                        sub.plan = 'SUPPORTER';
+                        sub.source = 'ADMIN_SET';
+                        dbManager.set('subscriptions', guildId, sub);
+                    }
+
+                    const txId = `tx_admin_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+                    dbManager.set('transactions', txId, {
+                        id: txId,
+                        guildId,
+                        guildName: sub.guildName || guild?.name || guildId,
+                        userId: admin?.sub || 'admin',
+                        amount: 0,
+                        daysAdded: Math.round((sub.expiresAt - now) / (24 * 3600 * 1000)),
+                        plan: sub.plan,
+                        timestamp: Date.now(),
+                        expiresAt: sub.expiresAt,
+                        voucherCode: 'ADMIN_SET_DATE',
+                        reason: body.reason || `กำหนดวันหมดอายุเป็น ${new Date(sub.expiresAt).toLocaleDateString('th-TH')}`,
+                        status: 'COMPLETED'
+                    });
+                    return this._sendJson(res, 200, { success: true, sub });
+                }
+
+                // 3. Add or Deduct Days (can be positive or negative)
+                const days = parseInt(body.addDays !== undefined ? body.addDays : body.days, 10) || 0;
+                if (days !== 0) {
+                    if (days > 0) {
+                        if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
+                            sub.expiresAt += days * 24 * 3600 * 1000;
+                        } else {
+                            sub.expiresAt = now + days * 24 * 3600 * 1000;
+                        }
+                        sub.plan = 'SUPPORTER';
+                        sub.source = 'ADMIN_GRANT';
+                        dbManager.set('subscriptions', guildId, sub);
+                    } else {
+                        // Deduct days (days is negative, e.g. -5)
+                        const currentExpiry = (sub.plan === 'SUPPORTER' && sub.expiresAt > now) ? sub.expiresAt : now;
+                        const newExpiry = currentExpiry + (days * 24 * 3600 * 1000);
+                        if (newExpiry <= now) {
+                            sub.expiresAt = 0;
+                            sub.plan = 'FREE';
+                            sub.audioFilter = 'off';
+                            dbManager.set('subscriptions', guildId, sub);
+                            subscriptionManager.downgradeGuildToFree(guildId, this.kazagumo);
+                        } else {
+                            sub.expiresAt = newExpiry;
+                            sub.plan = 'SUPPORTER';
+                            dbManager.set('subscriptions', guildId, sub);
+                        }
+                    }
+
+                    const txId = `tx_admin_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+                    dbManager.set('transactions', txId, {
+                        id: txId,
+                        guildId,
+                        guildName: sub.guildName || guild?.name || guildId,
+                        userId: admin?.sub || 'admin',
+                        amount: 0,
+                        daysAdded: days,
+                        plan: sub.plan,
+                        timestamp: Date.now(),
+                        expiresAt: sub.expiresAt,
+                        voucherCode: days > 0 ? 'ADMIN_ADD_DAYS' : 'ADMIN_DEDUCT_DAYS',
+                        reason: body.reason || (days > 0 ? `เพิ่มวันชดเชย +${days} วัน` : `หักวันใช้งาน ${days} วัน`),
+                        status: 'COMPLETED'
+                    });
+                }
+
                 return this._sendJson(res, 200, { success: true, sub });
             }
 
