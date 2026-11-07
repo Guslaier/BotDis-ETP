@@ -16,9 +16,13 @@ async function sync() {
     const subsPath = path.join(dataDir, 'subscriptions.json');
     const settingsPath = path.join(dataDir, 'guildSettings.json');
     const favPath = path.join(dataDir, 'favorites.json');
+    const txPath = path.join(dataDir, 'transactions.json');
+    const campPath = path.join(dataDir, 'campaigns.json');
 
     const subsData = fs.existsSync(subsPath) ? JSON.parse(fs.readFileSync(subsPath, 'utf8')) : {};
     const settingsData = fs.existsSync(settingsPath) ? JSON.parse(fs.readFileSync(settingsPath, 'utf8')) : {};
+    const txData = fs.existsSync(txPath) ? JSON.parse(fs.readFileSync(txPath, 'utf8')) : {};
+    const campData = fs.existsSync(campPath) ? JSON.parse(fs.readFileSync(campPath, 'utf8')) : {};
 
     // 1. Sync Master Guilds first (satisfy Foreign Key constraints)
     const guildMap = new Map();
@@ -28,6 +32,11 @@ async function sync() {
     for (const [gId] of Object.entries(settingsData)) {
         if (!guildMap.has(gId)) {
             guildMap.set(gId, { guild_id: gId, name: `Guild ${gId}`, icon: null, updated_at: new Date().toISOString() });
+        }
+    }
+    for (const [_, tx] of Object.entries(txData)) {
+        if (tx.guildId && !guildMap.has(tx.guildId)) {
+            guildMap.set(tx.guildId, { guild_id: tx.guildId, name: tx.guildName || `Guild ${tx.guildId}`, icon: null, updated_at: new Date().toISOString() });
         }
     }
 
@@ -79,7 +88,45 @@ async function sync() {
         else console.log(`[guild_settings] Synced ${settingRows.length} rows.`);
     }
 
-    // 4. Sync Favorites
+    // 4. Sync Transactions
+    const txRows = [];
+    for (const [txId, val] of Object.entries(txData)) {
+        txRows.push({
+            id: txId,
+            guild_id: val.guildId || null,
+            user_id: val.userId || null,
+            amount: val.amountBaht || 0,
+            voucher_url: val.voucherCode || val.voucherUrl || '',
+            status: val.status || 'SUCCESS',
+            created_at: val.timestamp ? new Date(val.timestamp).toISOString() : new Date().toISOString()
+        });
+    }
+    if (txRows.length > 0) {
+        const { error } = await supabase.from('transactions').upsert(txRows);
+        if (error) console.error('Error syncing transactions:', error.message);
+        else console.log(`[transactions] Synced ${txRows.length} rows.`);
+    }
+
+    // 5. Sync Campaigns
+    const campRows = [];
+    for (const [code, val] of Object.entries(campData)) {
+        campRows.push({
+            code: val.code || code,
+            title: val.name || val.title || 'Campaign',
+            bonus_days: val.days || val.bonus_days || 30,
+            max_claims: val.maxClaims || 100,
+            claimed_count: val.claimedCount || 0,
+            is_active: val.isActive !== undefined ? val.isActive : true,
+            created_at: val.createdAt ? new Date(val.createdAt).toISOString() : new Date().toISOString()
+        });
+    }
+    if (campRows.length > 0) {
+        const { error } = await supabase.from('campaigns').upsert(campRows);
+        if (error) console.error('Error syncing campaigns:', error.message);
+        else console.log(`[campaigns] Synced ${campRows.length} rows.`);
+    }
+
+    // 6. Sync Favorites
     if (fs.existsSync(favPath)) {
         try {
             const favData = JSON.parse(fs.readFileSync(favPath, 'utf8'));
@@ -101,7 +148,7 @@ async function sync() {
         }
     }
 
-    console.log('--- Migration Finished ---');
+    console.log('--- Migration Finished Successfully ---');
 }
 
 sync().catch(console.error);
