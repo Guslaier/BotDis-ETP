@@ -73,7 +73,7 @@ module.exports = {
                     },
                     {
                         name: '📊 ระดับสมาชิก',
-                        value: isSupporter ? '💎 **SUPPORTER**' : '🆓 **Standard (Free Tier)**',
+                        value: isSupporter ? '💎 **SUPPORTER**' : '🆓 **ทั่วไป**',
                         inline: true
                     },
                     {

@@ -154,7 +154,7 @@ export default function TopupView({ lang, onToast }) {
 
   const formatExpiry = (timestamp) => {
     if (!timestamp || timestamp <= Date.now()) {
-      return lang === 'th' ? 'ยังไม่มีแพ็กเกจ (สายฟรี)' : 'Free Tier (No Active Supporter)';
+      return lang === 'th' ? 'ยังไม่มีแพ็กเกจ (ทั่วไป)' : 'No Active Supporter';
     }
     const diff = timestamp - Date.now();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -316,7 +316,7 @@ export default function TopupView({ lang, onToast }) {
                   gap: 6
                 }}>
                   {guildData.guild.isSupporter ? <ShieldCheck size={14} /> : null}
-                  {guildData.guild.isSupporter ? 'SUPPORTER' : 'FREE TIER'}
+                  {guildData.guild.isSupporter ? 'SUPPORTER' : (lang === 'th' ? 'ทั่วไป' : 'STANDARD')}
                 </span>
               </div>
 
@@ -492,7 +492,7 @@ export default function TopupView({ lang, onToast }) {
             padding: 20
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-sub)' }}>FREE TIER</span>
+              <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-sub)' }}>{lang === 'th' ? 'ทั่วไป' : 'STANDARD'}</span>
               <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>0 บาท</span>
             </div>
             <ul style={{ listStyle: 'none', fontSize: 12.5, color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 10 }}>

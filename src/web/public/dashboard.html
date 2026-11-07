@@ -1425,7 +1425,7 @@
     }
 
     async function resetSub(guildId) {
-        const ok = await confirmAction('ยืนยันรีเซ็ตสิทธิ์?', `ยืนยันการรีเซ็ตแพ็กเกจเซิร์ฟเวอร์ ${guildId} กลับเป็นสายฟรี (Free Tier)?`, 'รีเซ็ตเป็นฟรี', true);
+        const ok = await confirmAction('ยืนยันรีเซ็ตสิทธิ์?', `ยืนยันการรีเซ็ตแพ็กเกจเซิร์ฟเวอร์ ${guildId} กลับเป็นระดับทั่วไป?`, 'รีเซ็ตเป็นทั่วไป', true);
         if (!ok) return;
         try {
             await fetch(`/api/admin/subscriptions/${guildId}`, {
