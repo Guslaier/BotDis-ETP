@@ -217,7 +217,7 @@ class AdminServer {
         const txGb = (txBytes / (1024 ** 3)).toFixed(2);
         const rxGb = (rxBytes / (1024 ** 3)).toFixed(2);
         const used = parseFloat(usedGb);
-        const quotaGb = 800;
+        const quotaGb = parseInt(process.env.MONTHLY_BANDWIDTH_QUOTA_GB || '1000', 10);
         const percent = Math.min(100, Math.round((used / quotaGb) * 100));
         return {
             usedGb: used,
@@ -717,6 +717,7 @@ class AdminServer {
                         vpnIp: vpnExitIp
                     },
                     config,
+                    billingConfig: config,
                     players: playersList,
                     subscriptions: subsList,
                     guilds: subsList,

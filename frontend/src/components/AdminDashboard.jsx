@@ -72,9 +72,11 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         if (json.config) {
           setSettingsForm({
             paymentMode: json.config.paymentMode || 'sandbox',
-            price30Days: json.config.price30Days || 29,
-            maxFreeStreams: json.config.maxFreeStreams || 6,
-            maxTotalStreams: json.config.maxTotalStreams || 12
+            price30Days: json.config.price30Days ?? 29,
+            maxFreeStreams: json.config.maxFreeStreams ?? 2,
+            maxTotalStreams: json.config.maxTotalStreams ?? 4,
+            maxReferralMonths: json.config.maxReferralMonths ?? 6,
+            phoneNumber: json.config.phoneNumber || ''
           });
         }
       }
@@ -492,10 +494,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             {lang === 'th' ? 'สล็อตสตรีมเสียง (LIVE SLOTS)' : 'Live Stream Slots'}
           </div>
           <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--slime-green)', margin: '6px 0 2px' }}>
-            {data?.stats?.slots?.total || 0} / {data?.stats?.slots?.maxTotal || 12}
+            {data?.stats?.slots?.total ?? 0} / {data?.stats?.slots?.maxTotal ?? data?.config?.maxTotalStreams ?? 4}
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
-            Free: {data?.stats?.slots?.free || 0}/{data?.stats?.slots?.maxFree || 6} • Supporter Max: {data?.stats?.slots?.dynamicVipMax || 0}
+            Free: {data?.stats?.slots?.free ?? 0}/{data?.stats?.slots?.maxFree ?? data?.config?.maxFreeStreams ?? 2} • Supporter Max: {data?.stats?.slots?.dynamicVipMax ?? Math.max(0, (data?.stats?.slots?.maxTotal ?? data?.config?.maxTotalStreams ?? 4) - (data?.stats?.slots?.free ?? 0))}
           </div>
         </div>
 
@@ -546,7 +548,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             {(data?.config?.paymentMode || 'sandbox').toUpperCase()}
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
-            เรต: {data?.config?.price30Days || 29} บาท / 30 วัน
+            เรต: {data?.config?.price30Days ?? 29} บาท / 30 วัน
           </div>
         </div>
       </div>
@@ -869,7 +871,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   onClick={() => {
                     setEditNodeModal(selectedNode);
                     setNodeNameInput(selectedNode.name || selectedNode.id);
-                    setNodeMaxRoomsInput(selectedNode.maxRooms || 15);
+                    setNodeMaxRoomsInput(selectedNode.maxRooms ?? (selectedNode.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15));
                   }}
                   className="btn btn-sm"
                 >
@@ -970,7 +972,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                           {n.cpu || '-'} • {n.ram || '-'}
                         </td>
                         <td style={{ fontWeight: 700 }}>
-                          <span style={{ color: 'var(--slime-green)' }}>{n.activeRooms || 0}</span> / {n.maxRooms || 15}
+                          <span style={{ color: 'var(--slime-green)' }}>{n.activeRooms ?? 0}</span> / {n.maxRooms ?? (n.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15)}
                         </td>
                         <td style={{ fontSize: 11.5 }}>
                           {n.activeSpawns || 0}/{n.maxSpawns || 2} (Q: {n.queuedSpawns || 0})
