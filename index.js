@@ -146,10 +146,10 @@ client.on('clientReady', async () => {
         });
     }
 
-    // Clean old cache at startup and sweep every 15 minutes (max 50MB quota)
-    cacheManager.cleanOldCache(2);
+    // Clean old cache at startup and sweep periodically (uses CACHE_MAX_AGE_HOURS from .env)
+    cacheManager.cleanOldCache();
     setInterval(() => {
-        cacheManager.cleanOldCache(2);
+        cacheManager.cleanOldCache();
         if (global.gc) global.gc();
     }, 15 * 60 * 1000).unref();
 

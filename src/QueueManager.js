@@ -41,8 +41,17 @@ class QueueManager extends EventEmitter {
         this._activeSearches = 0;
         this._maxConcurrentSearches = 2; // Limit concurrent yt-dlp child processes to preserve RAM
 
-        // Fire-and-forget cache cleanup when a track finishes
-        this.on('playerEnd', (player, track) => this._deleteTrackCacheAsync(player, track));
+        // Pin active tracks during playback so LRU eviction never deletes them
+        this.on('playerStart', (player, track) => {
+            const cacheManager = require('./CacheManager');
+            const identifier = track?.identifier || (track?.uri ? crypto.createHash('md5').update(track.uri).digest('hex').slice(0, 20) : null);
+            if (identifier) cacheManager.pinTrack(identifier);
+        });
+        this.on('playerEnd', (player, track) => {
+            const cacheManager = require('./CacheManager');
+            const identifier = track?.identifier || (track?.uri ? crypto.createHash('md5').update(track.uri).digest('hex').slice(0, 20) : null);
+            if (identifier) cacheManager.unpinTrack(identifier);
+        });
     }
 
     createPlayer(options) {

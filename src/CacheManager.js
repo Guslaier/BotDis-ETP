@@ -9,7 +9,20 @@ const youtubeCircuit = require('./helpers/youtubeCircuit');
 
 class CacheManager {
     constructor() {
-        this.cacheDir = path.resolve(__dirname, '../music_cache');
+        // Smart Storage Selector:
+        // If custom CACHE_DIR provided, use it.
+        // Otherwise, if running on Linux with >= 4GB RAM and /dev/shm is writable, use RAM Disk (/dev/shm/goolix_cache)
+        const customCacheDir = process.env.CACHE_DIR;
+        if (customCacheDir) {
+            this.cacheDir = path.resolve(customCacheDir);
+        } else if (process.platform === 'linux' && os.totalmem() >= 4 * 1024 * 1024 * 1024 && fs.existsSync('/dev/shm')) {
+            this.cacheDir = '/dev/shm/goolix_cache';
+            console.log('[CacheManager] Auto-selected High-Speed RAM Disk for audio cache: /dev/shm/goolix_cache');
+        } else {
+            this.cacheDir = path.resolve(__dirname, '../music_cache');
+        }
+
+        this.pinnedTracks = new Set();
         this.binPath = path.resolve(__dirname, process.platform === 'win32' ? '../bin/yt-dlp.exe' : '../bin/yt-dlp');
         
         this.ffmpegBundlePath = path.resolve(__dirname, '../bin/ffmpeg-bundle');
@@ -81,7 +94,38 @@ class CacheManager {
         this._activeTasks = new Map();
         this._spawnQueue = [];
         this._taskIdCounter = 0;
-        console.log(`[CacheManager] Stream Guard Active (Max Concurrent Spawns: ${this.maxConcurrentSpawns} [${configuredSpawns > 0 ? 'Manual .env' : 'Auto-Tuned'}])`);
+        console.log(`[CacheManager] Stream Guard Active (Initial Max Spawns: ${this.maxConcurrentSpawns} [${configuredSpawns > 0 ? 'Manual .env' : 'Auto-Tuned'}])`);
+    }
+
+    pinTrack(identifier) {
+        if (!identifier) return;
+        this.pinnedTracks.add(identifier);
+    }
+
+    unpinTrack(identifier) {
+        if (!identifier) return;
+        this.pinnedTracks.delete(identifier);
+    }
+
+    isPinned(identifier) {
+        if (!identifier) return false;
+        return this.pinnedTracks.has(identifier);
+    }
+
+    getCurrentMaxSpawns() {
+        const configuredSpawns = parseInt(process.env.MAX_CONCURRENT_SPAWNS || '0', 10);
+        if (configuredSpawns > 0) return configuredSpawns;
+
+        // Auto-detect based on host hardware & active load
+        const totalMemMb = Math.round(os.totalmem() / 1024 / 1024);
+        if (totalMemMb < 1000) {
+            // Strict lock on low-RAM systems (e.g. 400MB SG NAT VPS)
+            return 1;
+        }
+
+        // Dynamic Burst on systems with >= 1GB RAM:
+        // Allow 2 concurrent spawns if active streams < 5, else 1
+        return this.pinnedTracks.size < 5 ? 2 : 1;
     }
 
     getActiveSpawns() {
@@ -94,9 +138,10 @@ class CacheManager {
 
     async _acquireSpawnSlot(priority = 'interactive', onAbort = null, trackTitle = '') {
         const taskId = ++this._taskIdCounter;
+        const currentLimit = this.getCurrentMaxSpawns();
 
         // 1. Immediate slot available
-        if (this._activeSpawns < this.maxConcurrentSpawns) {
+        if (this._activeSpawns < currentLimit) {
             this._activeSpawns++;
             const task = { id: taskId, priority, onAbort, trackTitle, createdAt: Date.now() };
             this._activeTasks.set(taskId, task);
@@ -154,7 +199,8 @@ class CacheManager {
 
     _releaseSpawnSlot() {
         this._activeSpawns = Math.max(0, this._activeSpawns - 1);
-        if (this._spawnQueue.length > 0 && this._activeSpawns < this.maxConcurrentSpawns) {
+        const currentLimit = this.getCurrentMaxSpawns();
+        if (this._spawnQueue.length > 0 && this._activeSpawns < currentLimit) {
             const nextItem = this._spawnQueue.shift();
             if (nextItem && typeof nextItem.resolve === 'function') {
                 this._activeSpawns++;
@@ -308,14 +354,24 @@ class CacheManager {
         return res;
     }
 
-    _streamFromDisk(targetPath, seekSeconds = 0, volume = 100, onSpawn = null, filter = 'off', bitrate = '64k') {
+    _streamFromDisk(targetPath, seekSeconds = 0, volume = 100, onSpawn = null, filter = 'off', bitrate = '64k', identifier = null) {
+        const fileId = identifier || path.basename(targetPath, path.extname(targetPath));
+        if (fileId) this.pinTrack(fileId);
+        const unpin = () => {
+            if (fileId) this.unpinTrack(fileId);
+        };
+
         const filterChain = this._buildAudioFilterChain(volume, filter);
 
         // Fast path: Zero-copy direct disk stream (No child process, zero CPU overhead)
         if (seekSeconds <= 0 && !filterChain) {
             const fileStream = fs.createReadStream(targetPath, { highWaterMark: 1024 * 512 });
             fileStream.streamType = 'ogg/opus';
+            fileStream.once('close', unpin);
+            fileStream.once('end', unpin);
+            fileStream.once('error', unpin);
             fileStream.kill = () => {
+                unpin();
                 try { fileStream.destroy(); } catch {}
             };
             if (typeof onSpawn === 'function') {
@@ -339,9 +395,14 @@ class CacheManager {
         ffmpegArgs.push('-f', 'opus', 'pipe:1');
 
         const ffmpegProc = spawn(this.ffmpegPath, ffmpegArgs, { windowsHide: true });
+        ffmpegProc.once('close', unpin);
+        ffmpegProc.once('error', unpin);
+        ffmpegProc.stdout.once('close', unpin);
+        ffmpegProc.stdout.once('end', unpin);
         ffmpegProc.on('error', (err) => console.error('[CacheManager] ffmpeg cached stream error:', err.message));
         ffmpegProc.stdout.streamType = 'ogg/opus';
         ffmpegProc.stdout.kill = () => {
+            unpin();
             try { ffmpegProc.kill('SIGKILL'); } catch {}
         };
         if (typeof onSpawn === 'function') {
@@ -370,7 +431,7 @@ class CacheManager {
         // 1. Play from cached file if present (<0.1s latency)
         if (this.isCached(identifier)) {
             console.log(`[CacheManager:Stream] Cache HIT for "${track.title}" (Serving from disk) | Filter: ${filter} | Bitrate: ${bitrate}`);
-            return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate);
+            return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate, identifier);
         }
 
         const isYouTube = !track.uri?.includes('soundcloud.com') && !track.uri?.startsWith('scsearch');
@@ -400,7 +461,7 @@ class CacheManager {
             console.log(`[CacheManager:Stream] Caching track to disk before playback: "${track.title}" (Mode: ${streamMode})`);
             await this.prepareTrack(track, false, onSpawn);
             if (this.isCached(identifier)) {
-                return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate);
+                return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate, identifier);
             }
         } catch (err) {
             if (youtubeCircuit.constructor.isBotBlock(err.message)) {
@@ -741,6 +802,9 @@ class CacheManager {
             return targetPath;
         }
 
+        // Proactive High-Watermark Check: ensure capacity is available before downloading
+        this.cleanOldCache();
+
         // Memory Guard: Only applies to background pre-cache
         if (isBackground) {
             const mem = process.memoryUsage();
@@ -890,8 +954,8 @@ class CacheManager {
     }
 
     /**
-     * Strict Disk LRU Sweeper:
-     * Enforces strict disk quota (default 350MB) to protect container from ENOSPC errors.
+     * Proactive LRU Sweeper with High-Watermark (85%) & Active Stream Pinning:
+     * Enforces strict disk quota (default 350MB) and never deletes currently active streams.
      */
     cleanOldCache(maxAgeHours = null) {
         try {
@@ -907,31 +971,55 @@ class CacheManager {
             const fileStats = [];
 
             for (const file of files) {
+                if (!file.endsWith('.opus') && !file.endsWith('.webm') && !file.endsWith('.m4a') && !file.endsWith('.mp3')) continue;
                 const fullPath = path.join(this.cacheDir, file);
+                const fileIdentifier = path.basename(file, path.extname(file));
+
                 try {
                     const stats = fs.statSync(fullPath);
-                    if (now - stats.mtimeMs > maxAgeMs) {
-                        fs.unlinkSync(fullPath);
+                    const isPinned = this.isPinned(fileIdentifier);
+
+                    // If file exceeded TTL and is not actively streaming, delete it
+                    if (now - stats.mtimeMs > maxAgeMs && !isPinned) {
+                        try { fs.unlinkSync(fullPath); } catch {}
                     } else {
                         totalSizeBytes += stats.size;
-                        fileStats.push({ path: fullPath, size: stats.size, mtime: stats.mtimeMs });
+                        fileStats.push({
+                            path: fullPath,
+                            identifier: fileIdentifier,
+                            size: stats.size,
+                            mtime: stats.mtimeMs,
+                            pinned: isPinned
+                        });
                     }
                 } catch {}
             }
 
             const maxMb = parseInt(process.env.CACHE_MAX_SIZE_MB || '350', 10);
             const maxCacheBytes = maxMb * 1024 * 1024;
-            const targetBytes = Math.round(maxCacheBytes * 0.6);
-            if (totalSizeBytes > maxCacheBytes) {
+            const highWatermarkBytes = Math.round(maxCacheBytes * 0.85); // 85% High Watermark
+            const lowWatermarkBytes = Math.round(maxCacheBytes * 0.60); // 60% Low Watermark
+
+            // If total cache size exceeds 85%, proactively evict unpinned files by LRU down to 60%
+            if (totalSizeBytes > highWatermarkBytes) {
                 fileStats.sort((a, b) => a.mtime - b.mtime);
+                let evictedCount = 0;
+                let evictedBytes = 0;
+
                 for (const item of fileStats) {
-                    if (totalSizeBytes <= targetBytes) break;
+                    if (totalSizeBytes <= lowWatermarkBytes) break;
+                    if (item.pinned) continue; // NEVER delete actively playing tracks!
+
                     try {
                         fs.unlinkSync(item.path);
                         totalSizeBytes -= item.size;
+                        evictedBytes += item.size;
+                        evictedCount++;
                     } catch {}
                 }
-                console.log(`[CacheManager] Strict LRU clean reduced cache size to ${(totalSizeBytes / 1024 / 1024).toFixed(1)}MB (Cap: ${maxMb}MB)`);
+                if (evictedCount > 0) {
+                    console.log(`[CacheManager:LRU] High-watermark reached (85%). Evicted ${evictedCount} unpinned files (${(evictedBytes / 1024 / 1024).toFixed(1)}MB). Remaining: ${(totalSizeBytes / 1024 / 1024).toFixed(1)}MB / ${maxMb}MB`);
+                }
             }
         } catch (err) {
             console.error('[CacheManager] Cache cleanup error:', err.message);
