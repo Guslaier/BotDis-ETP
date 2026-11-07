@@ -153,3 +153,27 @@ $$N = \min(127, 75) = \mathbf{75 \text{ ห้อง}}$$
 * **Effective Core-to-Room Ratio:** **$1 C_{\text{eff}} : 11.2 \text{ ห้อง}$** (ที่เพดาน RAM) และสูงสุด **$1 C_{\text{eff}} : 19.0 \text{ ห้อง}$** (ถ้า RAM พอ)
 * **Price-to-Room Ratio:** **$6.6 \text{ บาท} : 1 \text{ ห้อง}$** *(กล่องราคา 500 บาท หาร 75 ห้อง จ่ายครั้งเดียวตลอดชีพ)*
 * **Power-to-Room Ratio:** **$0.08 \text{ Watt} : 1 \text{ ห้อง}$** *(กล่องกินไฟรวม 6 Watts)*
+
+---
+
+## 8. ตารางอัตราส่วน Spawn : Stream (Spawn Resource Ratio)
+
+* **CPU Ratio (ความแรง):**
+  $$\text{Spawn} : \text{Stream} = 100\% : 2\% = \mathbf{50 : 1}$$
+  *(การสปอว์นแกะเพลง 1 คิว ใช้พลัง CPU เท่ากับการเปิดเพลงปกติทิ้งไว้ 50 ห้องพร้อมกัน)*
+* **RAM Ratio (หน่วยความจำ):**
+  $$\text{Spawn} : \text{Stream} = 60\text{ MB} : 28\text{ MB} \approx \mathbf{2.1 : 1}$$
+
+---
+
+## 9. ข้อกำหนดการจูนระบบ (Hybrid Tuning Guidelines)
+
+1. **เปิดใช้ Priority Queue & Preemption เสมอ:**
+   เนื่องจาก Spawn 1 คิว กิน CPU สูงถึง 100% (เท่ากับสตรีมเพลง 50 ห้อง) ระบบ DisLava จึงมี Priority Queue เพื่อ Preempt (สั่งตัด `SIGTERM`) งาน Pre-fetch เบื้องหลังทันทีเมื่อผู้ใช้กด Play หรือ Skip เพื่อไม่ให้มี Spawn ชนกันเกินโควตา
+2. **ล็อก Spawns ไม่เกิน 1 หรือ 2 (`MAX_CONCURRENT_SPAWNS=1` หรือ `2`):**
+   * สำหรับ VPS 1 Core หรือกล่อง 4 Cores: ตั้ง `MAX_CONCURRENT_SPAWNS=1`
+   * สำหรับกล่อง 8 Cores (MECOOL BB2 PRO): ตั้ง `MAX_CONCURRENT_SPAWNS=2` (สำรอง 2 คิว = 200% CPU ซึ่งกล่อง 8 คอร์รับได้สบายโดยไม่รบกวนสตรีม)
+3. **ขยาย Threshold แคช Disk เป็น 30 นาที (`MAX_CACHE_DURATION_SEC=1800`):**
+   เพื่อให้เพลงส่วนใหญ่ (>95%) ถูกโหลดเก็บลงดิสก์ eMMC ภายใน ซึ่งจะทำให้การสตรีมกิน CPU **0.0%** ตัดภาระเครือข่ายและ CPU ออกทั้งหมด
+4. **RAM คือคอขวดใหม่:**
+   หากต้องการขยายคลัสเตอร์ให้รันเกิน 100 ห้องต่อ 1 กล่อง ควรเลือกอุปกรณ์ที่มี RAM **4GB ขึ้นไป** (เช่น Orange Pi 5 หรือ Raspberry Pi 4/5 รุ่น RAM 4GB–8GB)
