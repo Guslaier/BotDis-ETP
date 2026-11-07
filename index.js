@@ -449,7 +449,7 @@ client.on('interactionCreate', async interaction => {
 
                 const songInput = new TextInputBuilder()
                     .setCustomId('song_query')
-                    .setLabel('ชื่อเพลง หรือ ลิงก์ (YouTube / SoundCloud / Spotify)')
+                    .setLabel('ชื่อเพลง หรือ ลิงก์เพลง (YouTube/Spotify)')
                     .setPlaceholder('เช่น Sailor Song หรือ https://youtube.com/watch?v=...')
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true);
