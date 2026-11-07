@@ -61,37 +61,45 @@ module.exports = {
         const donateUrl = `${host}/donate?guildId=${guildId}&userId=${userId}`;
 
         if (subCommand === 'status') {
+            const botName = client.user?.username || 'GOOLIX';
             const embed = new EmbedBuilder()
                 .setTitle('💖 สถานะผู้สนับสนุนเซิร์ฟเวอร์ (Server Supporter)')
-                .setColor(isSupporter ? '#FF2E93' : '#64748B')
+                .setColor(isSupporter ? '#00FF88' : '#64748B')
                 .addFields(
                     {
-                        name: '\n🏰 เซิร์ฟเวอร์',
-                        value: `**${guildName}** (\`${guildId}\`)\n\n`,
+                        name: '🏰 เซิร์ฟเวอร์',
+                        value: `**${guildName}** (\`${guildId}\`)`,
                         inline: false
                     },
                     {
-                        name: '📊 ระดับสมาชิกปัจจุบัน',
-                        value: isSupporter ? '💎 **Server Supporter (VIP)**' : '🆓 **Standard (Free Tier)**',
+                        name: '📊 ระดับสมาชิก',
+                        value: isSupporter ? '💎 **VIP SUPPORTER**' : '🆓 **Standard (Free Tier)**',
                         inline: true
                     },
                     {
                         name: '⏱️ วันหมดอายุ',
-                        value: isSupporter ? `<t:${Math.floor(sub.expiresAt / 1000)}:R> (<t:${Math.floor(sub.expiresAt / 1000)}:d>)` : 'ไม่มี (ใช้งานโหมดทั่วไป)',
+                        value: isSupporter ? `<t:${Math.floor(sub.expiresAt / 1000)}:R>\n(<t:${Math.floor(sub.expiresAt / 1000)}:d>)` : 'ไม่มี (ใช้งานโหมดฟรี)',
                         inline: true
                     },
                     {
-                        name: '\n\n🎁 รหัสชวนเพื่อนประจำเซิร์ฟเวอร์',
-                        value: `\`${sub.referralCode}\` (ชวนเพื่อนสำเร็จ: **${sub.referralCount || 0}** เซิร์ฟเวอร์)`,
+                        name: '🎁 รหัสชวนเพื่อนประจำเซิร์ฟเวอร์',
+                        value: `\`${sub.referralCode}\` (ชวนสำเร็จ: **${sub.referralCount || 0}** เซิร์ฟเวอร์)`,
                         inline: false
                     },
                     {
-                        name: '\n\n✨ สิทธิ์ตอบแทนผู้สนับสนุน (Supporter Perks)',
-                        value: '• ⚡ **Priority Stream Slot** (การันตีช่องสัญญาณทันที ไม่ติดคิว)\n• 🎵 **คิวเพลงสูงสุด 50 เพลง & เพลย์ลิสต์ครั้งละ 25 เพลง** (สายฟรี คิว 10 เพลง / เพลย์ลิสต์ 5 เพลง)\n• 📻 **เล่นเพลง/คลิปยาว & Live Stream ไม่จำกัดความยาว** (สายฟรี <= 30 นาที)\n• 🎛️ **ปรับแต่งเสียง Equalizer** (`/gfilter` BassBoost, ฯลฯ)\n• 🔄 **ระบบ Autoplay เล่นเพลงต่อเนื่องอัตโนมัติ**\n• 🎧 **คุณภาพเสียงคมชัดระดับสตูดิโอ (Opus 96k Studio HQ)**',
+                        name: '✨ สิทธิประโยชน์ผู้สนับสนุน (VIP Perks)',
+                        value: [
+                            '⚡ **Priority Lane** — ช่องสัญญาณด่วน การันตีเข้าเล่นทันที ไม่ติดคิว',
+                            '🎵 **Extended Queue** — คิวสูงสุด 50 เพลง & เพลย์ลิสต์ครั้งละ 25 เพลง',
+                            '📻 **Unlimited Length** — สตรีมเพลงและคลิปยาวได้ไม่จำกัดความยาว',
+                            '🎛️ **Audio FX** — ปลดล็อกตัวปรับแต่งเสียง `/gfilter` BassBoost ฯลฯ',
+                            '🔄 **Autoplay Engine** — ระบบเล่นเพลงอัตโนมัติเมื่อคิวหมด',
+                            '🎧 **Studio Quality** — ถ่ายทอดเสียงคมชัดระดับ Opus 96k Studio HQ'
+                        ].join('\n'),
                         inline: false
                     }
                 )
-                .setFooter({ text: 'ขอบคุณที่ร่วมสนับสนุนค่าเซิร์ฟเวอร์ GOOLIX พลังเบสสไลม์เขียว 🟢⚡' });
+                .setFooter({ text: `${botName} • High-Performance Audio Engine` });
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
