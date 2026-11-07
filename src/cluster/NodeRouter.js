@@ -31,43 +31,139 @@ class NodeRouter extends EventEmitter {
     }
 
     _initRemoteNodes() {
-        let raw = process.env.REMOTE_NODES; // JSON or comma-separated
-        if (!raw) return;
-        try {
-            raw = raw.trim();
-            if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"'))) {
-                raw = raw.slice(1, -1).trim();
-            }
-            if (raw.includes('\\"')) {
-                raw = raw.replace(/\\"/g, '"');
-            }
-            const list = JSON.parse(raw);
-            if (Array.isArray(list)) {
-                const overrides = dbManager.get('nodesConfig') || {};
-                for (const node of list) {
-                    if (node.host) {
-                        const port = parseInt(node.port || '2333', 10);
-                        const id = node.id || `remote-${String(node.host).replace(/[^a-zA-Z0-9]/g, '-')}-${port}`;
-                        const override = overrides[id];
-                        this.nodes.set(id, {
-                            id: id,
-                            name: override?.name || node.name || id,
-                            type: 'remote',
-                            host: node.host,
-                            port: port,
-                            status: 'offline',
-                            activeRooms: 0,
-                            maxRooms: override?.maxRooms || node.maxRooms || 15,
-                            latency: 0,
-                            lastPing: 0,
-                            vpn: null
-                        });
+        const registry = dbManager.get('nodesRegistry') || {};
+        const overrides = dbManager.get('nodesConfig') || {};
+
+        // If nodesRegistry is empty, bootstrap/seed from process.env.REMOTE_NODES
+        if (Object.keys(registry).length === 0 && process.env.REMOTE_NODES) {
+            try {
+                let raw = process.env.REMOTE_NODES.trim();
+                if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"'))) {
+                    raw = raw.slice(1, -1).trim();
+                }
+                if (raw.includes('\\"')) {
+                    raw = raw.replace(/\\"/g, '"');
+                }
+                const list = JSON.parse(raw);
+                if (Array.isArray(list)) {
+                    for (const node of list) {
+                        if (node.host) {
+                            const port = parseInt(node.port || '2333', 10);
+                            const id = node.id || `remote-${String(node.host).replace(/[^a-zA-Z0-9]/g, '-')}-${port}`;
+                            const nodeRecord = {
+                                id: id,
+                                name: node.name || id,
+                                type: 'remote',
+                                host: node.host,
+                                port: port,
+                                maxRooms: node.maxRooms || 15,
+                                createdAt: Date.now()
+                            };
+                            dbManager.set('nodesRegistry', id, nodeRecord);
+                            registry[id] = nodeRecord;
+                        }
                     }
                 }
+            } catch (err) {
+                console.warn('[NodeRouter] Failed to bootstrap nodes from REMOTE_NODES:', err.message);
             }
-        } catch (err) {
-            console.warn('[NodeRouter] Failed to parse REMOTE_NODES config:', err.message);
         }
+
+        // Initialize active nodes map from persistent registry
+        for (const [id, node] of Object.entries(registry)) {
+            if (node && node.host) {
+                const port = parseInt(node.port || '2333', 10);
+                const override = overrides[id];
+                this.nodes.set(id, {
+                    id: id,
+                    name: override?.name || node.name || id,
+                    type: 'remote',
+                    host: node.host,
+                    port: port,
+                    status: 'offline',
+                    activeRooms: 0,
+                    maxRooms: override?.maxRooms || node.maxRooms || 15,
+                    latency: 0,
+                    lastPing: 0,
+                    vpn: null
+                });
+            }
+        }
+    }
+
+    async addNode(data = {}) {
+        const host = (data.host || '').trim();
+        const port = parseInt(data.port || '2333', 10);
+        const name = (data.name || '').trim();
+        const maxRooms = parseInt(data.maxRooms || '15', 10);
+
+        if (!host) {
+            return { success: false, error: 'Host or IP address is required' };
+        }
+        if (isNaN(port) || port < 1 || port > 65535) {
+            return { success: false, error: 'Invalid port number' };
+        }
+
+        const id = data.id || `remote-${String(host).replace(/[^a-zA-Z0-9]/g, '-')}-${port}`;
+        if (this.nodes.has(id)) {
+            return { success: false, error: `Node with ID "${id}" already exists` };
+        }
+
+        const nodeObj = {
+            id: id,
+            name: name || id,
+            type: 'remote',
+            host: host,
+            port: port,
+            status: 'offline',
+            activeRooms: 0,
+            maxRooms: Math.max(1, maxRooms),
+            latency: 0,
+            lastPing: 0,
+            vpn: null,
+            createdAt: Date.now()
+        };
+
+        // Persist to database
+        dbManager.set('nodesRegistry', id, {
+            id: nodeObj.id,
+            name: nodeObj.name,
+            type: 'remote',
+            host: nodeObj.host,
+            port: nodeObj.port,
+            maxRooms: nodeObj.maxRooms,
+            createdAt: nodeObj.createdAt
+        });
+
+        // Add to active memory
+        this.nodes.set(id, nodeObj);
+
+        // Immediately test ping and fetch stats
+        this._checkRemoteNode(nodeObj);
+
+        console.log(`[NodeRouter] Hot-plugged new AudioNode: "${nodeObj.name}" (${nodeObj.host}:${nodeObj.port})`);
+        return { success: true, node: nodeObj };
+    }
+
+    async removeNode(nodeId) {
+        if (!nodeId || nodeId === 'local-0') {
+            return { success: false, error: 'Cannot delete local controller core node' };
+        }
+
+        const node = this.nodes.get(nodeId);
+        if (!node) {
+            return { success: false, error: 'Node not found' };
+        }
+
+        // Delete from active memory
+        this.nodes.delete(nodeId);
+
+        // Delete from persistent database
+        dbManager.delete('nodesRegistry', nodeId);
+        dbManager.delete('nodesConfig', nodeId);
+
+        console.log(`[NodeRouter] Removed AudioNode: "${node.name}" (${nodeId})`);
+        return { success: true, nodeId };
     }
 
     _startHealthChecks() {

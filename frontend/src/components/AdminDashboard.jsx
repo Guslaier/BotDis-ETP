@@ -24,6 +24,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [nodeNameInput, setNodeNameInput] = useState('');
   const [nodeMaxRoomsInput, setNodeMaxRoomsInput] = useState(15);
 
+  // Add Node Modal State
+  const [addNodeModal, setAddNodeModal] = useState(false);
+  const [addNodeName, setAddNodeName] = useState('');
+  const [addNodeHost, setAddNodeHost] = useState('');
+  const [addNodePort, setAddNodePort] = useState(2333);
+  const [addNodeMaxRooms, setAddNodeMaxRooms] = useState(15);
+
   // New Drop
   const [dropCode, setDropCode] = useState('');
   const [dropClaims, setDropClaims] = useState(50);
@@ -162,6 +169,61 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         onToast('success', lang === 'th' ? 'บันทึกการตั้งค่าโหนดแล้ว' : 'Node Config Saved');
         setEditNodeModal(null);
         fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleAddNode = async (e) => {
+    e.preventDefault();
+    if (!addNodeHost.trim()) {
+      onToast('warning', lang === 'th' ? 'กรุณาระบุ Host หรือ IP' : 'Host is required');
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/nodes', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: addNodeName.trim(),
+          host: addNodeHost.trim(),
+          port: parseInt(addNodePort, 10),
+          maxRooms: parseInt(addNodeMaxRooms, 10)
+        })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'เพิ่มโหนดเข้าคลัสเตอร์สำเร็จ!' : 'Node Connected!', `Hot-plugged ${resJson.node.name}`);
+        setAddNodeModal(false);
+        setAddNodeName('');
+        setAddNodeHost('');
+        fetchData();
+      } else {
+        onToast('error', 'Failed', resJson.error);
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleDeleteNode = async (nodeId, nodeName) => {
+    if (!confirm(lang === 'th' ? `ยืนยันการลบโหนด "${nodeName || nodeId}" ออกจากคลัสเตอร์?` : `Remove node "${nodeName || nodeId}"?`)) return;
+    try {
+      const res = await fetch(`/api/admin/nodes/${nodeId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'ลบโหนดออกจากคลัสเตอร์แล้ว' : 'Node Removed');
+        if (selectedNodeId === nodeId) setSelectedNodeId('local-0');
+        fetchData();
+      } else {
+        onToast('error', 'Failed', resJson.error);
       }
     } catch (err) {
       onToast('error', 'Error', err.message);
@@ -498,6 +560,19 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 </span>
               </button>
             ))}
+
+            <button
+              onClick={() => setAddNodeModal(true)}
+              className="btn btn-sm btn-primary"
+              style={{
+                borderRadius: 10,
+                padding: '8px 14px',
+                fontSize: 12.5
+              }}
+            >
+              <Plus size={14} />
+              <span>{lang === 'th' ? 'เพิ่มโหนด (Add Node)' : 'Add Node'}</span>
+            </button>
           </div>
 
           {selectedNode ? (
@@ -714,13 +789,25 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                         {n.latency >= 0 ? `${n.latency} ms` : '-'}
                       </td>
                       <td>
-                        <button
-                          onClick={() => setSelectedNodeId(n.id)}
-                          className="btn btn-sm"
-                          style={{ padding: '4px 8px', fontSize: 11 }}
-                        >
-                          {lang === 'th' ? 'เลือกดู' : 'Inspect'}
-                        </button>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            onClick={() => setSelectedNodeId(n.id)}
+                            className="btn btn-sm"
+                            style={{ padding: '4px 8px', fontSize: 11 }}
+                          >
+                            {lang === 'th' ? 'เลือกดู' : 'Inspect'}
+                          </button>
+                          {n.type === 'remote' && (
+                            <button
+                              onClick={() => handleDeleteNode(n.id, n.name)}
+                              className="btn btn-sm btn-danger"
+                              style={{ padding: '4px 8px', fontSize: 11 }}
+                              title="Delete Node"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1238,6 +1325,94 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 {lang === 'th' ? 'บันทึก' : 'Save'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- ADD NODE MODAL --- */}
+      {addNodeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999
+        }}>
+          <div className="glass-panel" style={{ width: 440, padding: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Server size={18} style={{ color: 'var(--slime-green)' }} />
+              <span>{lang === 'th' ? 'เพิ่มโหนดประมวลผลเสียงเข้าคลัสเตอร์' : 'Add Audio Node to Cluster'}</span>
+            </h3>
+
+            <form onSubmit={handleAddNode}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'ชื่อที่แสดงของโหนด (Node Name)' : 'Node Name'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น Orikami Win-Node หรือ Residential 2"
+                  value={addNodeName}
+                  onChange={(e) => setAddNodeName(e.target.value)}
+                />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'Host / IP / Domain / TrueDDNS' : 'Host / IP'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น orikami.trueddns.com หรือ 192.168.1.50"
+                  value={addNodeHost}
+                  onChange={(e) => setAddNodeHost(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                    Port
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="2333 หรือ 28422"
+                    value={addNodePort}
+                    onChange={(e) => setAddNodePort(parseInt(e.target.value, 10))}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                    {lang === 'th' ? 'ความจุห้อง (Max Rooms)' : 'Max Rooms'}
+                  </label>
+                  <input
+                    type="number"
+                    value={addNodeMaxRooms}
+                    onChange={(e) => setAddNodeMaxRooms(parseInt(e.target.value, 10))}
+                    min="1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setAddNodeModal(false)} className="btn btn-sm">
+                  {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+                </button>
+                <button type="submit" className="btn btn-sm btn-primary">
+                  <Plus size={13} />
+                  <span>{lang === 'th' ? 'บันทึกและเชื่อมต่อทันที' : 'Connect Node'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

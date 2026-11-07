@@ -873,6 +873,18 @@ class AdminServer {
                 return this._sendJson(res, 200, { success: true, ...resClear });
             }
 
+            if (pathname === '/api/admin/nodes' && req.method === 'POST') {
+                const body = await this._parseBody(req);
+                const resAdd = await nodeRouter.addNode(body);
+                return this._sendJson(res, resAdd.success ? 200 : 400, resAdd);
+            }
+
+            if (pathname.startsWith('/api/admin/nodes/') && req.method === 'DELETE') {
+                const nodeId = pathname.split('/')[4];
+                const resDel = await nodeRouter.removeNode(nodeId);
+                return this._sendJson(res, resDel.success ? 200 : 400, resDel);
+            }
+
             if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/drain') && req.method === 'POST') {
                 const nodeId = pathname.split('/')[4];
                 const resDrain = await nodeRouter.toggleDrain(nodeId);

@@ -21,7 +21,7 @@ class DatabaseManager {
     }
 
     _initCollections() {
-        const collections = ['subscriptions', 'campaigns', 'transactions', 'billingConfig', 'bannedGuilds', 'nodesConfig'];
+        const collections = ['subscriptions', 'campaigns', 'transactions', 'billingConfig', 'bannedGuilds', 'nodesConfig', 'nodesRegistry'];
         for (const col of collections) {
             const filePath = path.join(dataDir, `${col}.json`);
             if (fs.existsSync(filePath)) {
