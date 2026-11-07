@@ -491,9 +491,8 @@ export default function TopupView({ lang, onToast }) {
             borderRadius: 14,
             padding: 20
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
               <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-sub)' }}>{lang === 'th' ? 'ทั่วไป' : 'STANDARD'}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{lang === 'th' ? '0 บาท / ฟรีตลอดชีพ' : '0 THB / Lifetime Free'}</span>
             </div>
             <ul style={{ listStyle: 'none', fontSize: 12.5, color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -525,9 +524,9 @@ export default function TopupView({ lang, onToast }) {
 
           {/* Supporter Tier */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(0, 255, 136, 0.08) 0%, rgba(17, 22, 32, 0.95) 100%)',
-            border: '1px solid var(--slime-green)',
-            boxShadow: '0 0 24px var(--slime-glow)',
+            background: 'linear-gradient(135deg, rgba(0, 255, 136, 0.03) 0%, rgba(12, 16, 24, 0.98) 100%)',
+            border: '1px solid rgba(0, 255, 136, 0.3)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 255, 136, 0.06)',
             borderRadius: 14,
             padding: 20,
             position: 'relative'
@@ -535,7 +534,7 @@ export default function TopupView({ lang, onToast }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--slime-green)' }}>SUPPORTER</span>
-                <span className="slime-badge" style={{ marginLeft: 8, fontSize: 10 }}>RECOMMENDED</span>
+                <span className="slime-badge" style={{ marginLeft: 8, fontSize: 10, background: 'rgba(0, 255, 136, 0.08)', border: '1px solid rgba(0, 255, 136, 0.25)', boxShadow: 'none' }}>RECOMMENDED</span>
               </div>
               <span style={{ fontWeight: 700, fontSize: 14, color: '#FFF' }}>{lang === 'th' ? '29 บาท / 30 วัน' : '29 THB / 30 Days'}</span>
             </div>

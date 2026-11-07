@@ -21,31 +21,18 @@ export default function Navbar({ mode, lang, setLang, isAdminLoggedIn, onLogout 
     }}>
       {/* Brand Identity */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ position: 'relative' }}>
-          <img
-            src="/goolix-avatar.jpg"
-            alt="GOOLIX"
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              border: `2px solid ${isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)'}`,
-              boxShadow: `0 0 16px ${isAdmin ? 'var(--cyber-glow)' : 'var(--slime-glow)'}`,
-              objectFit: 'cover'
-            }}
-          />
-          <span style={{
-            position: 'absolute',
-            bottom: -2,
-            right: -2,
-            width: 12,
-            height: 12,
+        <img
+          src="/goolix-avatar.jpg"
+          alt="GOOLIX"
+          style={{
+            width: 44,
+            height: 44,
             borderRadius: '50%',
-            background: isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)',
-            border: '2px solid var(--bg-dark)',
-            boxShadow: `0 0 8px ${isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)'}`
-          }} />
-        </div>
+            border: `2px solid ${isAdmin ? 'var(--cyber-pink)' : 'var(--slime-green)'}`,
+            boxShadow: `0 0 12px ${isAdmin ? 'rgba(255, 46, 147, 0.2)' : 'rgba(0, 255, 136, 0.2)'}`,
+            objectFit: 'cover'
+          }}
+        />
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <h1 style={{
