@@ -349,6 +349,10 @@ class NodeRouter extends EventEmitter {
         const proxyManager = require('../helpers/proxyManager');
         const result = await proxyManager.switchVpnServer('next');
         const newExitIp = await proxyManager.fetchPublicExitIp(4000).catch(() => null);
+        if (result && result.ok) {
+            const youtubeCircuit = require('../helpers/youtubeCircuit');
+            youtubeCircuit.reset();
+        }
         return { success: true, result, newExitIp };
     }
 
