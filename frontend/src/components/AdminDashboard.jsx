@@ -1,0 +1,1212 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Shield, Server, HardDrive, Wifi, Activity, Cpu, RotateCw, 
+  Trash2, Play, Square, FastForward, Search, Plus, Ban, CheckCircle, 
+  AlertTriangle, Settings, RefreshCw, Power, Radio, Sliders, ExternalLink
+} from 'lucide-react';
+
+export default function AdminDashboard({ lang, token, setToken, onToast }) {
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState(null);
+  const [activeSubTab, setActiveSubTab] = useState('nodes'); // 'nodes' | 'streams' | 'guilds' | 'drops' | 'tx' | 'settings'
+  const [selectedNodeId, setSelectedNodeId] = useState('local-0');
+
+  // Search & Filter
+  const [guildSearch, setGuildSearch] = useState('');
+
+  // Modals
+  const [banModal, setBanModal] = useState(null); // { guildId, guildName }
+  const [banDays, setBanDays] = useState(7);
+  const [banReason, setBanReason] = useState('ละเมิดข้อกำหนดการใช้งาน');
+
+  const [editNodeModal, setEditNodeModal] = useState(null); // node obj
+  const [nodeNameInput, setNodeNameInput] = useState('');
+  const [nodeMaxRoomsInput, setNodeMaxRoomsInput] = useState(15);
+
+  // New Drop
+  const [dropCode, setDropCode] = useState('');
+  const [dropClaims, setDropClaims] = useState(50);
+  const [dropDays, setDropDays] = useState(30);
+
+  // Settings
+  const [settingsForm, setSettingsForm] = useState({
+    paymentMode: 'sandbox',
+    price30Days: 29,
+    maxFreeStreams: 6,
+    maxTotalStreams: 12
+  });
+
+  const fetchData = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/admin/overview', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.status === 401) {
+        setToken('');
+        localStorage.removeItem('goolix_admin_token');
+        onToast('error', 'Session Expired', 'Please log in again');
+        return;
+      }
+      const json = await res.json();
+      if (json.success) {
+        setData(json);
+        if (json.config) {
+          setSettingsForm({
+            paymentMode: json.config.paymentMode || 'sandbox',
+            price30Days: json.config.price30Days || 29,
+            maxFreeStreams: json.config.maxFreeStreams || 6,
+            maxTotalStreams: json.config.maxTotalStreams || 12
+          });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const timer = setInterval(fetchData, 4000);
+    return () => clearInterval(timer);
+  }, [token]);
+
+  // Node Actions
+  const handleClearNodeCache = async (nodeId) => {
+    if (!confirm(lang === 'th' ? `ยืนยันการล้างแคชเพลงของโหนด ${nodeId}?` : `Clear cache for node ${nodeId}?`)) return;
+    try {
+      const res = await fetch(`/api/admin/nodes/${nodeId}/cache/clear`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'ล้างแคชสำเร็จ' : 'Cache Cleared', `Deleted ${resJson.deletedFiles || 0} files (${resJson.freedMb || 0} MB freed)`);
+        fetchData();
+      } else {
+        onToast('error', 'Failed', resJson.error);
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleSwitchNodeVpn = async (nodeId) => {
+    try {
+      onToast('info', lang === 'th' ? 'กำลังสลับ VPN...' : 'Switching VPN...');
+      const res = await fetch(`/api/admin/nodes/${nodeId}/vpn/switch`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'สลับ VPN สำเร็จ' : 'VPN Switched', `New Exit IP: ${resJson.newExitIp || 'Updated'}`);
+        fetchData();
+      } else {
+        onToast('error', 'Failed', resJson.error);
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleResetNodeCircuit = async (nodeId) => {
+    try {
+      const res = await fetch(`/api/admin/nodes/${nodeId}/circuit/reset`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'รีเซ็ต Circuit สำเร็จ' : 'Circuit Reset');
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleToggleDrain = async (nodeId) => {
+    try {
+      const res = await fetch(`/api/admin/nodes/${nodeId}/drain`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'เปลี่ยนสถานะ Drain สำเร็จ' : 'Drain Status Updated');
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleSaveNodeConfig = async () => {
+    if (!editNodeModal) return;
+    try {
+      const res = await fetch(`/api/admin/nodes/${editNodeModal.id}/config`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: nodeNameInput,
+          maxRooms: parseInt(nodeMaxRoomsInput, 10)
+        })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'บันทึกการตั้งค่าโหนดแล้ว' : 'Node Config Saved');
+        setEditNodeModal(null);
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  // Player Actions
+  const handlePlayerAction = async (guildId, action) => {
+    try {
+      await fetch(`/api/admin/players/${guildId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action })
+      });
+      onToast('success', action === 'skip' ? 'Skipped Track' : 'Stopped Player');
+      fetchData();
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  // Guild Subscription Actions
+  const handleAdjustGuildDays = async (guildId, days) => {
+    try {
+      const res = await fetch(`/api/admin/guilds/${guildId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ addDays: days, plan: days < 0 ? 'FREE' : 'SUPPORTER' })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'ปรับวันใช้งานสำเร็จ' : 'Days Adjusted');
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleBanGuild = async () => {
+    if (!banModal) return;
+    try {
+      const res = await fetch(`/api/admin/guilds/${banModal.guildId}/ban`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          days: banDays,
+          reason: banReason,
+          guildName: banModal.guildName
+        })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'แบนเซิร์ฟเวอร์แล้ว' : 'Guild Banned');
+        setBanModal(null);
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleUnbanGuild = async (guildId) => {
+    try {
+      const res = await fetch(`/api/admin/guilds/${guildId}/unban`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'ปลดแบนเซิร์ฟเวอร์แล้ว' : 'Guild Unbanned');
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  // Campaign Actions
+  const handleCreateDrop = async (e) => {
+    e.preventDefault();
+    if (!dropCode.trim()) return;
+    try {
+      const res = await fetch('/api/admin/campaigns', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          code: dropCode.trim(),
+          maxClaims: dropClaims,
+          days: dropDays
+        })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'สร้างแคมเปญสำเร็จ' : 'Campaign Created');
+        setDropCode('');
+        fetchData();
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleDeleteDrop = async (code) => {
+    if (!confirm(lang === 'th' ? `ลบแคมเปญ ${code}?` : `Delete drop ${code}?`)) return;
+    try {
+      await fetch(`/api/admin/campaigns/${encodeURIComponent(code)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      onToast('success', 'Drop Deleted');
+      fetchData();
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  // Config Actions
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settingsForm)
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'บันทึกการตั้งค่าแล้ว' : 'Settings Saved');
+        fetchData();
+      } else {
+        onToast('error', 'Error', resJson.error);
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleForceSweep = async () => {
+    try {
+      await fetch('/api/admin/sweep', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      onToast('success', 'Sweep Performed');
+      fetchData();
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  // Filtered Guilds
+  const filteredGuilds = (data?.guilds || []).filter((g) => {
+    if (!guildSearch.trim()) return true;
+    const term = guildSearch.toLowerCase();
+    return (g.guildName || '').toLowerCase().includes(term) || (g.guildId || '').includes(term);
+  });
+
+  const nodesList = data?.nodes || [];
+  const selectedNode = nodesList.find(n => n.id === selectedNodeId) || nodesList[0] || null;
+
+  return (
+    <div style={{ maxWidth: 1280, margin: '24px auto', padding: '0 20px' }} className="fade-in">
+      {/* Top Controller Overview Bar */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: 16,
+        marginBottom: 24
+      }}>
+        <div className="glass-panel" style={{ padding: 18 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600, textTransform: 'uppercase' }}>
+            {lang === 'th' ? 'สล็อตสตรีมเสียง (LIVE SLOTS)' : 'Live Stream Slots'}
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--slime-green)', margin: '6px 0 2px' }}>
+            {data?.stats?.slots?.total || 0} / {data?.stats?.slots?.maxTotal || 12}
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+            Free: {data?.stats?.slots?.free || 0}/{data?.stats?.slots?.maxFree || 6} • VIP Max: {data?.stats?.slots?.dynamicVipMax || 0}
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: 18 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600, textTransform: 'uppercase' }}>
+            {lang === 'th' ? 'โหนดประมวลผล (AUDIO CLUSTER)' : 'Audio Processing Nodes'}
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--accent-blue)', margin: '6px 0 2px' }}>
+            {nodesList.filter(n => n.status === 'online').length} / {nodesList.length} Online
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+            {nodesList.some(n => n.type === 'remote' && n.status === 'online') ? '🌐 Hybrid Cloud & Residential Active' : '📍 Local Core Only'}
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: 18 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600, textTransform: 'uppercase' }}>
+            {lang === 'th' ? 'เซิร์ฟเวอร์ที่ติดตั้งบอท (GUILDS)' : 'Total Guilds'}
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#FFF', margin: '6px 0 2px' }}>
+            {data?.guilds?.length || 0}
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+            {data?.guilds?.filter(g => g.isSupporter).length || 0} VIP Supporters
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: 18 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600, textTransform: 'uppercase' }}>
+            {lang === 'th' ? 'โหมดบิลลิ่ง (PAYMENT MODE)' : 'Billing Mode'}
+          </div>
+          <div style={{
+            fontSize: 22,
+            fontWeight: 800,
+            color: data?.config?.paymentMode === 'production' ? 'var(--slime-green)' : 'var(--accent-yellow)',
+            margin: '6px 0 2px'
+          }}>
+            {(data?.config?.paymentMode || 'sandbox').toUpperCase()}
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+            เรต: {data?.config?.price30Days || 29} บาท / 30 วัน
+          </div>
+        </div>
+      </div>
+
+      {/* Sub-Navigation Tabs */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        borderBottom: '1px solid var(--card-border)',
+        paddingBottom: 12,
+        marginBottom: 24,
+        overflowX: 'auto'
+      }}>
+        {[
+          { id: 'nodes', label: lang === 'th' ? '🌐 โหนดประมวลผลเสียง (Cluster)' : 'Audio Nodes', icon: <Server size={15} /> },
+          { id: 'streams', label: `${lang === 'th' ? '🎵 ห้องที่กำลังเล่น' : 'Live Streams'} (${data?.players?.length || 0})`, icon: <Radio size={15} /> },
+          { id: 'guilds', label: lang === 'th' ? '🏰 จัดการเซิร์ฟเวอร์ (Subscriptions)' : 'Guilds', icon: <Shield size={15} /> },
+          { id: 'drops', label: lang === 'th' ? '🎁 แคมเปญ Early-Bird' : 'Drops', icon: <Plus size={15} /> },
+          { id: 'tx', label: lang === 'th' ? '📋 ประวัติธุรกรรม (Transactions)' : 'Audit Log', icon: <Activity size={15} /> },
+          { id: 'settings', label: lang === 'th' ? '⚙️ ตั้งค่าระบบ (Settings)' : 'Settings', icon: <Settings size={15} /> }
+        ].map(t => (
+          <button
+            key={t.id}
+            onClick={() => setActiveSubTab(t.id)}
+            className={`btn btn-sm ${activeSubTab === t.id ? 'btn-primary' : ''}`}
+            style={{
+              borderRadius: 8,
+              padding: '8px 14px',
+              fontSize: 12.5,
+              whiteSpace: 'nowrap',
+              border: activeSubTab === t.id ? '1px solid var(--slime-green)' : '1px solid var(--card-border)',
+              background: activeSubTab === t.id ? 'var(--slime-green)' : 'rgba(17, 22, 32, 0.6)',
+              color: activeSubTab === t.id ? '#080B10' : 'var(--text-sub)'
+            }}
+          >
+            {t.icon}
+            <span>{t.label}</span>
+          </button>
+        ))}
+        <div style={{ marginLeft: 'auto' }}>
+          <button
+            onClick={fetchData}
+            className="btn btn-sm"
+            style={{ padding: '8px 12px' }}
+            title="Refresh"
+          >
+            <RefreshCw size={13} />
+          </button>
+        </div>
+      </div>
+
+      {/* --- TAB 1: AUDIO PROCESSING NODES (CLUSTER & TELEMETRY) --- */}
+      {activeSubTab === 'nodes' && (
+        <div className="fade-in">
+          {/* Node Selector Tabs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-sub)' }}>
+              {lang === 'th' ? 'เลือกโหนดประมวลผลเสียง:' : 'Select Audio Node:'}
+            </span>
+            {nodesList.map(node => (
+              <button
+                key={node.id}
+                onClick={() => setSelectedNodeId(node.id)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 14px',
+                  borderRadius: 10,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: selectedNodeId === node.id ? '1px solid var(--slime-green)' : '1px solid var(--card-border)',
+                  background: selectedNodeId === node.id ? 'rgba(0, 255, 136, 0.15)' : 'rgba(17, 22, 32, 0.8)',
+                  color: selectedNodeId === node.id ? 'var(--slime-green)' : 'var(--text-sub)',
+                  boxShadow: selectedNodeId === node.id ? '0 0 14px var(--slime-glow)' : 'none'
+                }}
+              >
+                <span style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: node.status === 'online' ? 'var(--slime-green)' : (node.status === 'draining' ? 'var(--accent-yellow)' : 'var(--danger)')
+                }} />
+                <span>{node.name || node.id}</span>
+                <span style={{ fontSize: 10, opacity: 0.7, textTransform: 'uppercase' }}>
+                  ({node.type})
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {selectedNode ? (
+            <div style={{ marginBottom: 28 }}>
+              {/* Node Metrics Cards (The 3 cards user requested!) */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
+                gap: 16,
+                marginBottom: 20
+              }}>
+                {/* 1. Storage & Cache Card */}
+                <div className="glass-panel" style={{ padding: 20, position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <HardDrive size={14} style={{ color: 'var(--slime-green)' }} />
+                        <span>{lang === 'th' ? 'ดิสก์ & แคชเพลง (STORAGE)' : 'Disk & Song Cache'}</span>
+                      </div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
+                        {selectedNode.cache ? `${selectedNode.cache.usedMb} / ${selectedNode.cache.maxMb} MB (Cache)` : `${data?.stats?.cache?.usedMb || 0} / ${data?.stats?.cache?.maxMb || 350} MB`}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--slime-green)' }}>
+                        {selectedNode.disk ? `Disk รวม: ${selectedNode.disk.usedGb}G / ${selectedNode.disk.totalGb}G (ว่าง ${selectedNode.disk.freeMb}M)` : `Disk ว่าง: ${data?.stats?.disk?.freeMb || 0} MB`}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleClearNodeCache(selectedNode.id)}
+                      className="btn btn-sm btn-danger"
+                      style={{ padding: '6px 10px', fontSize: 11 }}
+                      title="Clear Cache"
+                    >
+                      <Trash2 size={12} />
+                      <span>{lang === 'th' ? 'ล้างแคช' : 'Clear'}</span>
+                    </button>
+                  </div>
+                  {/* Cache usage progress bar */}
+                  <div style={{ width: '100%', height: 4, background: '#1E2838', borderRadius: 2, overflow: 'hidden', marginTop: 10 }}>
+                    <div style={{
+                      width: `${Math.min(100, Math.round(((selectedNode.cache?.usedMb || 0) / (selectedNode.cache?.maxMb || 1)) * 100))}%`,
+                      height: '100%',
+                      background: 'var(--slime-green)'
+                    }} />
+                  </div>
+                </div>
+
+                {/* 2. Bandwidth Monthly Quota Card */}
+                <div className="glass-panel" style={{ padding: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Wifi size={14} style={{ color: 'var(--accent-blue)' }} />
+                    <span>{lang === 'th' ? 'แบนด์วิธ (MONTHLY QUOTA)' : 'Bandwidth Quota'}</span>
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
+                    {selectedNode.bandwidth ? `${selectedNode.bandwidth.usedGb} GB / ${selectedNode.bandwidth.quotaGb} GB (${selectedNode.bandwidth.percent}%)` : `${data?.stats?.bandwidth?.usedGb || 0} GB / ${data?.stats?.bandwidth?.quotaGb || 800} GB (${data?.stats?.bandwidth?.percent || 0}%)`}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--slime-green)' }}>
+                    Tx: {selectedNode.bandwidth?.txGb || data?.stats?.bandwidth?.txGb || 0} GB • Rx: {selectedNode.bandwidth?.rxGb || data?.stats?.bandwidth?.rxGb || 0} GB
+                  </div>
+                  <div style={{ width: '100%', height: 4, background: '#1E2838', borderRadius: 2, overflow: 'hidden', marginTop: 10 }}>
+                    <div style={{
+                      width: `${selectedNode.bandwidth?.percent || data?.stats?.bandwidth?.percent || 0}%`,
+                      height: '100%',
+                      background: 'var(--accent-blue)'
+                    }} />
+                  </div>
+                </div>
+
+                {/* 3. Network & VPN Card */}
+                <div className="glass-panel" style={{ padding: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Radio size={14} style={{ color: 'var(--cyber-pink)' }} />
+                        <span>{lang === 'th' ? 'เครือข่าย & VPN' : 'Network & VPN'}</span>
+                      </div>
+                      <div style={{ fontSize: 17, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
+                        {selectedNode.vpn?.server || (selectedNode.type === 'remote' ? 'Residential / Direct' : 'Direct')}
+                        <span style={{ fontSize: 11, color: 'var(--slime-green)', marginLeft: 8 }}>
+                          (Online)
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+                        Exit IP: <strong style={{ color: 'var(--slime-green)' }}>{selectedNode.vpn?.exitIp || selectedNode.host || 'Direct'}</strong>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                        Circuit: <strong style={{ color: selectedNode.circuit?.isOpen ? 'var(--danger)' : 'var(--slime-green)' }}>{selectedNode.circuit?.status || 'CLOSED'}</strong>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <button
+                        onClick={() => handleSwitchNodeVpn(selectedNode.id)}
+                        className="btn btn-sm btn-pink"
+                        style={{ padding: '4px 8px', fontSize: 11 }}
+                        title="Switch VPN Server"
+                      >
+                        <RotateCw size={11} />
+                        <span>{lang === 'th' ? 'สลับ' : 'Switch'}</span>
+                      </button>
+                      {selectedNode.circuit?.isOpen && (
+                        <button
+                          onClick={() => handleResetNodeCircuit(selectedNode.id)}
+                          className="btn btn-sm btn-danger"
+                          style={{ padding: '4px 8px', fontSize: 11 }}
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Stream Guard & Compute Load */}
+                <div className="glass-panel" style={{ padding: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Cpu size={14} style={{ color: 'var(--accent-yellow)' }} />
+                    <span>{lang === 'th' ? 'STREAM GUARD & CPU' : 'Stream Guard & Load'}</span>
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
+                    Spawns: <span style={{ color: 'var(--slime-green)' }}>{selectedNode.activeSpawns || 0}</span> / {selectedNode.maxSpawns || 2}
+                    <span style={{ fontSize: 12, color: 'var(--text-sub)', marginLeft: 6 }}>
+                      (Queue: {selectedNode.queuedSpawns || 0})
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+                    CPU: {selectedNode.cpu || '-'}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                    RAM: {selectedNode.hostRam || selectedNode.ram || '-'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Node Management Actions */}
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => handleToggleDrain(selectedNode.id)}
+                  className={`btn btn-sm ${selectedNode.status === 'draining' ? 'btn-primary' : 'btn-danger'}`}
+                >
+                  <Power size={13} />
+                  <span>{selectedNode.status === 'draining' ? (lang === 'th' ? 'ยกเลิกโหมด Drain (กลับสู่ปกติ)' : 'Resume Node') : (lang === 'th' ? 'เปิดโหมด Drain (ไม่รับงานใหม่)' : 'Drain Node')}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setEditNodeModal(selectedNode);
+                    setNodeNameInput(selectedNode.name || selectedNode.id);
+                    setNodeMaxRoomsInput(selectedNode.maxRooms || 15);
+                  }}
+                  className="btn btn-sm"
+                >
+                  <Sliders size={13} />
+                  <span>{lang === 'th' ? 'แก้ไขชื่อ / ความจุโหนด' : 'Edit Node Settings'}</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {/* All Nodes Cluster Table */}
+          <div className="glass-panel" style={{ padding: 20 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Server size={16} style={{ color: 'var(--slime-green)' }} />
+              <span>{lang === 'th' ? 'รายชื่อโหนดในคลัสเตอร์ทั้งหมด' : 'Cluster Nodes Status'}</span>
+            </h3>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>{lang === 'th' ? 'ชื่อโหนด' : 'Node Name'}</th>
+                    <th>{lang === 'th' ? 'ประเภท' : 'Type'}</th>
+                    <th>Host / IP</th>
+                    <th>{lang === 'th' ? 'สถานะ' : 'Status'}</th>
+                    <th>CPU / RAM</th>
+                    <th>{lang === 'th' ? 'ภาระสตรีม' : 'Streams'}</th>
+                    <th>{lang === 'th' ? 'สล็อต Spawn' : 'Spawns'}</th>
+                    <th>Latency</th>
+                    <th>{lang === 'th' ? 'จัดการ' : 'Action'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {nodesList.map(n => (
+                    <tr key={n.id}>
+                      <td style={{ fontWeight: 700, color: '#FFF' }}>{n.name || n.id}</td>
+                      <td>
+                        <span style={{
+                          fontSize: 10,
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                          background: n.type === 'remote' ? 'rgba(0, 210, 255, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+                          color: n.type === 'remote' ? 'var(--accent-blue)' : '#FFF'
+                        }}>
+                          {n.type.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{n.host}:{n.port || 2333}</td>
+                      <td>
+                        <span style={{
+                          fontWeight: 700,
+                          fontSize: 11,
+                          color: n.status === 'online' ? 'var(--slime-green)' : (n.status === 'draining' ? 'var(--accent-yellow)' : 'var(--danger)')
+                        }}>
+                          ● {n.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: 11.5 }}>
+                        {n.cpu || '-'} • {n.ram || '-'}
+                      </td>
+                      <td style={{ fontWeight: 700 }}>
+                        <span style={{ color: 'var(--slime-green)' }}>{n.activeRooms || 0}</span> / {n.maxRooms || 15}
+                      </td>
+                      <td style={{ fontSize: 11.5 }}>
+                        {n.activeSpawns || 0}/{n.maxSpawns || 2} (Q: {n.queuedSpawns || 0})
+                      </td>
+                      <td style={{ fontSize: 11.5 }}>
+                        {n.latency >= 0 ? `${n.latency} ms` : '-'}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => setSelectedNodeId(n.id)}
+                          className="btn btn-sm"
+                          style={{ padding: '4px 8px', fontSize: 11 }}
+                        >
+                          {lang === 'th' ? 'เลือกดู' : 'Inspect'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- TAB 2: LIVE STREAMS / PLAYERS --- */}
+      {activeSubTab === 'streams' && (
+        <div className="glass-panel fade-in" style={{ padding: 20 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>
+            {lang === 'th' ? '🎵 ห้องที่กำลังเล่นเพลง (Live Streams)' : 'Active Discord Audio Sessions'}
+          </h3>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>{lang === 'th' ? 'เซิร์ฟเวอร์' : 'Guild'}</th>
+                  <th>{lang === 'th' ? 'เพลงที่เล่นอยู่' : 'Track Title'}</th>
+                  <th>{lang === 'th' ? 'ต้นทาง' : 'Source'}</th>
+                  <th>{lang === 'th' ? 'ความยาว & ผู้ฟัง' : 'Progress & Listeners'}</th>
+                  <th>{lang === 'th' ? 'โหนด' : 'Node'}</th>
+                  <th>{lang === 'th' ? 'จัดการ' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data?.players || []).length > 0 ? (
+                  data.players.map(p => (
+                    <tr key={p.guildId}>
+                      <td style={{ fontWeight: 700, color: '#FFF' }}>
+                        {p.guildName}
+                        {p.isSupporter && <span className="slime-badge" style={{ marginLeft: 6, fontSize: 9 }}>VIP</span>}
+                      </td>
+                      <td style={{ maxWidth: 280, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {p.trackTitle}
+                      </td>
+                      <td>
+                        <span style={{ fontSize: 11 }}>{p.source}</span>
+                      </td>
+                      <td style={{ fontSize: 12 }}>
+                        {p.elapsed} • 👥 {p.listeners || 0}
+                      </td>
+                      <td>
+                        <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#1A2230' }}>
+                          {p.nodeName}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            onClick={() => handlePlayerAction(p.guildId, 'skip')}
+                            className="btn btn-sm"
+                            style={{ padding: '4px 8px' }}
+                            title="Skip"
+                          >
+                            <FastForward size={12} />
+                          </button>
+                          <button
+                            onClick={() => handlePlayerAction(p.guildId, 'stop')}
+                            className="btn btn-sm btn-danger"
+                            style={{ padding: '4px 8px' }}
+                            title="Stop"
+                          >
+                            <Square size={12} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-dim)' }}>
+                      {lang === 'th' ? 'ไม่มีห้องที่กำลังเล่นเพลงอยู่ค่ะ' : 'No active playback sessions'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* --- TAB 3: GUILD SUBSCRIPTIONS & COMPENSATION --- */}
+      {activeSubTab === 'guilds' && (
+        <div className="glass-panel fade-in" style={{ padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700 }}>
+              {lang === 'th' ? '🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Subscriptions)' : 'Guild Subscriptions'}
+            </h3>
+            <div style={{ width: 260 }}>
+              <input
+                type="text"
+                placeholder={lang === 'th' ? 'ค้นหาชื่อ หรือ Guild ID...' : 'Search guild...'}
+                value={guildSearch}
+                onChange={(e) => setGuildSearch(e.target.value)}
+                style={{ padding: '6px 12px', fontSize: 12 }}
+              />
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>{lang === 'th' ? 'ชื่อเซิร์ฟเวอร์' : 'Guild Name'}</th>
+                  <th>{lang === 'th' ? 'สถานะ' : 'Status'}</th>
+                  <th>{lang === 'th' ? 'วันหมดอายุ' : 'Expiry'}</th>
+                  <th>{lang === 'th' ? 'รหัสชวน' : 'Referral'}</th>
+                  <th>{lang === 'th' ? 'ชดเชยวัน' : 'Adjust Days'}</th>
+                  <th>{lang === 'th' ? 'การจัดการ' : 'Action'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredGuilds.map(g => (
+                  <tr key={g.guildId}>
+                    <td>
+                      <div style={{ fontWeight: 700, color: '#FFF' }}>{g.guildName}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>ID: {g.guildId}</div>
+                    </td>
+                    <td>
+                      {g.isBanned ? (
+                        <span style={{ color: 'var(--danger)', fontWeight: 700, fontSize: 11 }}>BANNED</span>
+                      ) : g.isSupporter ? (
+                        <span className="slime-badge" style={{ fontSize: 10 }}>VIP SUPPORTER</span>
+                      ) : (
+                        <span style={{ color: 'var(--text-dim)', fontSize: 11 }}>FREE</span>
+                      )}
+                    </td>
+                    <td style={{ fontSize: 12 }}>
+                      {g.expiresAt && g.expiresAt > Date.now() ? (
+                        <span>{new Date(g.expiresAt).toLocaleDateString('th-TH')} ({Math.ceil((g.expiresAt - Date.now()) / (1000 * 60 * 60 * 24))} วัน)</span>
+                      ) : (
+                        <span style={{ color: 'var(--text-dim)' }}>-</span>
+                      )}
+                    </td>
+                    <td style={{ fontFamily: 'monospace', fontSize: 12 }}>
+                      {g.referralCode || '-'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button
+                          onClick={() => handleAdjustGuildDays(g.guildId, 7)}
+                          className="btn btn-sm"
+                          style={{ padding: '3px 8px', fontSize: 11 }}
+                        >
+                          +7d
+                        </button>
+                        <button
+                          onClick={() => handleAdjustGuildDays(g.guildId, 30)}
+                          className="btn btn-sm btn-primary"
+                          style={{ padding: '3px 8px', fontSize: 11 }}
+                        >
+                          +30d
+                        </button>
+                        <button
+                          onClick={() => handleAdjustGuildDays(g.guildId, -1)}
+                          className="btn btn-sm btn-danger"
+                          style={{ padding: '3px 8px', fontSize: 11 }}
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      {g.isBanned ? (
+                        <button
+                          onClick={() => handleUnbanGuild(g.guildId)}
+                          className="btn btn-sm btn-primary"
+                          style={{ padding: '3px 8px', fontSize: 11 }}
+                        >
+                          Unban
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setBanModal({ guildId: g.guildId, guildName: g.guildName })}
+                          className="btn btn-sm btn-danger"
+                          style={{ padding: '3px 8px', fontSize: 11 }}
+                        >
+                          Ban
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* --- TAB 4: CAMPAIGNS & EARLY BIRD DROPS --- */}
+      {activeSubTab === 'drops' && (
+        <div className="glass-panel fade-in" style={{ padding: 20 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>
+            {lang === 'th' ? '🎁 แคมเปญ Early-Bird Drops' : 'Early-Bird Drops'}
+          </h3>
+
+          {/* Create Drop Form */}
+          <form onSubmit={handleCreateDrop} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
+            <input
+              type="text"
+              placeholder={lang === 'th' ? 'รหัสโค้ด เช่น DROP1' : 'Code e.g. DROP1'}
+              value={dropCode}
+              onChange={(e) => setDropCode(e.target.value.toUpperCase())}
+              style={{ width: 180 }}
+              required
+            />
+            <input
+              type="number"
+              placeholder="Claims Limit"
+              value={dropClaims}
+              onChange={(e) => setDropClaims(parseInt(e.target.value, 10))}
+              style={{ width: 120 }}
+              min="1"
+            />
+            <input
+              type="number"
+              placeholder="Days"
+              value={dropDays}
+              onChange={(e) => setDropDays(parseInt(e.target.value, 10))}
+              style={{ width: 100 }}
+              min="1"
+            />
+            <button type="submit" className="btn btn-primary">
+              <Plus size={14} />
+              <span>{lang === 'th' ? 'สร้างแคมเปญ' : 'Create Drop'}</span>
+            </button>
+          </form>
+
+          {/* Drops Table */}
+          <div style={{ overflowX: 'auto' }}>
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>{lang === 'th' ? 'รหัสโค้ด' : 'Code'}</th>
+                  <th>{lang === 'th' ? 'ชื่อแคมเปญ' : 'Name'}</th>
+                  <th>{lang === 'th' ? 'สิทธิ์ที่เคลมแล้ว' : 'Claims'}</th>
+                  <th>{lang === 'th' ? 'จำนวนวัน' : 'Days'}</th>
+                  <th>{lang === 'th' ? 'จัดการ' : 'Action'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.values(data?.campaigns || {}).map((c) => (
+                  <tr key={c.code}>
+                    <td style={{ fontWeight: 700, color: 'var(--slime-green)', fontFamily: 'monospace' }}>{c.code}</td>
+                    <td>{c.name}</td>
+                    <td>{c.claimedCount || 0} / {c.maxClaims}</td>
+                    <td>+{c.days} วัน</td>
+                    <td>
+                      <button
+                        onClick={() => handleDeleteDrop(c.code)}
+                        className="btn btn-sm btn-danger"
+                        style={{ padding: '4px 8px' }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* --- TAB 5: TRANSACTIONS & AUDIT LOG --- */}
+      {activeSubTab === 'tx' && (
+        <div className="glass-panel fade-in" style={{ padding: 20 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>
+            {lang === 'th' ? '📋 ประวัติธุรกรรมและการเงินล่าสุด (Audit Log)' : 'Transactions & Topup Audit Log'}
+          </h3>
+
+          <div style={{ overflowX: 'auto', maxHeight: 500, overflowY: 'auto' }}>
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>{lang === 'th' ? 'วันเวลา' : 'Time'}</th>
+                  <th>{lang === 'th' ? 'เซิร์ฟเวอร์' : 'Guild'}</th>
+                  <th>{lang === 'th' ? 'ยอดเงิน' : 'Amount'}</th>
+                  <th>{lang === 'th' ? 'รหัสซอง / โค้ด' : 'Voucher / Code'}</th>
+                  <th>{lang === 'th' ? 'ผู้ทำรายการ' : 'User'}</th>
+                  <th>{lang === 'th' ? 'สถานะ' : 'Status'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data?.transactions || []).map(tx => (
+                  <tr key={tx.id || tx.timestamp}>
+                    <td style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+                      {new Date(tx.timestamp).toLocaleString('th-TH')}
+                    </td>
+                    <td style={{ fontWeight: 600, color: '#FFF' }}>
+                      {tx.guildName || tx.guildId}
+                    </td>
+                    <td style={{ fontWeight: 700, color: 'var(--slime-green)' }}>
+                      {tx.amount ? `${tx.amount} ฿` : '-'}
+                    </td>
+                    <td style={{ fontFamily: 'monospace', fontSize: 11.5 }}>
+                      {tx.voucherCode || tx.code || '-'}
+                    </td>
+                    <td style={{ fontSize: 11.5 }}>
+                      {tx.userId || 'system'}
+                    </td>
+                    <td>
+                      <span style={{ fontSize: 11, color: 'var(--slime-green)', fontWeight: 600 }}>SUCCESS</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* --- TAB 6: SETTINGS & CONFIG --- */}
+      {activeSubTab === 'settings' && (
+        <div className="glass-panel fade-in" style={{ padding: 24, maxWidth: 640 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Settings size={18} style={{ color: 'var(--slime-green)' }} />
+            <span>{lang === 'th' ? '⚙️ ตั้งค่าระบบด่วน (Live Config)' : 'System Configuration'}</span>
+          </h3>
+
+          <form onSubmit={handleSaveSettings}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                {lang === 'th' ? 'โหมดการชำระเงิน (Payment Mode)' : 'Payment Mode'}
+              </label>
+              <select
+                value={settingsForm.paymentMode}
+                onChange={(e) => setSettingsForm({ ...settingsForm, paymentMode: e.target.value })}
+              >
+                <option value="sandbox">โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)</option>
+                <option value="production">โหมดใช้งานจริง (PRODUCTION - รับซอง TrueMoney จริง)</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                {lang === 'th' ? 'ราคาผู้สนับสนุน (บาท / 30 วัน)' : 'Supporter Price (THB / 30 Days)'}
+              </label>
+              <input
+                type="number"
+                value={settingsForm.price30Days}
+                onChange={(e) => setSettingsForm({ ...settingsForm, price30Days: parseInt(e.target.value, 10) })}
+                min="0"
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'โควตาสตรีมสายฟรี (Max Free)' : 'Max Free Slots'}
+                </label>
+                <input
+                  type="number"
+                  value={settingsForm.maxFreeStreams}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, maxFreeStreams: parseInt(e.target.value, 10) })}
+                  min="0"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'โควตาสตรีมรวมสูงสุด (Max Total)' : 'Max Total Slots'}
+                </label>
+                <input
+                  type="number"
+                  value={settingsForm.maxTotalStreams}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, maxTotalStreams: parseInt(e.target.value, 10) })}
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px 18px', marginBottom: 16 }}>
+              <span>{lang === 'th' ? '💾 บันทึกการตั้งค่าระบบ' : 'Save System Settings'}</span>
+            </button>
+          </form>
+
+          <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 16 }}>
+            <button
+              onClick={handleForceSweep}
+              className="btn btn-sm"
+              style={{ width: '100%', padding: '10px' }}
+            >
+              <RefreshCw size={14} />
+              <span>{lang === 'th' ? 'สั่ง Sweep เคลียร์ห้องหมดอายุทันที (Force Sweep)' : 'Force Sweep Idle Rooms'}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- BAN MODAL --- */}
+      {banModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999
+        }}>
+          <div className="glass-panel" style={{ width: 420, padding: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14, color: 'var(--danger)' }}>
+              {lang === 'th' ? 'แบนเซิร์ฟเวอร์' : 'Ban Guild'}: {banModal.guildName}
+            </h3>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                {lang === 'th' ? 'จำนวนวันแบน' : 'Ban Days'}
+              </label>
+              <input
+                type="number"
+                value={banDays}
+                onChange={(e) => setBanDays(parseInt(e.target.value, 10))}
+                min="1"
+              />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                {lang === 'th' ? 'เหตุผล' : 'Reason'}
+              </label>
+              <input
+                type="text"
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setBanModal(null)} className="btn btn-sm">
+                {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+              </button>
+              <button onClick={handleBanGuild} className="btn btn-sm btn-danger">
+                {lang === 'th' ? 'ยืนยันการแบน' : 'Confirm Ban'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- EDIT NODE MODAL --- */}
+      {editNodeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999
+        }}>
+          <div className="glass-panel" style={{ width: 420, padding: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>
+              {lang === 'th' ? 'ตั้งค่าโหนด' : 'Configure Node'}: {editNodeModal.id}
+            </h3>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                {lang === 'th' ? 'ชื่อที่แสดง (Display Name)' : 'Display Name'}
+              </label>
+              <input
+                type="text"
+                value={nodeNameInput}
+                onChange={(e) => setNodeNameInput(e.target.value)}
+              />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                {lang === 'th' ? 'ความจุห้องสูงสุด (Max Rooms)' : 'Max Rooms'}
+              </label>
+              <input
+                type="number"
+                value={nodeMaxRoomsInput}
+                onChange={(e) => setNodeMaxRoomsInput(parseInt(e.target.value, 10))}
+                min="1"
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditNodeModal(null)} className="btn btn-sm">
+                {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+              </button>
+              <button onClick={handleSaveNodeConfig} className="btn btn-sm btn-primary">
+                {lang === 'th' ? 'บันทึก' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

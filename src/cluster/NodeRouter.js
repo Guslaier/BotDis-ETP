@@ -128,6 +128,10 @@ class NodeRouter extends EventEmitter {
                         node.ram = parsed.ram || '-';
                         node.hostRam = parsed.hostRam || '-';
                         node.vpn = parsed.vpn || null;
+                        node.disk = parsed.disk || null;
+                        node.bandwidth = parsed.bandwidth || null;
+                        node.cache = parsed.cache || null;
+                        node.circuit = parsed.circuit || null;
                         node.activeSpawns = parsed.activeSpawns || 0;
                         node.maxSpawns = parsed.maxSpawns || 2;
                         node.queuedSpawns = parsed.queuedSpawns || 0;
@@ -180,8 +184,105 @@ class NodeRouter extends EventEmitter {
             if (stats.ram !== undefined) local.ram = stats.ram;
             if (stats.hostRam !== undefined) local.hostRam = stats.hostRam;
             if (stats.vpn !== undefined) local.vpn = stats.vpn;
+            if (stats.disk !== undefined) local.disk = stats.disk;
+            if (stats.bandwidth !== undefined) local.bandwidth = stats.bandwidth;
+            if (stats.cache !== undefined) local.cache = stats.cache;
+            if (stats.circuit !== undefined) local.circuit = stats.circuit;
+            if (stats.activeSpawns !== undefined) local.activeSpawns = stats.activeSpawns;
+            if (stats.maxSpawns !== undefined) local.maxSpawns = stats.maxSpawns;
+            if (stats.queuedSpawns !== undefined) local.queuedSpawns = stats.queuedSpawns;
             local.lastPing = Date.now();
         }
+    }
+
+    async clearNodeCache(nodeId) {
+        const node = this.nodes.get(nodeId);
+        if (!node) return { success: false, error: 'Node not found' };
+
+        if (node.type === 'remote') {
+            return new Promise((resolve) => {
+                const req = http.request({
+                    hostname: node.host,
+                    port: node.port || 2333,
+                    path: '/api/node/cache/clear',
+                    method: 'POST',
+                    timeout: 4000,
+                    headers: { 'x-node-secret': process.env.NODE_AUTH_SECRET || '' }
+                }, (res) => {
+                    let d = '';
+                    res.on('data', c => d += c);
+                    res.on('end', () => {
+                        try { resolve(JSON.parse(d)); } catch { resolve({ success: res.statusCode === 200 }); }
+                    });
+                });
+                req.on('error', (err) => resolve({ success: false, error: err.message }));
+                req.end();
+            });
+        }
+
+        const cacheManager = require('../CacheManager');
+        return { success: true, ...cacheManager.clearAllCache() };
+    }
+
+    async switchNodeVpn(nodeId) {
+        const node = this.nodes.get(nodeId);
+        if (!node) return { success: false, error: 'Node not found' };
+
+        if (node.type === 'remote') {
+            return new Promise((resolve) => {
+                const req = http.request({
+                    hostname: node.host,
+                    port: node.port || 2333,
+                    path: '/api/node/vpn/switch',
+                    method: 'POST',
+                    timeout: 4000,
+                    headers: { 'x-node-secret': process.env.NODE_AUTH_SECRET || '' }
+                }, (res) => {
+                    let d = '';
+                    res.on('data', c => d += c);
+                    res.on('end', () => {
+                        try { resolve(JSON.parse(d)); } catch { resolve({ success: res.statusCode === 200 }); }
+                    });
+                });
+                req.on('error', (err) => resolve({ success: false, error: err.message }));
+                req.end();
+            });
+        }
+
+        const proxyManager = require('../helpers/proxyManager');
+        const result = await proxyManager.switchVpnServer('next');
+        const newExitIp = await proxyManager.fetchPublicExitIp(4000).catch(() => null);
+        return { success: true, result, newExitIp };
+    }
+
+    async resetNodeCircuit(nodeId) {
+        const node = this.nodes.get(nodeId);
+        if (!node) return { success: false, error: 'Node not found' };
+
+        if (node.type === 'remote') {
+            return new Promise((resolve) => {
+                const req = http.request({
+                    hostname: node.host,
+                    port: node.port || 2333,
+                    path: '/api/node/circuit/reset',
+                    method: 'POST',
+                    timeout: 4000,
+                    headers: { 'x-node-secret': process.env.NODE_AUTH_SECRET || '' }
+                }, (res) => {
+                    let d = '';
+                    res.on('data', c => d += c);
+                    res.on('end', () => {
+                        try { resolve(JSON.parse(d)); } catch { resolve({ success: res.statusCode === 200 }); }
+                    });
+                });
+                req.on('error', (err) => resolve({ success: false, error: err.message }));
+                req.end();
+            });
+        }
+
+        const youtubeCircuit = require('../helpers/youtubeCircuit');
+        youtubeCircuit.reset();
+        return { success: true };
     }
 
     selectBestNode(guildId, isSupporter = false) {

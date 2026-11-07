@@ -18,6 +18,7 @@ class AdminServer {
         this.client = client;
         this.kazagumo = kazagumo;
         this.port = parseInt(process.env.WEB_PORT || '3000', 10);
+        this.host = process.env.WEB_HOST || '0.0.0.0';
         this.server = null;
     }
 
@@ -36,8 +37,8 @@ class AdminServer {
             });
         });
 
-        this.server.listen(this.port, '0.0.0.0', () => {
-            console.log(`[AdminServer] Web Portal & Admin running on http://0.0.0.0:${this.port}`);
+        this.server.listen(this.port, this.host, () => {
+            console.log(`[AdminServer] Web Portal & Admin running on http://${this.host}:${this.port}`);
         });
 
         this.server.on('error', (err) => {
@@ -250,7 +251,41 @@ class AdminServer {
         const query = parsedUrl.query;
         const ip = this._getClientIp(req);
 
-        // --- Static HTML Routes ---
+        const distDir = fs.existsSync(path.join(process.cwd(), 'dist')) 
+            ? path.join(process.cwd(), 'dist')
+            : (fs.existsSync(path.join(process.cwd(), 'frontend', 'dist')) ? path.join(process.cwd(), 'frontend', 'dist') : null);
+
+        // --- Static HTML & SPA Routes ---
+        if (distDir && (pathname === '/' || pathname === '/donate' || pathname === '/topup' || pathname === '/admin' || pathname === '/dashboard' || pathname === '/dashboard.html' || pathname === '/admin.html')) {
+            return this._sendHtml(res, path.join(distDir, 'index.html'));
+        }
+
+        // --- Static Asset Routes (Vite React dist or public fallback) ---
+        if (distDir && (pathname.startsWith('/assets/') || pathname === '/goolix-avatar.jpg' || pathname.endsWith('.js') || pathname.endsWith('.css') || pathname.endsWith('.jpg') || pathname.endsWith('.png') || pathname.endsWith('.svg') || pathname.endsWith('.ico'))) {
+            const relPath = pathname.replace(/^\//, '');
+            const distFilePath = path.join(distDir, relPath);
+            if (fs.existsSync(distFilePath)) {
+                const ext = path.extname(distFilePath).toLowerCase();
+                const mimeTypes = {
+                    '.html': 'text/html; charset=utf-8',
+                    '.js': 'application/javascript; charset=utf-8',
+                    '.css': 'text/css; charset=utf-8',
+                    '.json': 'application/json; charset=utf-8',
+                    '.jpg': 'image/jpeg',
+                    '.jpeg': 'image/jpeg',
+                    '.png': 'image/png',
+                    '.svg': 'image/svg+xml',
+                    '.ico': 'image/x-icon'
+                };
+                res.writeHead(200, {
+                    'Content-Type': mimeTypes[ext] || 'application/octet-stream',
+                    'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable'
+                });
+                return fs.createReadStream(distFilePath).pipe(res);
+            }
+        }
+
+        // --- Fallback Static HTML Routes ---
         if (pathname === '/' || pathname === '/donate' || pathname === '/topup') {
             return this._sendHtml(res, path.join(__dirname, 'public/topup.html'));
         }
@@ -259,7 +294,7 @@ class AdminServer {
             return this._sendHtml(res, path.join(__dirname, 'public/dashboard.html'));
         }
 
-        // --- Static Asset Routes (Images, CSS, Logos) ---
+        // --- Static Asset Routes Fallback (Images, CSS, Logos) ---
         if (pathname.startsWith('/assets/') || pathname === '/goolix-avatar.jpg' || pathname.endsWith('.jpg') || pathname.endsWith('.png') || pathname.endsWith('.svg')) {
             const relPath = pathname.replace(/^\//, '');
             const filePath = path.join(__dirname, 'public', relPath);
@@ -569,6 +604,18 @@ class AdminServer {
                     cpu: cpuUsage.display,
                     ram: `${rssMb} MB (Node)`,
                     hostRam: `${sysMem.usedMb}/${sysMem.totalMb} MB (${sysMem.percent}%)`,
+                    disk: disk,
+                    bandwidth: net,
+                    cache: cache,
+                    circuit: {
+                        isOpen: youtubeCircuit.isOpen(),
+                        reason: youtubeCircuit.lastReason || null,
+                        cooldownSec: Math.max(0, Math.round((youtubeCircuit.openUntil - Date.now()) / 1000)),
+                        status: youtubeCircuit.isOpen() ? 'OPEN' : 'CLOSED'
+                    },
+                    activeSpawns: typeof cacheManager.getActiveSpawns === 'function' ? cacheManager.getActiveSpawns() : 0,
+                    maxSpawns: cacheManager.maxConcurrentSpawns || 2,
+                    queuedSpawns: typeof cacheManager.getQueuedSpawnsCount === 'function' ? cacheManager.getQueuedSpawnsCount() : 0,
                     vpn: {
                         enabled: isVpnActive,
                         server: isVpnActive ? vpnServerName : 'DIRECT',
@@ -794,6 +841,24 @@ class AdminServer {
                     maxTotalStreams: maxTotal
                 });
                 return this._sendJson(res, 200, { success: true, config: updated });
+            }
+
+            if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/cache/clear') && req.method === 'POST') {
+                const nodeId = pathname.split('/')[4];
+                const resClear = await nodeRouter.clearNodeCache(nodeId);
+                return this._sendJson(res, 200, resClear);
+            }
+
+            if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/vpn/switch') && req.method === 'POST') {
+                const nodeId = pathname.split('/')[4];
+                const resVpn = await nodeRouter.switchNodeVpn(nodeId);
+                return this._sendJson(res, 200, resVpn);
+            }
+
+            if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/circuit/reset') && req.method === 'POST') {
+                const nodeId = pathname.split('/')[4];
+                const resCircuit = await nodeRouter.resetNodeCircuit(nodeId);
+                return this._sendJson(res, 200, resCircuit);
             }
 
             if (pathname === '/api/admin/vpn/switch' && req.method === 'POST') {

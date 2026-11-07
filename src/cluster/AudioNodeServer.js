@@ -2,9 +2,11 @@ require('dotenv').config();
 const http = require('http');
 const url = require('url');
 const os = require('os');
+const fs = require('fs');
 const crypto = require('crypto');
 const cacheManager = require('../CacheManager');
 const proxyManager = require('../helpers/proxyManager');
+const youtubeCircuit = require('../helpers/youtubeCircuit');
 
 // Clear system proxy variables so yt-dlp always uses direct residential internet when no proxy configured
 delete process.env.http_proxy;
@@ -69,6 +71,55 @@ class AudioNodeServer {
         };
     }
 
+    _getDiskSpace() {
+        try {
+            const rootPath = process.platform === 'win32' ? process.cwd().slice(0, 3) : '/';
+            if (fs.statfsSync) {
+                const s = fs.statfsSync(rootPath);
+                const totalBytes = Number(s.blocks) * Number(s.bsize);
+                const freeBytes = Number(s.bavail) * Number(s.bsize);
+                const usedBytes = totalBytes - freeBytes;
+                return {
+                    totalGb: (totalBytes / (1024 ** 3)).toFixed(1),
+                    freeMb: Math.round(freeBytes / (1024 ** 2)),
+                    usedGb: (usedBytes / (1024 ** 3)).toFixed(1),
+                    percent: totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0
+                };
+            }
+        } catch {}
+        return { totalGb: '5.0', freeMb: 1024, usedGb: '4.0', percent: 80 };
+    }
+
+    _getNetworkBandwidth() {
+        let rxBytes = 0;
+        let txBytes = 0;
+        try {
+            if (process.platform === 'linux' && fs.existsSync('/proc/net/dev')) {
+                const lines = fs.readFileSync('/proc/net/dev', 'utf8').split('\n');
+                for (const line of lines) {
+                    if (line.includes(':') && !line.includes('lo:')) {
+                        const parts = line.split(':')[1].trim().split(/\s+/);
+                        rxBytes += parseInt(parts[0], 10) || 0;
+                        txBytes += parseInt(parts[8], 10) || 0;
+                    }
+                }
+            }
+        } catch {}
+        const usedGb = ((rxBytes + txBytes) / (1024 ** 3)).toFixed(2);
+        const txGb = (txBytes / (1024 ** 3)).toFixed(2);
+        const rxGb = (rxBytes / (1024 ** 3)).toFixed(2);
+        const used = parseFloat(usedGb);
+        const quotaGb = 800;
+        const percent = Math.min(100, Math.round((used / quotaGb) * 100));
+        return {
+            usedGb: used,
+            txGb: parseFloat(txGb),
+            rxGb: parseFloat(rxGb),
+            quotaGb,
+            percent
+        };
+    }
+
     _checkAuth(req) {
         if (!this.authSecret) return true;
         const authHeader = req.headers['authorization'];
@@ -128,6 +179,9 @@ class AudioNodeServer {
             if (pathname === '/api/node/stats') {
                 const cpuUsage = this._getCpuUsage();
                 const sysMem = this._getSystemMemory();
+                const disk = this._getDiskSpace();
+                const bandwidth = this._getNetworkBandwidth();
+                const cache = cacheManager.getCacheStats();
                 const mem = process.memoryUsage();
                 const rssMb = Math.round(mem.rss / (1024 * 1024));
                 const vpnSourceIp = proxyManager.getVpnSourceIp();
@@ -148,6 +202,15 @@ class AudioNodeServer {
                     cpu: cpuUsage.display,
                     ram: `${rssMb} MB (Node)`,
                     hostRam: `${sysMem.usedMb}/${sysMem.totalMb} MB (${sysMem.percent}%)`,
+                    disk: disk,
+                    bandwidth: bandwidth,
+                    cache: cache,
+                    circuit: {
+                        isOpen: youtubeCircuit.isOpen(),
+                        reason: youtubeCircuit.lastReason || null,
+                        cooldownSec: Math.max(0, Math.round((youtubeCircuit.openUntil - Date.now()) / 1000)),
+                        status: youtubeCircuit.isOpen() ? 'OPEN' : 'CLOSED'
+                    },
                     vpn: {
                         enabled: isVpnActive,
                         server: isVpnActive ? vpnServerName : 'DIRECT',
@@ -156,6 +219,25 @@ class AudioNodeServer {
                     },
                     uptime: process.uptime()
                 });
+            }
+
+            // Node Action: Clear Cache
+            if (pathname === '/api/node/cache/clear' && req.method === 'POST') {
+                const resClear = cacheManager.clearAllCache();
+                return this._sendJson(res, 200, { success: true, ...resClear });
+            }
+
+            // Node Action: Switch VPN
+            if (pathname === '/api/node/vpn/switch' && req.method === 'POST') {
+                const result = await proxyManager.switchVpnServer('next');
+                const newExitIp = await proxyManager.fetchPublicExitIp(4000).catch(() => null);
+                return this._sendJson(res, 200, { success: true, result, newExitIp });
+            }
+
+            // Node Action: Reset Circuit Breaker
+            if (pathname === '/api/node/circuit/reset' && req.method === 'POST') {
+                youtubeCircuit.reset();
+                return this._sendJson(res, 200, { success: true });
             }
 
             // Pre-cache track endpoint: /api/node/precache?uri=...&identifier=...&title=...
