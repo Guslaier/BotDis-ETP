@@ -328,8 +328,9 @@ class AudioNodeServer {
 
                     streamInstance = spawned;
 
+                    const contentType = spawned.streamType === 'webm/opus' ? 'audio/webm; codecs=opus' : 'audio/ogg; codecs=opus';
                     res.writeHead(200, {
-                        'Content-Type': 'audio/ogg; codecs=opus',
+                        'Content-Type': contentType,
                         'Transfer-Encoding': 'chunked',
                         'Cache-Control': 'no-cache, no-store',
                         'Connection': 'keep-alive'

@@ -319,12 +319,16 @@ class Player {
     _createBufferedResource(stream) {
         // High-capacity Opus demuxer buffer: buffers up to 250 Opus frames (~5-7s) in RAM (~180 KB)
         // Prevents audio stutter caused by the default tiny 16-frame buffer in @discordjs/voice
-        const demuxer = new prism.opus.OggDemuxer({ readableHighWaterMark: 250 });
+        const isWebm = stream && stream.streamType === 'webm/opus';
+        const demuxer = isWebm
+            ? new prism.opus.WebmDemuxer({ readableHighWaterMark: 250 })
+            : new prism.opus.OggDemuxer({ readableHighWaterMark: 250 });
+
         stream.on('error', (err) => {
             try { demuxer.destroy(err); } catch {}
         });
         demuxer.on('error', (err) => {
-            console.error('[AudioDemuxer] Demuxer stream error:', err.message);
+            console.error(`[AudioDemuxer] ${isWebm ? 'Webm' : 'Ogg'} demuxer stream error:`, err.message);
         });
 
         const demuxed = stream.pipe(demuxer);
@@ -336,10 +340,8 @@ class Player {
             try { demuxer.destroy(); } catch {}
         };
 
-        const resource = createAudioResource(demuxed, { inputType: StreamType.Opus, inlineVolume: true });
-        if (resource.volume) {
-            resource.volume.setVolume(Math.max(0, (this.volume ?? 100) / 100));
-        }
+        // Zero-copy direct passthrough: inlineVolume = false completely bypasses JS OpusDecoder & OpusEncoder
+        const resource = createAudioResource(demuxed, { inputType: StreamType.Opus, inlineVolume: false });
 
         return {
             resource,

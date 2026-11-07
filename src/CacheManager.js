@@ -261,10 +261,13 @@ class CacheManager {
             args.push('--cookies', cookiesPath);
         }
 
+        if (this.ffmpegPath) {
+            args.push('--ffmpeg-location', path.dirname(this.ffmpegPath));
+        }
+
         if (isStreamOutput) {
             args.push('-o', '-');
         } else if (outTemplate) {
-            args.push('--ffmpeg-location', path.dirname(this.ffmpegPath));
             args.push('-x', '--audio-format', 'opus');
             args.push('--force-overwrites');
             args.push('-o', outTemplate);
@@ -311,6 +314,7 @@ class CacheManager {
         // Fast path: Zero-copy direct disk stream (No child process, zero CPU overhead)
         if (seekSeconds <= 0 && !filterChain) {
             const fileStream = fs.createReadStream(targetPath, { highWaterMark: 1024 * 512 });
+            fileStream.streamType = 'ogg/opus';
             fileStream.kill = () => {
                 try { fileStream.destroy(); } catch {}
             };
@@ -336,6 +340,7 @@ class CacheManager {
 
         const ffmpegProc = spawn(this.ffmpegPath, ffmpegArgs, { windowsHide: true });
         ffmpegProc.on('error', (err) => console.error('[CacheManager] ffmpeg cached stream error:', err.message));
+        ffmpegProc.stdout.streamType = 'ogg/opus';
         ffmpegProc.stdout.kill = () => {
             try { ffmpegProc.kill('SIGKILL'); } catch {}
         };
@@ -368,7 +373,7 @@ class CacheManager {
             return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate);
         }
 
-        const isYouTube = !track.uri?.includes('soundcloud.com');
+        const isYouTube = !track.uri?.includes('soundcloud.com') && !track.uri?.startsWith('scsearch');
 
         // 2. FAST PATH: If YouTube circuit is OPEN, do not waste time attempting YouTube!
         // Immediately pipe from SoundCloud (latency ~2-3s).
@@ -428,9 +433,12 @@ class CacheManager {
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
             this._ensureExecutable();
-            const isYouTube = !sourceUri.includes('soundcloud.com');
+            const isYouTube = !sourceUri.includes('soundcloud.com') && !sourceUri.startsWith('scsearch');
             const ytdlpArgs = this._buildYtDlpArgs(sourceUri, true, null, seekSeconds);
             const ytdlpProc = spawn(this.binPath, ytdlpArgs, { windowsHide: true });
+
+            const filterChain = this._buildAudioFilterChain(volume, filter);
+            const useDirectPassthrough = isYouTube && !filterChain;
 
             const threadQueueSize = process.env.THREAD_QUEUE_SIZE || '1024';
             const opusBitrate = bitrate || process.env.OPUS_BITRATE || '64k';
@@ -438,44 +446,52 @@ class CacheManager {
             const preBufferKb = parseInt(process.env.PRE_BUFFER_KB || '32', 10);
             const preBufferTimeoutMs = parseInt(process.env.PRE_BUFFER_TIMEOUT_MS || '200', 10);
 
-            const ffmpegArgs = [
-                '-nostdin',
-                '-loglevel', 'error',
-                '-thread_queue_size', threadQueueSize
-            ];
-            // If seek was not already handled directly by yt-dlp download sections (e.g. SoundCloud)
-            if (seekSeconds > 0 && !isYouTube) {
-                ffmpegArgs.push('-ss', seekSeconds.toString());
-            }
-            ffmpegArgs.push('-i', 'pipe:0', '-vn');
-            const filterChain = this._buildAudioFilterChain(volume, filter);
-            if (filterChain) {
-                ffmpegArgs.push('-af', filterChain);
-            }
-            ffmpegArgs.push(
-                '-c:a', 'libopus',
-                '-b:a', opusBitrate,
-                '-vbr', 'on',
-                '-application', 'audio',
-                '-ar', '48000',
-                '-ac', '2',
-                '-f', 'opus',
-                'pipe:1'
-            );
-
-            const ffmpegProc = spawn(this.ffmpegPath, ffmpegArgs, { windowsHide: true });
-
-            // Prevent unhandled EPIPE errors
-            ytdlpProc.stdout.on('error', () => {});
-            ffmpegProc.stdin.on('error', () => {});
-            ffmpegProc.stdout.on('error', () => {});
-
-            // Pipe yt-dlp stdout into ffmpeg stdin
-            ytdlpProc.stdout.pipe(ffmpegProc.stdin);
-
-            // High-capacity PassThrough stream buffer configured via env
+            let ffmpegProc = null;
             const outputStream = new PassThrough({ highWaterMark: 1024 * passThroughKb });
-            ffmpegProc.stdout.pipe(outputStream);
+
+            if (useDirectPassthrough) {
+                console.log(`[CacheManager:Stream] Hybrid WebmOpus Direct Passthrough for "${track.title}" (Zero FFmpeg CPU | Seek: ${seekSeconds}s)`);
+                outputStream.streamType = 'webm/opus';
+                ytdlpProc.stdout.on('error', () => {});
+                ytdlpProc.stdout.pipe(outputStream);
+            } else {
+                console.log(`[CacheManager:Stream] FFmpeg DSP Pipe for "${track.title}" (Filter: ${filter} | Vol: ${volume}% | Bitrate: ${opusBitrate} | Seek: ${seekSeconds}s)`);
+                outputStream.streamType = 'ogg/opus';
+                const ffmpegArgs = [
+                    '-nostdin',
+                    '-loglevel', 'error',
+                    '-thread_queue_size', threadQueueSize
+                ];
+                // If seek was not already handled directly by yt-dlp download sections (e.g. SoundCloud)
+                if (seekSeconds > 0 && !isYouTube) {
+                    ffmpegArgs.push('-ss', seekSeconds.toString());
+                }
+                ffmpegArgs.push('-i', 'pipe:0', '-vn');
+                if (filterChain) {
+                    ffmpegArgs.push('-af', filterChain);
+                }
+                ffmpegArgs.push(
+                    '-c:a', 'libopus',
+                    '-b:a', opusBitrate,
+                    '-vbr', 'on',
+                    '-application', 'audio',
+                    '-ar', '48000',
+                    '-ac', '2',
+                    '-f', 'opus',
+                    'pipe:1'
+                );
+
+                ffmpegProc = spawn(this.ffmpegPath, ffmpegArgs, { windowsHide: true });
+
+                // Prevent unhandled EPIPE errors
+                ytdlpProc.stdout.on('error', () => {});
+                ffmpegProc.stdin.on('error', () => {});
+                ffmpegProc.stdout.on('error', () => {});
+
+                // Pipe yt-dlp stdout into ffmpeg stdin
+                ytdlpProc.stdout.pipe(ffmpegProc.stdin);
+                ffmpegProc.stdout.pipe(outputStream);
+            }
 
             let hasOutput = false;
             let isHandled = false;
@@ -489,10 +505,12 @@ class CacheManager {
                 if (stderrBuffer.length > 3000) stderrBuffer = stderrBuffer.slice(-3000);
             });
 
-            ffmpegProc.stderr.on('data', (chunk) => {
-                ffmpegStderr += chunk.toString();
-                if (ffmpegStderr.length > 2000) ffmpegStderr = ffmpegStderr.slice(-2000);
-            });
+            if (ffmpegProc) {
+                ffmpegProc.stderr.on('data', (chunk) => {
+                    ffmpegStderr += chunk.toString();
+                    if (ffmpegStderr.length > 2000) ffmpegStderr = ffmpegStderr.slice(-2000);
+                });
+            }
 
             // Combined kill helper for clean termination
             outputStream.kill = () => {
@@ -506,7 +524,9 @@ class CacheManager {
                     releaseTimer = null;
                 }
                 try { ytdlpProc.kill('SIGKILL'); } catch {}
-                try { ffmpegProc.kill('SIGKILL'); } catch {}
+                if (ffmpegProc) {
+                    try { ffmpegProc.kill('SIGKILL'); } catch {}
+                }
                 try { outputStream.destroy(); } catch {}
             };
 
@@ -605,10 +625,12 @@ class CacheManager {
                 await triggerFallbackOrReject(err.message);
             });
 
-            ffmpegProc.on('error', async (err) => {
-                console.error(`[CacheManager] ffmpeg error on "${track.title}":`, err.message);
-                await triggerFallbackOrReject(err.message);
-            });
+            if (ffmpegProc) {
+                ffmpegProc.on('error', async (err) => {
+                    console.error(`[CacheManager] ffmpeg error on "${track.title}":`, err.message);
+                    await triggerFallbackOrReject(err.message);
+                });
+            }
 
             ytdlpProc.on('close', async (code) => {
                 if (code !== 0 && !hasOutput) {
@@ -622,14 +644,16 @@ class CacheManager {
                 }
             });
 
-            ffmpegProc.on('close', async (code) => {
-                if (!hasOutput) {
-                    if (ffmpegStderr) {
-                        console.warn(`[CacheManager ffmpeg stderr]:\n${ffmpegStderr.trim()}`);
+            if (ffmpegProc) {
+                ffmpegProc.on('close', async (code) => {
+                    if (!hasOutput) {
+                        if (ffmpegStderr) {
+                            console.warn(`[CacheManager ffmpeg stderr]:\n${ffmpegStderr.trim()}`);
+                        }
+                        await triggerFallbackOrReject(ffmpegStderr || `ffmpeg exit code ${code}`);
                     }
-                    await triggerFallbackOrReject(ffmpegStderr || `ffmpeg exit code ${code}`);
-                }
-            });
+                });
+            }
 
             // 12s primary timeout (fast failover instead of 30s)
             streamTimeout = setTimeout(async () => {
@@ -671,6 +695,8 @@ class CacheManager {
                 if (res.statusCode !== 200) {
                     return reject(new Error(`Remote node ${node.id} responded with status ${res.statusCode}`));
                 }
+
+                res.streamType = (res.headers['content-type'] && res.headers['content-type'].includes('webm')) ? 'webm/opus' : 'ogg/opus';
 
                 res.kill = () => {
                     try { req.destroy(); } catch {}
@@ -746,7 +772,7 @@ class CacheManager {
             try {
                 this._ensureExecutable();
                 const outTemplate = path.join(this.cacheDir, `${trackHash}.%(ext)s`);
-            const isYouTube = !track.uri?.includes('soundcloud.com');
+            const isYouTube = !track.uri?.includes('soundcloud.com') && !track.uri?.startsWith('scsearch');
 
             // If circuit is open, download directly from SoundCloud
             if (isYouTube && youtubeCircuit.isOpen()) {
