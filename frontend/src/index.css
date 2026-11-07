@@ -106,6 +106,45 @@ body {
   animation: pulseDot 1.6s infinite ease-in-out;
 }
 
+.slime-badge-danger {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: var(--danger) !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
+.slime-badge-danger::before {
+  background: var(--danger) !important;
+  box-shadow: 0 0 8px var(--danger) !important;
+}
+
+.slime-badge-warning {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: var(--accent-yellow) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+.slime-badge-warning::before {
+  background: var(--accent-yellow) !important;
+  box-shadow: 0 0 8px var(--accent-yellow) !important;
+}
+
+.slime-badge-blue,
+.slime-badge-info {
+  background: rgba(0, 210, 255, 0.12) !important;
+  color: var(--accent-blue) !important;
+  border: 1px solid rgba(0, 210, 255, 0.3) !important;
+}
+
+.slime-badge-blue::before,
+.slime-badge-info::before {
+  background: var(--accent-blue) !important;
+  box-shadow: 0 0 8px var(--accent-blue) !important;
+}
+
+.slime-badge-no-dot::before {
+  display: none !important;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;

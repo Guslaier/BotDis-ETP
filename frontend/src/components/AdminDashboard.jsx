@@ -891,13 +891,19 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     borderRadius: '50%',
                     background: selectedNode.status === 'online' ? 'var(--slime-green)' : (selectedNode.status === 'draining' ? 'var(--accent-yellow)' : 'var(--danger)')
                   }} />
-                  <span style={{ fontWeight: 700, color: selectedNode.status === 'online' ? 'var(--slime-green)' : '#FFF' }}>
+                  <span style={{ fontWeight: 700, color: selectedNode.status === 'online' ? 'var(--slime-green)' : (selectedNode.status === 'draining' ? 'var(--accent-yellow)' : 'var(--danger)') }}>
                     {selectedNode.status?.toUpperCase()}
                   </span>
                   <span style={{ color: 'var(--text-dim)' }}>•</span>
                   <span style={{ color: 'var(--text-sub)' }}>{selectedNode.activeRooms || 0}/{selectedNode.maxRooms} Rooms</span>
                   <span style={{ color: 'var(--text-dim)' }}>•</span>
-                  <span style={{ color: 'var(--text-sub)' }}>{selectedNode.latency >= 0 ? `${selectedNode.latency}ms` : 'Local'}</span>
+                  <span style={{ color: 'var(--text-sub)' }}>
+                    {selectedNode.type === 'remote'
+                      ? (selectedNode.status === 'online'
+                          ? `${selectedNode.latency >= 0 ? selectedNode.latency : 0}ms • Remote`
+                          : (lang === 'th' ? 'ขาดการเชื่อมต่อ • Remote' : 'Offline • Remote'))
+                      : 'Local Controller'}
+                  </span>
                 </div>
               )}
             </div>
@@ -922,159 +928,211 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             </div>
           </div>
 
-          {selectedNode ? (
-            <div style={{ marginBottom: 28 }}>
-              {/* Node Metrics Cards (The 3 cards user requested!) */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
-                gap: 16,
-                marginBottom: 20
-              }}>
-                {/* 1. Storage & Cache Card */}
-                <div className="glass-panel" style={{ padding: 20, position: 'relative' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <HardDrive size={14} style={{ color: 'var(--slime-green)' }} />
-                        <span>{lang === 'th' ? 'ดิสก์ & แคชเพลง (STORAGE)' : 'Disk & Song Cache'}</span>
-                      </div>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
-                        {selectedNode.cache ? `${selectedNode.cache.usedMb} / ${selectedNode.cache.maxMb} MB (Cache)` : `${data?.stats?.cache?.usedMb || 0} / ${data?.stats?.cache?.maxMb || 350} MB`}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--slime-green)' }}>
-                        {selectedNode.disk ? `Disk รวม: ${selectedNode.disk.usedGb}G / ${selectedNode.disk.totalGb}G (ว่าง ${selectedNode.disk.freeMb}M)` : `Disk ว่าง: ${data?.stats?.disk?.freeMb || 0} MB`}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleClearNodeCache(selectedNode.id)}
-                      className="btn btn-sm btn-danger"
-                      style={{ padding: '6px 10px', fontSize: 11 }}
-                      title="Clear Cache"
-                    >
-                      <Trash2 size={12} />
-                      <span>{lang === 'th' ? 'ล้างแคช' : 'Clear'}</span>
-                    </button>
-                  </div>
-                  {/* Cache usage progress bar */}
-                  <div style={{ width: '100%', height: 4, background: '#1E2838', borderRadius: 2, overflow: 'hidden', marginTop: 10 }}>
-                    <div style={{
-                      width: `${Math.min(100, Math.round(((selectedNode.cache?.usedMb || 0) / (selectedNode.cache?.maxMb || 1)) * 100))}%`,
-                      height: '100%',
-                      background: 'var(--slime-green)'
-                    }} />
-                  </div>
-                </div>
+          {selectedNode ? (() => {
+            const isOffline = selectedNode.status === 'offline';
+            const isRemote = selectedNode.type === 'remote';
 
-                {/* 2. Bandwidth Monthly Quota Card */}
-                <div className="glass-panel" style={{ padding: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Wifi size={14} style={{ color: 'var(--accent-blue)' }} />
-                    <span>{lang === 'th' ? 'แบนด์วิธ (MONTHLY QUOTA)' : 'Bandwidth Quota'}</span>
-                  </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
-                    {selectedNode.bandwidth ? `${selectedNode.bandwidth.usedGb} GB / ${selectedNode.bandwidth.quotaGb} GB (${selectedNode.bandwidth.percent}%)` : `${data?.stats?.bandwidth?.usedGb || 0} GB / ${data?.stats?.bandwidth?.quotaGb || 800} GB (${data?.stats?.bandwidth?.percent || 0}%)`}
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--slime-green)' }}>
-                    Tx: {selectedNode.bandwidth?.txGb || data?.stats?.bandwidth?.txGb || 0} GB • Rx: {selectedNode.bandwidth?.rxGb || data?.stats?.bandwidth?.rxGb || 0} GB
-                  </div>
-                  <div style={{ width: '100%', height: 4, background: '#1E2838', borderRadius: 2, overflow: 'hidden', marginTop: 10 }}>
-                    <div style={{
-                      width: `${selectedNode.bandwidth?.percent || data?.stats?.bandwidth?.percent || 0}%`,
-                      height: '100%',
-                      background: 'var(--accent-blue)'
-                    }} />
-                  </div>
-                </div>
-
-                {/* 3. Network & VPN Card */}
-                <div className="glass-panel" style={{ padding: 20 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Radio size={14} style={{ color: 'var(--cyber-pink)' }} />
-                        <span>{lang === 'th' ? 'เครือข่าย & VPN' : 'Network & VPN'}</span>
+            return (
+              <div style={{ marginBottom: 28 }}>
+                {/* Node Metrics Cards */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
+                  gap: 16,
+                  marginBottom: 20
+                }}>
+                  {/* 1. Storage & Cache Card */}
+                  <div className="glass-panel" style={{ padding: 20, position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <HardDrive size={14} style={{ color: 'var(--slime-green)' }} />
+                          <span>{lang === 'th' ? 'ดิสก์ & แคชเพลง (STORAGE)' : 'Disk & Song Cache'}</span>
+                        </div>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: isOffline ? 'var(--danger)' : '#FFF', margin: '8px 0 4px' }}>
+                          {isOffline
+                            ? (lang === 'th' ? 'โหนดออฟไลน์' : 'Node Offline')
+                            : (isRemote
+                                ? `${selectedNode.cache?.usedMb || 0} / ${selectedNode.cache?.maxMb || 0} MB (Cache)`
+                                : `${data?.stats?.cache?.usedMb || 0} / ${data?.stats?.cache?.maxMb || 350} MB`)}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: isOffline ? 'var(--text-dim)' : 'var(--slime-green)' }}>
+                          {isOffline
+                            ? (lang === 'th' ? 'ขาดการเชื่อมต่อกับโหนด' : 'Node unreachable')
+                            : (isRemote
+                                ? (selectedNode.disk ? `Disk รวม: ${selectedNode.disk.usedGb}G / ${selectedNode.disk.totalGb}G (ว่าง ${selectedNode.disk.freeMb}M)` : 'Disk: พร้อมใช้งาน')
+                                : `Disk ว่าง: ${data?.stats?.disk?.freeMb || 0} MB`)}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 17, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
-                        {selectedNode.vpn?.server || (selectedNode.type === 'remote' ? 'Residential / Direct' : 'Direct')}
-                        <span style={{ fontSize: 11, color: 'var(--slime-green)', marginLeft: 8 }}>
-                          (Online)
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
-                        Exit IP: <strong style={{ color: 'var(--slime-green)' }}>{selectedNode.vpn?.exitIp || selectedNode.host || 'Direct'}</strong>
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                        Circuit: <strong style={{ color: selectedNode.circuit?.isOpen ? 'var(--danger)' : 'var(--slime-green)' }}>{selectedNode.circuit?.status || 'CLOSED'}</strong>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <button
-                        onClick={() => handleSwitchNodeVpn(selectedNode.id)}
-                        className="btn btn-sm btn-pink"
-                        style={{ padding: '4px 8px', fontSize: 11 }}
-                        title="Switch VPN Server"
+                        onClick={() => handleClearNodeCache(selectedNode.id)}
+                        className="btn btn-sm btn-danger"
+                        style={{ padding: '6px 10px', fontSize: 11 }}
+                        title="Clear Cache"
+                        disabled={isOffline}
                       >
-                        <RotateCw size={11} />
-                        <span>{lang === 'th' ? 'สลับ' : 'Switch'}</span>
+                        <Trash2 size={12} />
+                        <span>{lang === 'th' ? 'ล้างแคช' : 'Clear'}</span>
                       </button>
-                      {selectedNode.circuit?.isOpen && (
+                    </div>
+                    {/* Cache usage progress bar */}
+                    <div style={{ width: '100%', height: 4, background: '#1E2838', borderRadius: 2, overflow: 'hidden', marginTop: 10 }}>
+                      <div style={{
+                        width: isOffline
+                          ? '0%'
+                          : `${Math.min(100, Math.round(((isRemote ? (selectedNode.cache?.usedMb || 0) : (data?.stats?.cache?.usedMb || 0)) / (isRemote ? (selectedNode.cache?.maxMb || 1) : (data?.stats?.cache?.maxMb || 350))) * 100))}%`,
+                        height: '100%',
+                        background: 'var(--slime-green)'
+                      }} />
+                    </div>
+                  </div>
+
+                  {/* 2. Bandwidth Monthly Quota Card */}
+                  <div className="glass-panel" style={{ padding: 20 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Wifi size={14} style={{ color: 'var(--accent-blue)' }} />
+                      <span>{lang === 'th' ? 'แบนด์วิธ (MONTHLY QUOTA)' : 'Bandwidth Quota'}</span>
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: isOffline ? 'var(--danger)' : '#FFF', margin: '8px 0 4px' }}>
+                      {isOffline
+                        ? (lang === 'th' ? 'โหนดออฟไลน์' : 'Node Offline')
+                        : (isRemote
+                            ? `${selectedNode.bandwidth?.usedGb || 0} GB / ${selectedNode.bandwidth?.quotaGb || 1000} GB (${selectedNode.bandwidth?.percent || 0}%)`
+                            : `${data?.stats?.bandwidth?.usedGb || 0} GB / ${data?.stats?.bandwidth?.quotaGb || 800} GB (${data?.stats?.bandwidth?.percent || 0}%)`)}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: isOffline ? 'var(--text-dim)' : 'var(--slime-green)' }}>
+                      {isOffline
+                        ? 'Tx: - • Rx: -'
+                        : (isRemote
+                            ? `Tx: ${selectedNode.bandwidth?.txGb || 0} GB • Rx: ${selectedNode.bandwidth?.rxGb || 0} GB`
+                            : `Tx: ${data?.stats?.bandwidth?.txGb || 0} GB • Rx: ${data?.stats?.bandwidth?.rxGb || 0} GB`)}
+                    </div>
+                    <div style={{ width: '100%', height: 4, background: '#1E2838', borderRadius: 2, overflow: 'hidden', marginTop: 10 }}>
+                      <div style={{
+                        width: isOffline
+                          ? '0%'
+                          : `${isRemote ? (selectedNode.bandwidth?.percent || 0) : (data?.stats?.bandwidth?.percent || 0)}%`,
+                        height: '100%',
+                        background: 'var(--accent-blue)'
+                      }} />
+                    </div>
+                  </div>
+
+                  {/* 3. Network & VPN Card */}
+                  <div className="glass-panel" style={{ padding: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Radio size={14} style={{ color: 'var(--cyber-pink)' }} />
+                          <span>{lang === 'th' ? 'เครือข่าย & VPN' : 'Network & VPN'}</span>
+                        </div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
+                          {isRemote
+                            ? (selectedNode.vpn?.server || 'Residential / Direct')
+                            : (data?.stats?.vpn?.server || 'Direct')}
+                          <span style={{
+                            fontSize: 11,
+                            color: isOffline ? 'var(--danger)' : 'var(--slime-green)',
+                            marginLeft: 8
+                          }}>
+                            {isOffline
+                              ? '(Offline)'
+                              : (isRemote
+                                  ? '(Online)'
+                                  : (data?.stats?.vpn?.connected ? '(VPN Active)' : '(Online)'))}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+                          Exit IP: <strong style={{ color: isOffline ? 'var(--text-sub)' : 'var(--slime-green)' }}>
+                            {isOffline
+                              ? (selectedNode.host || '-')
+                              : (isRemote
+                                  ? (selectedNode.vpn?.exitIp || selectedNode.host || 'Direct')
+                                  : (data?.stats?.vpn?.exitIp || 'Direct'))}
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                          Circuit: <strong style={{ color: isOffline ? 'var(--danger)' : (isRemote ? (selectedNode.circuit?.isOpen ? 'var(--danger)' : 'var(--slime-green)') : (data?.stats?.circuit?.isOpen ? 'var(--danger)' : 'var(--slime-green)')) }}>
+                            {isOffline
+                              ? 'DISCONNECTED'
+                              : (isRemote
+                                  ? (selectedNode.circuit?.status || 'CLOSED')
+                                  : (data?.stats?.circuit?.status || 'CLOSED'))}
+                          </strong>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <button
-                          onClick={() => handleResetNodeCircuit(selectedNode.id)}
-                          className="btn btn-sm btn-danger"
+                          onClick={() => handleSwitchNodeVpn(selectedNode.id)}
+                          className="btn btn-sm btn-pink"
                           style={{ padding: '4px 8px', fontSize: 11 }}
+                          title="Switch VPN Server"
+                          disabled={isOffline || isRemote}
                         >
-                          Reset
+                          <RotateCw size={11} />
+                          <span>{lang === 'th' ? 'สลับ' : 'Switch'}</span>
                         </button>
-                      )}
+                        {((isRemote && selectedNode.circuit?.isOpen) || (!isRemote && data?.stats?.circuit?.isOpen)) && (
+                          <button
+                            onClick={() => handleResetNodeCircuit(selectedNode.id)}
+                            className="btn btn-sm btn-danger"
+                            style={{ padding: '4px 8px', fontSize: 11 }}
+                            disabled={isOffline}
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4. Stream Guard & Compute Load */}
+                  <div className="glass-panel" style={{ padding: 20 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Cpu size={14} style={{ color: 'var(--accent-yellow)' }} />
+                      <span>{lang === 'th' ? 'STREAM GUARD & CPU' : 'Stream Guard & Load'}</span>
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
+                      Spawns: <span style={{ color: isOffline ? 'var(--danger)' : 'var(--slime-green)' }}>
+                        {isOffline ? '0' : (isRemote ? (selectedNode.activeSpawns || 0) : (data?.stats?.slots?.total || 0))}
+                      </span> / {isRemote ? (selectedNode.maxSpawns || 2) : (data?.stats?.slots?.maxTotal || 4)}
+                      <span style={{ fontSize: 12, color: 'var(--text-sub)', marginLeft: 6 }}>
+                        {isOffline ? '(Offline)' : `(Queue: ${isRemote ? (selectedNode.queuedSpawns || 0) : 0})`}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+                      CPU: {isOffline ? 'Offline' : (isRemote ? (selectedNode.cpu || '-') : (data?.stats?.cpuDisplay || '-'))}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                      RAM: {isOffline ? 'Offline' : (isRemote ? (selectedNode.hostRam || selectedNode.ram || '-') : (data?.stats?.hostRam?.display || '-'))}
                     </div>
                   </div>
                 </div>
 
-                {/* 4. Stream Guard & Compute Load */}
-                <div className="glass-panel" style={{ padding: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Cpu size={14} style={{ color: 'var(--accent-yellow)' }} />
-                    <span>{lang === 'th' ? 'STREAM GUARD & CPU' : 'Stream Guard & Load'}</span>
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
-                    Spawns: <span style={{ color: 'var(--slime-green)' }}>{selectedNode.activeSpawns || 0}</span> / {selectedNode.maxSpawns || 2}
-                    <span style={{ fontSize: 12, color: 'var(--text-sub)', marginLeft: 6 }}>
-                      (Queue: {selectedNode.queuedSpawns || 0})
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
-                    CPU: {selectedNode.cpu || '-'}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                    RAM: {selectedNode.hostRam || selectedNode.ram || '-'}
-                  </div>
+                {/* Node Management Actions */}
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => handleToggleDrain(selectedNode.id)}
+                    className={`btn btn-sm ${selectedNode.status === 'draining' ? 'btn-primary' : 'btn-danger'}`}
+                  >
+                    <Power size={13} />
+                    <span>{selectedNode.status === 'draining' ? (lang === 'th' ? 'ยกเลิกโหมด Drain (กลับสู่ปกติ)' : 'Resume Node') : (lang === 'th' ? 'เปิดโหมด Drain (ไม่รับงานใหม่)' : 'Drain Node')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditNodeModal(selectedNode);
+                      setNodeNameInput(selectedNode.name || selectedNode.id);
+                      setNodeMaxRoomsInput(selectedNode.maxRooms ?? (selectedNode.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15));
+                    }}
+                    className="btn btn-sm"
+                  >
+                    <Sliders size={13} />
+                    <span>{lang === 'th' ? 'แก้ไขชื่อ / ความจุโหนด' : 'Edit Node Settings'}</span>
+                  </button>
                 </div>
               </div>
-
-              {/* Node Management Actions */}
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => handleToggleDrain(selectedNode.id)}
-                  className={`btn btn-sm ${selectedNode.status === 'draining' ? 'btn-primary' : 'btn-danger'}`}
-                >
-                  <Power size={13} />
-                  <span>{selectedNode.status === 'draining' ? (lang === 'th' ? 'ยกเลิกโหมด Drain (กลับสู่ปกติ)' : 'Resume Node') : (lang === 'th' ? 'เปิดโหมด Drain (ไม่รับงานใหม่)' : 'Drain Node')}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setEditNodeModal(selectedNode);
-                    setNodeNameInput(selectedNode.name || selectedNode.id);
-                    setNodeMaxRoomsInput(selectedNode.maxRooms ?? (selectedNode.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15));
-                  }}
-                  className="btn btn-sm"
-                >
-                  <Sliders size={13} />
-                  <span>{lang === 'th' ? 'แก้ไขชื่อ / ความจุโหนด' : 'Edit Node Settings'}</span>
-                </button>
-              </div>
-            </div>
-          ) : null}
+            );
+          })() : null}
 
           {/* All Nodes Cluster Table */}
           <div className="glass-panel" style={{ padding: 20 }}>
@@ -1470,13 +1528,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   <div>
                     <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span>{lang === 'th' ? 'แคมเปญชวนเพื่อนรับวันฟรี (Referral Season)' : 'Referral Season Campaign'}</span>
-                      <span className="slime-badge" style={{
-                        background: referralForm.enabled && !isRefExpired ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 75, 75, 0.15)',
-                        color: referralForm.enabled && !isRefExpired ? 'var(--slime-green)' : 'var(--danger)',
-                        border: `1px solid ${referralForm.enabled && !isRefExpired ? 'rgba(0, 255, 136, 0.3)' : 'rgba(255, 75, 75, 0.3)'}`,
+                      <span className={`slime-badge ${!referralForm.enabled ? 'slime-badge-danger' : (isRefExpired ? 'slime-badge-warning' : '')}`} style={{
                         fontSize: 10.5
                       }}>
-                        {referralForm.enabled ? (!isRefExpired ? (lang === 'th' ? '● กำลังเปิดรับสิทธิ์' : '● ACTIVE') : (lang === 'th' ? '● หมดเขต Season แล้ว' : '● EXPIRED')) : (lang === 'th' ? '○ ปิดรับสิทธิ์ชั่วคราว' : '○ PAUSED')}
+                        {referralForm.enabled ? (!isRefExpired ? (lang === 'th' ? 'กำลังเปิดรับสิทธิ์' : 'ACTIVE') : (lang === 'th' ? 'หมดเขต Season แล้ว' : 'EXPIRED')) : (lang === 'th' ? 'ปิดรับสิทธิ์ชั่วคราว' : 'PAUSED')}
                       </span>
                     </h3>
                     <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 2 }}>
@@ -1783,12 +1838,12 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                         <td>+{c.days} วัน</td>
                         <td>
                           {!c.expiresAt ? (
-                            <span className="slime-badge" style={{ background: 'rgba(0, 210, 255, 0.12)', color: 'var(--accent-blue)', border: '1px solid rgba(0, 210, 255, 0.3)', fontSize: 11 }}>
+                            <span className="slime-badge slime-badge-blue" style={{ fontSize: 11 }}>
                               {lang === 'th' ? 'ไม่มีวันหมดอายุ' : 'Never Expire'}
                             </span>
                           ) : c.expiresAt <= Date.now() ? (
-                            <span className="slime-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', fontSize: 11 }}>
-                              ● {lang === 'th' ? 'หมดอายุแล้ว' : 'Expired'} ({new Date(c.expiresAt).toLocaleDateString('th-TH')})
+                            <span className="slime-badge slime-badge-danger" style={{ fontSize: 11 }}>
+                              {lang === 'th' ? 'หมดอายุแล้ว' : 'Expired'} ({new Date(c.expiresAt).toLocaleDateString('th-TH')})
                             </span>
                           ) : (
                             <span style={{ fontSize: 12, fontWeight: 600, color: (c.expiresAt - Date.now() < 3 * 24 * 3600 * 1000) ? 'var(--accent-yellow)' : 'var(--slime-green)' }}>
