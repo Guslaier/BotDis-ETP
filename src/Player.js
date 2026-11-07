@@ -340,8 +340,10 @@ class Player {
             try { demuxer.destroy(); } catch {}
         };
 
-        // Zero-copy direct passthrough: inlineVolume = false completely bypasses JS OpusDecoder & OpusEncoder
-        const resource = createAudioResource(demuxed, { inputType: StreamType.Opus, inlineVolume: false });
+        const resource = createAudioResource(demuxed, { inputType: StreamType.Opus, inlineVolume: true });
+        if (resource.volume) {
+            resource.volume.setVolume(Math.max(0, (this.volume ?? 100) / 100));
+        }
 
         return {
             resource,
