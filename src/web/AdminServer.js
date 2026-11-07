@@ -346,6 +346,7 @@ class AdminServer {
                 }
             }
 
+            const config = subscriptionManager.getConfig();
             return this._sendJson(res, 200, {
                 success: true,
                 guild: {
@@ -357,10 +358,17 @@ class AdminServer {
                     expiresAt: sub.expiresAt,
                     referralCode: sub.referralCode,
                     referralCount: sub.referralCount || 0,
-                    maxReferralMonths: subscriptionManager.getConfig()?.maxReferralMonths || 6,
+                    maxReferralMonths: config?.maxReferralMonths || 6,
                     earlyBirdUsed: sub.earlyBirdUsed
                 },
                 user: userObj,
+                referralConfig: {
+                    enabled: config.referralEnabled !== false,
+                    minTopup: config.referralMinTopup || 29,
+                    rewardDays: config.referralRewardDays || 30,
+                    maxInvites: config.maxReferralMonths || 6,
+                    expiresAt: config.referralExpiresAt || null
+                },
                 campaign: activeEarlyBird ? {
                     name: activeEarlyBird.name,
                     days: activeEarlyBird.days || 30,
@@ -372,6 +380,14 @@ class AdminServer {
         }
 
         if (pathname === '/api/public/verify-referral' && req.method === 'GET') {
+            const config = subscriptionManager.getConfig();
+            if (config.referralEnabled === false) {
+                return this._sendJson(res, 400, { success: false, error: 'ระบบแคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวค่ะ' });
+            }
+            if (config.referralExpiresAt && Date.now() > config.referralExpiresAt) {
+                return this._sendJson(res, 400, { success: false, error: 'แคมเปญชวนเพื่อนรอบนี้หมดอายุแล้วค่ะ' });
+            }
+
             const code = (query.code || '').trim().toUpperCase();
             const guildId = query.guildId || '';
 
@@ -928,6 +944,33 @@ class AdminServer {
                 return this._sendJson(res, 200, { success: true, campaign: newCampaign });
             }
 
+            if (pathname.startsWith('/api/admin/campaigns/') && req.method === 'PUT') {
+                const code = decodeURIComponent(pathname.split('/')[4] || '').toUpperCase();
+                const body = await this._parseBody(req);
+                let campaignExpiresAt = undefined;
+                if (body.expiresAt !== undefined) {
+                    if (body.expiresAt === null || body.expiresAt === '' || body.expiresAt === 'never') {
+                        campaignExpiresAt = null;
+                    } else if (!isNaN(new Date(body.expiresAt).getTime())) {
+                        campaignExpiresAt = new Date(body.expiresAt).getTime();
+                    }
+                }
+                const updates = {};
+                if (body.name !== undefined) updates.name = body.name;
+                if (body.maxClaims !== undefined) updates.maxClaims = body.maxClaims;
+                if (body.days !== undefined) updates.days = body.days;
+                if (campaignExpiresAt !== undefined) updates.expiresAt = campaignExpiresAt;
+
+                const result = subscriptionManager.updateCampaign(code, updates);
+                return this._sendJson(res, result.success ? 200 : 400, result);
+            }
+
+            if (pathname === '/api/admin/referral/reset' && req.method === 'POST') {
+                const body = await this._parseBody(req);
+                const result = subscriptionManager.resetReferralSeason(body.seasonName);
+                return this._sendJson(res, 200, result);
+            }
+
             if (pathname === '/api/admin/config' && req.method === 'POST') {
                 const body = await this._parseBody(req);
                 const maxFree = parseInt(body.maxFreeStreams, 10);
@@ -944,12 +987,38 @@ class AdminServer {
                     return this._sendJson(res, 400, { success: false, error: 'ราคาต้องไม่ติดลบค่ะ' });
                 }
 
-                const updated = subscriptionManager.updateConfig({
+                const configPayload = {
                     paymentMode: body.paymentMode || 'sandbox',
                     price30Days: isNaN(price) ? 29 : price,
                     maxFreeStreams: maxFree,
                     maxTotalStreams: maxTotal
-                });
+                };
+
+                // Configurable Referral Season Parameters
+                if (body.referralEnabled !== undefined) configPayload.referralEnabled = Boolean(body.referralEnabled);
+                if (body.referralMinTopup !== undefined) {
+                    const parsedMin = parseInt(body.referralMinTopup, 10);
+                    configPayload.referralMinTopup = (!isNaN(parsedMin) && parsedMin >= 1) ? parsedMin : 29;
+                }
+                if (body.referralRewardDays !== undefined) {
+                    const parsedDays = parseInt(body.referralRewardDays, 10);
+                    configPayload.referralRewardDays = (!isNaN(parsedDays) && parsedDays >= 1) ? parsedDays : 30;
+                }
+                if (body.maxReferralMonths !== undefined) {
+                    const parsedMax = parseInt(body.maxReferralMonths, 10);
+                    configPayload.maxReferralMonths = (!isNaN(parsedMax) && parsedMax >= 1) ? parsedMax : 6;
+                }
+                if (body.referralExpiresAt !== undefined) {
+                    if (body.referralExpiresAt === null || body.referralExpiresAt === '' || body.referralExpiresAt === 'never') {
+                        configPayload.referralExpiresAt = null;
+                    } else if (!isNaN(new Date(body.referralExpiresAt).getTime())) {
+                        configPayload.referralExpiresAt = new Date(body.referralExpiresAt).getTime();
+                    } else {
+                        configPayload.referralExpiresAt = body.referralExpiresAt;
+                    }
+                }
+
+                const updated = subscriptionManager.updateConfig(configPayload);
                 // Sync local-0 Controller node capacity live
                 await nodeRouter.updateNodeConfig('local-0', { maxRooms: maxTotal });
                 return this._sendJson(res, 200, { success: true, config: updated });

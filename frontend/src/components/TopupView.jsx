@@ -382,14 +382,31 @@ export default function TopupView({ lang, onToast }) {
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--slime-green)' }}>
                       {lang === 'th'
-                        ? `ชวนสำเร็จ: ${guildData.guild.referralCount || 0} / ${guildData.guild.maxReferralMonths || 6} เซิร์ฟเวอร์`
-                        : `Invites: ${guildData.guild.referralCount || 0} / ${guildData.guild.maxReferralMonths || 6}`}
+                        ? `ชวนสำเร็จ: ${guildData.guild.referralCount || 0} / ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6} เซิร์ฟเวอร์`
+                        : `Invites: ${guildData.guild.referralCount || 0} / ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6}`}
                     </span>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 4 }}>
-                    {lang === 'th'
-                      ? `เพื่อนใช้โค้ดนี้ร่วมสนับสนุน (29บ.+): คุณได้รับ +7 วัน เพื่อนได้รับ +7 วัน (สูงสุด ${guildData.guild.maxReferralMonths || 6} เซิร์ฟเวอร์)`
-                      : `Friends support with code (29+ THB): Both get +7 days (Max ${guildData.guild.maxReferralMonths || 6} servers)`}
+                  <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 5, lineHeight: 1.4 }}>
+                    {guildData?.referralConfig?.enabled === false ? (
+                      <span style={{ color: 'var(--accent-yellow)', fontWeight: 600 }}>
+                        {lang === 'th' ? '● แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราว' : '● Referral campaign is currently paused'}
+                      </span>
+                    ) : (
+                      <>
+                        <span>
+                          {lang === 'th'
+                            ? `เพื่อนเติมเงินด้วยโค้ดนี้ (ขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท): คุณได้รับวันฟรี +${guildData?.referralConfig?.rewardDays ?? 30} วัน (สูงสุด ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6} เซิร์ฟเวอร์)`
+                            : `Friends top up with code (${guildData?.referralConfig?.minTopup ?? 29}+ THB): Referrer gets +${guildData?.referralConfig?.rewardDays ?? 30} days (Max ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6} servers)`}
+                        </span>
+                        {guildData?.referralConfig?.expiresAt && (
+                          <div style={{ color: 'var(--accent-yellow)', marginTop: 2, fontWeight: 600 }}>
+                            {lang === 'th'
+                              ? `• หมดเขต Season นี้: ${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')}`
+                              : `• Season ends: ${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()}`}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -495,21 +512,33 @@ export default function TopupView({ lang, onToast }) {
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
                   {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
                 </label>
-                <input
-                  type="text"
-                  placeholder="REF-XXXXXX"
-                  value={referralCode}
-                  onChange={(e) => {
-                    const val = e.target.value.toUpperCase();
-                    setReferralCode(val);
-                    verifyReferral(val);
-                  }}
-                />
-                {referrerName && (
-                  <div style={{ fontSize: 11, color: 'var(--slime-green)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <CheckCircle2 size={12} />
-                    <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (รับโบนัสคนละ +7 วันเมื่อยอด 29บ. ขึ้นไป)` : `Referrer: ${referrerName} (+7 days bonus on 29+ THB)`}</span>
+                {guildData?.referralConfig?.enabled === false ? (
+                  <div style={{ padding: '9px 12px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--card-border)', borderRadius: 8, fontSize: 12, color: 'var(--text-dim)' }}>
+                    {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวค่ะ' : 'Referral campaign is temporarily paused'}
                   </div>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="REF-XXXXXX"
+                      value={referralCode}
+                      onChange={(e) => {
+                        const val = e.target.value.toUpperCase();
+                        setReferralCode(val);
+                        verifyReferral(val);
+                      }}
+                    />
+                    {referrerName && (
+                      <div style={{ fontSize: 11, color: 'var(--slime-green)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <CheckCircle2 size={12} />
+                        <span>
+                          {lang === 'th'
+                            ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (ผู้ชวนได้รับโบนัส +${guildData?.referralConfig?.rewardDays ?? 30} วัน เมื่อยอดเติมขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท)`
+                            : `Referrer: ${referrerName} (Referrer gets +${guildData?.referralConfig?.rewardDays ?? 30} days on ${guildData?.referralConfig?.minTopup ?? 29}+ THB)`}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -887,8 +916,8 @@ export default function TopupView({ lang, onToast }) {
                   <div>
                     <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• เงื่อนไขรหัสชวนเพื่อนและโค้ดกิจกรรม:' : '• Referral & Drop Codes:'}</strong>{' '}
                     {lang === 'th'
-                      ? 'โบนัสวันใช้งานพิเศษ (+7 วันสำหรับผู้ชวนและผู้ถูกชวน) จะทำงานเมื่อเซิร์ฟเวอร์ผู้ถูกชวนทำรายการสนับสนุนด้วยซองของขวัญที่มียอดตั้งแต่ 29 บาทขึ้นไป เท่านั้น ส่วนโค้ดกิจกรรม (Early-Bird Drop) จำกัดสิทธิ์การใช้งาน 1 โค้ดต่อ 1 เซิร์ฟเวอร์และมีจำนวนจำกัดตามรอบที่กำหนด'
-                      : 'Referral rewards (+7 bonus days) trigger only on contributions of 29 THB or greater. Early-Bird Drop codes are single-use per server and strictly quota-governed.'}
+                      ? `โบนัสวันใช้งานพิเศษสำหรับผู้ชวน จะทำงานเมื่อเซิร์ฟเวอร์ผู้ถูกชวนทำรายการสนับสนุนด้วยซองของขวัญที่มียอดตั้งแต่ ${guildData?.referralConfig?.minTopup ?? 29} บาทขึ้นไป เท่านั้น และต้องอยู่ภายในระยะเวลาของรอบซีซั่น ส่วนโค้ดกิจกรรม (Early-Bird Drop) จำกัดสิทธิ์การใช้งาน 1 โค้ดต่อ 1 เซิร์ฟเวอร์และมีจำนวนจำกัดตามโควตาที่กำหนด`
+                      : `Referral bonus days trigger only when the referred server contributes ${guildData?.referralConfig?.minTopup ?? 29} THB or greater within the active season period. Early-Bird Drop codes are single-use per server and strictly quota-governed.`}
                   </div>
                   <div>
                     <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• นโยบายไม่คืนเงิน (No Refund Policy):' : '• No Refund Policy:'}</strong>{' '}

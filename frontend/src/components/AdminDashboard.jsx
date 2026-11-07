@@ -4,7 +4,8 @@ import {
   Trash2, Play, Square, FastForward, Search, Plus, Ban, CheckCircle, 
   AlertTriangle, Settings, RefreshCw, Power, Radio, Sliders, ExternalLink,
   Users, Globe, MapPin, Cloud, Save, Gift, ChevronLeft, ChevronRight,
-  Calendar, Minus, ArrowRight
+  Calendar, Minus, ArrowRight, Eye, Edit2, Share2, ToggleLeft, ToggleRight,
+  Check, X, Sparkles, Clock
 } from 'lucide-react';
 
 export default function AdminDashboard({ lang, token, setToken, onToast }) {
@@ -41,12 +42,39 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [addNodePort, setAddNodePort] = useState(2333);
   const [addNodeMaxRooms, setAddNodeMaxRooms] = useState(15);
 
-  // New Drop
+  // New Drop Form State
   const [dropCode, setDropCode] = useState('');
   const [dropClaims, setDropClaims] = useState(50);
   const [dropDays, setDropDays] = useState(30);
   const [dropExpireMode, setDropExpireMode] = useState('7'); // '7' | '14' | '30' | 'custom' | 'never'
   const [dropCustomDate, setDropCustomDate] = useState('');
+
+  // Edit Drop Modal State
+  const [editDropModal, setEditDropModal] = useState(null); // drop object
+  const [editDropName, setEditDropName] = useState('');
+  const [editDropClaims, setEditDropClaims] = useState(50);
+  const [editDropDays, setEditDropDays] = useState(30);
+  const [editDropExpireMode, setEditDropExpireMode] = useState('never');
+  const [editDropCustomDate, setEditDropCustomDate] = useState('');
+
+  // View Claimed Guilds Modal State
+  const [viewClaimedModal, setViewClaimedModal] = useState(null); // drop object
+
+  // Reset Referral Season Modal State
+  const [resetReferralModal, setResetReferralModal] = useState(false);
+  const [resetSeasonName, setResetSeasonName] = useState('');
+
+  // Referral Campaign Form State
+  const [referralForm, setReferralForm] = useState({
+    enabled: true,
+    minTopup: 29,
+    rewardDays: 30,
+    maxInvites: 6,
+    expireMode: 'never',
+    customDate: ''
+  });
+  const hasInitializedReferralRef = useRef(false);
+  const isReferralDirtyRef = useRef(false);
 
   // Settings Form State & Protection against Polling Overwrites
   const [settingsForm, setSettingsForm] = useState({
@@ -85,6 +113,18 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             maxTotalStreams: json.config.maxTotalStreams ?? 4,
             maxReferralMonths: json.config.maxReferralMonths ?? 6,
             phoneNumber: json.config.phoneNumber || ''
+          });
+        }
+        if (json.config && !hasInitializedReferralRef.current && !isReferralDirtyRef.current) {
+          hasInitializedReferralRef.current = true;
+          const exp = json.config.referralExpiresAt;
+          setReferralForm({
+            enabled: json.config.referralEnabled !== false,
+            minTopup: json.config.referralMinTopup ?? 29,
+            rewardDays: json.config.referralRewardDays ?? 30,
+            maxInvites: json.config.maxReferralMonths ?? 6,
+            expireMode: exp ? 'custom' : 'never',
+            customDate: exp ? new Date(exp).toISOString().split('T')[0] : ''
           });
         }
       }
@@ -445,6 +485,130 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       });
       onToast('success', 'Drop Deleted');
       fetchData();
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleOpenEditDrop = (drop) => {
+    setEditDropModal(drop);
+    setEditDropName(drop.name || '');
+    setEditDropClaims(drop.maxClaims || 50);
+    setEditDropDays(drop.days || 30);
+    if (drop.expiresAt) {
+      setEditDropExpireMode('custom');
+      setEditDropCustomDate(new Date(drop.expiresAt).toISOString().split('T')[0]);
+    } else {
+      setEditDropExpireMode('never');
+      setEditDropCustomDate('');
+    }
+  };
+
+  const handleSaveEditDrop = async (e) => {
+    e.preventDefault();
+    if (!editDropModal) return;
+
+    let targetExpiresAt = null;
+    if (editDropExpireMode === 'custom') {
+      if (!editDropCustomDate) {
+        onToast('warning', lang === 'th' ? 'กรุณาระบุวันหมดอายุแคมเปญ' : 'Please specify expiry date');
+        return;
+      }
+      targetExpiresAt = new Date(editDropCustomDate + 'T23:59:59').getTime();
+    } else if (editDropExpireMode !== 'never') {
+      targetExpiresAt = Date.now() + parseInt(editDropExpireMode, 10) * 24 * 3600 * 1000;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/campaigns/${encodeURIComponent(editDropModal.code)}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: editDropName.trim() || editDropModal.name,
+          maxClaims: parseInt(editDropClaims, 10) || editDropModal.maxClaims,
+          days: parseInt(editDropDays, 10) || editDropModal.days,
+          expiresAt: targetExpiresAt
+        })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'บันทึกการแก้ไขแคมเปญสำเร็จ' : 'Campaign Updated');
+        setEditDropModal(null);
+        fetchData();
+      } else {
+        onToast('error', 'Error', resJson.error);
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleSaveReferralSettings = async (e) => {
+    if (e) e.preventDefault();
+    let targetExpiresAt = null;
+    if (referralForm.expireMode === 'custom') {
+      if (referralForm.customDate) {
+        targetExpiresAt = new Date(referralForm.customDate + 'T23:59:59').getTime();
+      }
+    } else if (referralForm.expireMode !== 'never') {
+      targetExpiresAt = Date.now() + parseInt(referralForm.expireMode, 10) * 24 * 3600 * 1000;
+    }
+
+    const payload = {
+      ...(data?.config || {}),
+      referralEnabled: referralForm.enabled,
+      referralMinTopup: parseInt(referralForm.minTopup, 10) || 29,
+      referralRewardDays: parseInt(referralForm.rewardDays, 10) || 30,
+      maxReferralMonths: parseInt(referralForm.maxInvites, 10) || 6,
+      referralExpiresAt: targetExpiresAt
+    };
+
+    try {
+      const res = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'บันทึกการตั้งค่าแคมเปญชวนเพื่อนแล้ว' : 'Referral Campaign Saved');
+        isReferralDirtyRef.current = false;
+        fetchData();
+      } else {
+        onToast('error', 'Error', resJson.error);
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleConfirmResetReferralSeason = async () => {
+    try {
+      const res = await fetch('/api/admin/referral/reset', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          seasonName: resetSeasonName.trim() || 'New Season'
+        })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'รีเซ็ตซีซั่นชวนเพื่อนสำเร็จ!' : 'Season Reset Successful!', `Reset ${resJson.resetCount || 0} guilds progress`);
+        setResetReferralModal(false);
+        setResetSeasonName('');
+        fetchData();
+      } else {
+        onToast('error', 'Error', resJson.error);
+      }
     } catch (err) {
       onToast('error', 'Error', err.message);
     }
@@ -1277,156 +1441,403 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         </div>
       )}
 
-      {/* --- TAB 4: CAMPAIGNS & EARLY BIRD DROPS --- */}
-      {activeSubTab === 'drops' && (
-        <div className="glass-panel fade-in" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Gift size={16} style={{ color: 'var(--slime-green)' }} />
-            <span>{lang === 'th' ? 'แคมเปญ Early-Bird Drops' : 'Early-Bird Drops'}</span>
-          </h3>
+      {/* --- TAB 4: CAMPAIGNS & PROMOTIONS (REFERRAL + EARLY-BIRD DROPS) --- */}
+      {activeSubTab === 'drops' && (() => {
+        const guildList = data?.guilds || [];
+        const referralActiveGuilds = guildList.filter(g => (g.referralCount || 0) > 0);
+        const totalReferralSuccess = referralActiveGuilds.reduce((acc, g) => acc + (g.referralCount || 0), 0);
+        const refExp = data?.config?.referralExpiresAt;
+        const isRefExpired = refExp && refExp <= Date.now();
 
-          {/* Create Drop Form */}
-          <form onSubmit={handleCreateDrop} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 24 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
-                {lang === 'th' ? 'รหัสโค้ด (Code)' : 'Code'}
-              </label>
-              <input
-                type="text"
-                placeholder="เช่น DROP1 หรือ VIP30"
-                value={dropCode}
-                onChange={(e) => setDropCode(e.target.value.toUpperCase())}
-                style={{ width: 170 }}
-                required
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
-                {lang === 'th' ? 'โควตาสิทธิ์ (Claims)' : 'Claims'}
-              </label>
-              <input
-                type="number"
-                placeholder="50"
-                value={dropClaims}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setDropClaims(v === '' ? '' : (parseInt(v, 10) || 0));
-                }}
-                style={{ width: 110 }}
-                min="1"
-                required
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
-                {lang === 'th' ? 'วันใช้งานที่ได้รับ (Days)' : 'Reward Days'}
-              </label>
-              <input
-                type="number"
-                placeholder="30"
-                value={dropDays}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setDropDays(v === '' ? '' : (parseInt(v, 10) || 0));
-                }}
-                style={{ width: 120 }}
-                min="1"
-                required
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
-                {lang === 'th' ? 'อายุแคมเปญ (Expiration)' : 'Campaign Expiry'}
-              </label>
-              <select
-                value={dropExpireMode}
-                onChange={(e) => setDropExpireMode(e.target.value)}
-                style={{ width: 180 }}
-              >
-                <option value="7">หมดอายุใน 7 วัน</option>
-                <option value="14">หมดอายุใน 14 วัน</option>
-                <option value="30">หมดอายุใน 30 วัน</option>
-                <option value="60">หมดอายุใน 60 วัน</option>
-                <option value="custom">กำหนดวันที่เอง...</option>
-                <option value="never">ไม่มีวันหมดอายุ (Never)</option>
-              </select>
-            </div>
-            {dropExpireMode === 'custom' && (
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
-                  {lang === 'th' ? 'ระบุวันหมดเขต' : 'Expiry Date'}
-                </label>
-                <input
-                  type="date"
-                  value={dropCustomDate}
-                  onChange={(e) => setDropCustomDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  style={{ width: 150 }}
-                  required
-                />
+        return (
+          <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* 1. REFERRAL SEASON CAMPAIGN MANAGER */}
+            <div className="glass-panel" style={{ padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: 'rgba(255, 46, 147, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--cyber-pink)'
+                  }}>
+                    <Share2 size={18} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>{lang === 'th' ? 'แคมเปญชวนเพื่อนรับวันฟรี (Referral Season)' : 'Referral Season Campaign'}</span>
+                      <span className="slime-badge" style={{
+                        background: referralForm.enabled && !isRefExpired ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 75, 75, 0.15)',
+                        color: referralForm.enabled && !isRefExpired ? 'var(--slime-green)' : 'var(--danger)',
+                        border: `1px solid ${referralForm.enabled && !isRefExpired ? 'rgba(0, 255, 136, 0.3)' : 'rgba(255, 75, 75, 0.3)'}`,
+                        fontSize: 10.5
+                      }}>
+                        {referralForm.enabled ? (!isRefExpired ? (lang === 'th' ? '● กำลังเปิดรับสิทธิ์' : '● ACTIVE') : (lang === 'th' ? '● หมดเขต Season แล้ว' : '● EXPIRED')) : (lang === 'th' ? '○ ปิดรับสิทธิ์ชั่วคราว' : '○ PAUSED')}
+                      </span>
+                    </h3>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 2 }}>
+                      {lang === 'th' ? 'ควบคุมกติกาการชวนเพื่อน ยอดเติมขั้นต่ำ วันรางวัล และวันหมดเขตของซีซั่น' : 'Configure minimum topup threshold, reward days, max cap, and season expiration'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Season Quick Stats */}
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderRadius: 8, border: '1px solid var(--card-border)', fontSize: 11.5 }}>
+                    <span style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'กิลด์ที่เริ่มชวน:' : 'Active Referrers:'} </span>
+                    <strong style={{ color: '#FFF' }}>{referralActiveGuilds.length}</strong>
+                  </div>
+                  <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderRadius: 8, border: '1px solid var(--card-border)', fontSize: 11.5 }}>
+                    <span style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'ชวนสำเร็จรวม:' : 'Total Invites:'} </span>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{totalReferralSuccess}</strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setResetReferralModal(true)}
+                    className="btn btn-sm btn-danger"
+                    style={{ padding: '6px 12px', fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                    title={lang === 'th' ? 'รีเซ็ตจำนวนการชวนของทุกเซิร์ฟเวอร์เพื่อเริ่ม Season ใหม่' : 'Reset all guilds referral progress for a new season'}
+                  >
+                    <RotateCw size={12} />
+                    <span>{lang === 'th' ? 'เริ่ม Season ใหม่ (Reset All)' : 'Reset Season'}</span>
+                  </button>
+                </div>
               </div>
-            )}
-            <div style={{ marginTop: 18 }}>
-              <button type="submit" className="btn btn-primary" style={{ padding: '9px 18px' }}>
-                <Plus size={14} />
-                <span>{lang === 'th' ? 'สร้างแคมเปญ' : 'Create Drop'}</span>
-              </button>
-            </div>
-          </form>
 
-          {/* Drops Table */}
-          <div style={{ overflowX: 'auto' }}>
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>{lang === 'th' ? 'รหัสโค้ด' : 'Code'}</th>
-                  <th>{lang === 'th' ? 'ชื่อแคมเปญ' : 'Name'}</th>
-                  <th>{lang === 'th' ? 'สิทธิ์ที่เคลมแล้ว' : 'Claims'}</th>
-                  <th>{lang === 'th' ? 'วันใช้งานที่ได้' : 'Reward Days'}</th>
-                  <th>{lang === 'th' ? 'อายุแคมเปญ' : 'Campaign Expiry'}</th>
-                  <th>{lang === 'th' ? 'จัดการ' : 'Action'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.values(data?.campaigns || {}).map((c) => (
-                  <tr key={c.code}>
-                    <td style={{ fontWeight: 700, color: 'var(--slime-green)', fontFamily: 'monospace' }}>{c.code}</td>
-                    <td>{c.name}</td>
-                    <td>{c.claimedCount || 0} / {c.maxClaims}</td>
-                    <td>+{c.days} วัน</td>
-                    <td>
-                      {!c.expiresAt ? (
-                        <span className="slime-badge" style={{ background: 'rgba(0, 210, 255, 0.12)', color: 'var(--accent-blue)', border: '1px solid rgba(0, 210, 255, 0.3)', fontSize: 11 }}>
-                          {lang === 'th' ? 'ไม่มีวันหมดอายุ' : 'Never Expire'}
-                        </span>
-                      ) : c.expiresAt <= Date.now() ? (
-                        <span className="slime-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', fontSize: 11 }}>
-                          ● {lang === 'th' ? 'หมดอายุแล้ว' : 'Expired'} ({new Date(c.expiresAt).toLocaleDateString('th-TH')})
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: 12, fontWeight: 600, color: (c.expiresAt - Date.now() < 3 * 24 * 3600 * 1000) ? 'var(--accent-yellow)' : 'var(--slime-green)' }}>
-                          {lang === 'th'
-                            ? `เหลือ ${Math.ceil((c.expiresAt - Date.now()) / (24 * 3600 * 1000))} วัน (${new Date(c.expiresAt).toLocaleDateString('th-TH')})`
-                            : `${Math.ceil((c.expiresAt - Date.now()) / (24 * 3600 * 1000))}d left (${new Date(c.expiresAt).toLocaleDateString()})`}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => handleDeleteDrop(c.code)}
-                        className="btn btn-sm btn-danger"
-                        style={{ padding: '4px 8px' }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              {/* Referral Settings Form */}
+              <form onSubmit={handleSaveReferralSettings} style={{ background: 'rgba(0, 0, 0, 0.25)', padding: 16, borderRadius: 12, border: '1px solid var(--card-border)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14, marginBottom: 16 }}>
+                  {/* 1. Master Toggle */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 5 }}>
+                      {lang === 'th' ? 'สถานะระบบชวนเพื่อน' : 'Referral System Status'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        isReferralDirtyRef.current = true;
+                        setReferralForm(prev => ({ ...prev, enabled: !prev.enabled }));
+                      }}
+                      className={`btn btn-sm ${referralForm.enabled ? 'btn-primary' : 'btn-danger'}`}
+                      style={{ width: '100%', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                    >
+                      {referralForm.enabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                      <span>{referralForm.enabled ? (lang === 'th' ? 'เปิดใช้งาน (ENABLED)' : 'ENABLED') : (lang === 'th' ? 'ปิดระบบ (DISABLED)' : 'DISABLED')}</span>
+                    </button>
+                  </div>
+
+                  {/* 2. Min Topup Threshold */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 5 }}>
+                      {lang === 'th' ? 'ยอดเติมขั้นต่ำ (บาท) *' : 'Min Topup (THB)'}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="29"
+                      value={referralForm.minTopup}
+                      onChange={(e) => {
+                        isReferralDirtyRef.current = true;
+                        const v = e.target.value;
+                        setReferralForm(prev => ({ ...prev, minTopup: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                      }}
+                      style={{ width: '100%' }}
+                      required
+                    />
+                  </div>
+
+                  {/* 3. Reward Days */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 5 }}>
+                      {lang === 'th' ? 'วันรางวัลผู้ชวน (วันต่อเซิร์ฟ) *' : 'Reward Days / Invite'}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="30"
+                      value={referralForm.rewardDays}
+                      onChange={(e) => {
+                        isReferralDirtyRef.current = true;
+                        const v = e.target.value;
+                        setReferralForm(prev => ({ ...prev, rewardDays: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                      }}
+                      style={{ width: '100%' }}
+                      required
+                    />
+                  </div>
+
+                  {/* 4. Max Invites Cap */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 5 }}>
+                      {lang === 'th' ? 'โควตาสูงสุด (ครั้งต่อกิลด์)' : 'Max Invites Cap'}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="6"
+                      value={referralForm.maxInvites}
+                      onChange={(e) => {
+                        isReferralDirtyRef.current = true;
+                        const v = e.target.value;
+                        setReferralForm(prev => ({ ...prev, maxInvites: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                      }}
+                      style={{ width: '100%' }}
+                      required
+                    />
+                  </div>
+
+                  {/* 5. Expiry Preset */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 5 }}>
+                      {lang === 'th' ? 'อายุรอบซีซั่น (Season Expiry)' : 'Season Expiry'}
+                    </label>
+                    <select
+                      value={referralForm.expireMode}
+                      onChange={(e) => {
+                        isReferralDirtyRef.current = true;
+                        setReferralForm(prev => ({ ...prev, expireMode: e.target.value }));
+                      }}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="never">ไม่มีวันหมดอายุ (Never Expire)</option>
+                      <option value="14">จบซีซั่นใน 14 วัน</option>
+                      <option value="30">จบซีซั่นใน 30 วัน (1 เดือน)</option>
+                      <option value="60">จบซีซั่นใน 60 วัน (2 เดือน)</option>
+                      <option value="90">จบซีซั่นใน 90 วัน (3 เดือน)</option>
+                      <option value="custom">กำหนดวันที่สิ้นสุดเอง...</option>
+                    </select>
+                  </div>
+
+                  {/* Custom Date Picker */}
+                  {referralForm.expireMode === 'custom' && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 5 }}>
+                        {lang === 'th' ? 'ระบุวันสิ้นสุด Season' : 'Season End Date'}
+                      </label>
+                      <input
+                        type="date"
+                        value={referralForm.customDate}
+                        onChange={(e) => {
+                          isReferralDirtyRef.current = true;
+                          setReferralForm(prev => ({ ...prev, customDate: e.target.value }));
+                        }}
+                        min={new Date().toISOString().split('T')[0]}
+                        style={{ width: '100%' }}
+                        required
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: 12 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                    💡 {lang === 'th' ? `ปัจจุบัน: เพื่อนเติมขั้นต่ำ ${data?.config?.referralMinTopup ?? 29} บาท -> ผู้ชวนรับ +${data?.config?.referralRewardDays ?? 30} วัน (จำกัด ${data?.config?.maxReferralMonths ?? 6} ครั้ง)` : `Active rule: Min ${data?.config?.referralMinTopup ?? 29} THB topup -> +${data?.config?.referralRewardDays ?? 30} days`}
+                  </div>
+                  <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '8px 18px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Save size={13} />
+                    <span>{lang === 'th' ? 'บันทึกการตั้งค่า Referral Season' : 'Save Referral Campaign'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* 2. EARLY-BIRD PROMO DROPS MANAGER */}
+            <div className="glass-panel" style={{ padding: 22 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Gift size={16} style={{ color: 'var(--slime-green)' }} />
+                <span>{lang === 'th' ? 'แคมเปญแจกโค้ดวันฟรี (Early-Bird Drops)' : 'Early-Bird Promo Drops'}</span>
+              </h3>
+
+              {/* Create Drop Form */}
+              <form onSubmit={handleCreateDrop} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 24 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                    {lang === 'th' ? 'รหัสโค้ด (Code)' : 'Code'}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="เช่น DROP1 หรือ VIP30"
+                    value={dropCode}
+                    onChange={(e) => setDropCode(e.target.value.toUpperCase())}
+                    style={{ width: 170 }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                    {lang === 'th' ? 'โควตาสิทธิ์ (Claims)' : 'Claims'}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="50"
+                    value={dropClaims}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDropClaims(v === '' ? '' : (parseInt(v, 10) || 0));
+                    }}
+                    style={{ width: 110 }}
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                    {lang === 'th' ? 'วันใช้งานที่ได้รับ (Days)' : 'Reward Days'}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="30"
+                    value={dropDays}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDropDays(v === '' ? '' : (parseInt(v, 10) || 0));
+                    }}
+                    style={{ width: 120 }}
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                    {lang === 'th' ? 'อายุแคมเปญ (Expiration)' : 'Campaign Expiry'}
+                  </label>
+                  <select
+                    value={dropExpireMode}
+                    onChange={(e) => setDropExpireMode(e.target.value)}
+                    style={{ width: 180 }}
+                  >
+                    <option value="7">หมดอายุใน 7 วัน</option>
+                    <option value="14">หมดอายุใน 14 วัน</option>
+                    <option value="30">หมดอายุใน 30 วัน</option>
+                    <option value="60">หมดอายุใน 60 วัน</option>
+                    <option value="custom">กำหนดวันที่เอง...</option>
+                    <option value="never">ไม่มีวันหมดอายุ (Never)</option>
+                  </select>
+                </div>
+                {dropExpireMode === 'custom' && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: 'var(--text-sub)', marginBottom: 4 }}>
+                      {lang === 'th' ? 'ระบุวันหมดเขต' : 'Expiry Date'}
+                    </label>
+                    <input
+                      type="date"
+                      value={dropCustomDate}
+                      onChange={(e) => setDropCustomDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      style={{ width: 150 }}
+                      required
+                    />
+                  </div>
+                )}
+                <div style={{ marginTop: 18 }}>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '9px 18px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Plus size={14} />
+                    <span>{lang === 'th' ? 'สร้างแคมเปญ' : 'Create Drop'}</span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Drops Table */}
+              <div style={{ overflowX: 'auto' }}>
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>{lang === 'th' ? 'รหัสโค้ด' : 'Code'}</th>
+                      <th>{lang === 'th' ? 'ชื่อแคมเปญ' : 'Name'}</th>
+                      <th>{lang === 'th' ? 'สิทธิ์ที่เคลมแล้ว' : 'Claims'}</th>
+                      <th>{lang === 'th' ? 'วันใช้งานที่ได้' : 'Reward Days'}</th>
+                      <th>{lang === 'th' ? 'อายุแคมเปญ' : 'Campaign Expiry'}</th>
+                      <th style={{ textAlign: 'center' }}>{lang === 'th' ? 'จัดการ' : 'Action'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.values(data?.campaigns || {}).map((c) => (
+                      <tr key={c.code}>
+                        <td style={{ fontWeight: 700, color: 'var(--slime-green)', fontFamily: 'monospace' }}>{c.code}</td>
+                        <td>{c.name}</td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => setViewClaimedModal(c)}
+                            className="btn btn-sm"
+                            style={{
+                              padding: '2px 8px',
+                              fontSize: 11.5,
+                              background: 'rgba(0, 210, 255, 0.1)',
+                              border: '1px solid rgba(0, 210, 255, 0.3)',
+                              color: 'var(--accent-blue)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4
+                            }}
+                            title={lang === 'th' ? 'คลิกดูรายชื่อเซิร์ฟเวอร์ที่กดรับโค้ดนี้' : 'View claimed guilds'}
+                          >
+                            <Eye size={11} />
+                            <span>{c.claimedCount || 0} / {c.maxClaims}</span>
+                          </button>
+                        </td>
+                        <td>+{c.days} วัน</td>
+                        <td>
+                          {!c.expiresAt ? (
+                            <span className="slime-badge" style={{ background: 'rgba(0, 210, 255, 0.12)', color: 'var(--accent-blue)', border: '1px solid rgba(0, 210, 255, 0.3)', fontSize: 11 }}>
+                              {lang === 'th' ? 'ไม่มีวันหมดอายุ' : 'Never Expire'}
+                            </span>
+                          ) : c.expiresAt <= Date.now() ? (
+                            <span className="slime-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', fontSize: 11 }}>
+                              ● {lang === 'th' ? 'หมดอายุแล้ว' : 'Expired'} ({new Date(c.expiresAt).toLocaleDateString('th-TH')})
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: 12, fontWeight: 600, color: (c.expiresAt - Date.now() < 3 * 24 * 3600 * 1000) ? 'var(--accent-yellow)' : 'var(--slime-green)' }}>
+                              {lang === 'th'
+                                ? `เหลือ ${Math.ceil((c.expiresAt - Date.now()) / (24 * 3600 * 1000))} วัน (${new Date(c.expiresAt).toLocaleDateString('th-TH')})`
+                                : `${Math.ceil((c.expiresAt - Date.now()) / (24 * 3600 * 1000))}d left (${new Date(c.expiresAt).toLocaleDateString()})`}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditDrop(c)}
+                              className="btn btn-sm"
+                              style={{
+                                padding: '4px 8px',
+                                background: 'rgba(0, 210, 255, 0.1)',
+                                border: '1px solid var(--accent-blue)',
+                                color: 'var(--accent-blue)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 3
+                              }}
+                              title={lang === 'th' ? 'แก้ไขโควตาสิทธิ์ หรือขยายวันหมดอายุ' : 'Edit Drop'}
+                            >
+                              <Edit2 size={11} />
+                              <span style={{ fontSize: 11 }}>{lang === 'th' ? 'แก้ไข' : 'Edit'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDrop(c.code)}
+                              className="btn btn-sm btn-danger"
+                              style={{ padding: '4px 8px' }}
+                              title={lang === 'th' ? 'ลบแคมเปญนี้' : 'Delete Drop'}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* --- TAB 5: TRANSACTIONS & AUDIT LOG --- */}
       {activeSubTab === 'tx' && (
@@ -1702,7 +2113,308 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         </div>
       )}
 
-      {/* --- ADD NODE MODAL --- */}
+      {/* --- EDIT DROP MODAL --- */}
+      {editDropModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: 16
+        }}>
+          <div className="glass-panel" style={{ width: 440, maxWidth: '100%', padding: 24, borderRadius: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: 'rgba(0, 210, 255, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--accent-blue)'
+              }}>
+                <Edit2 size={18} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#FFF' }}>
+                  {lang === 'th' ? 'แก้ไขแคมเปญ' : 'Edit Campaign'}: <span style={{ color: 'var(--slime-green)', fontFamily: 'monospace' }}>{editDropModal.code}</span>
+                </h3>
+                <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 2 }}>
+                  {lang === 'th' ? `เคลมไปแล้วแล้ว ${editDropModal.claimedCount || 0} จาก ${editDropModal.maxClaims} สิทธิ์` : `Claimed: ${editDropModal.claimedCount || 0} / ${editDropModal.maxClaims}`}
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveEditDrop}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 11.5, color: 'var(--text-sub)', marginBottom: 5 }}>
+                  {lang === 'th' ? 'ชื่อแคมเปญ (Name)' : 'Campaign Name'}
+                </label>
+                <input
+                  type="text"
+                  value={editDropName}
+                  onChange={(e) => setEditDropName(e.target.value)}
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11.5, color: 'var(--text-sub)', marginBottom: 5 }}>
+                    {lang === 'th' ? 'โควตาสิทธิ์ (Claims)' : 'Max Claims'}
+                  </label>
+                  <input
+                    type="number"
+                    min={editDropModal.claimedCount || 1}
+                    value={editDropClaims}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setEditDropClaims(v === '' ? '' : (parseInt(v, 10) || 0));
+                    }}
+                    style={{ width: '100%' }}
+                    required
+                  />
+                  <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginTop: 3 }}>
+                    {lang === 'th' ? `ขั้นต่ำ: ${editDropModal.claimedCount || 0} (ตามที่เคลมแล้ว)` : `Min: ${editDropModal.claimedCount || 0}`}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 11.5, color: 'var(--text-sub)', marginBottom: 5 }}>
+                    {lang === 'th' ? 'วันใช้งาน (Reward Days)' : 'Reward Days'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editDropDays}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setEditDropDays(v === '' ? '' : (parseInt(v, 10) || 0));
+                    }}
+                    style={{ width: '100%' }}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11.5, color: 'var(--text-sub)', marginBottom: 5 }}>
+                  {lang === 'th' ? 'อายุแคมเปญ (Expiry)' : 'Campaign Expiry'}
+                </label>
+                <select
+                  value={editDropExpireMode}
+                  onChange={(e) => setEditDropExpireMode(e.target.value)}
+                  style={{ width: '100%', marginBottom: 8 }}
+                >
+                  <option value="never">ไม่มีวันหมดอายุ (Never Expire)</option>
+                  <option value="7">หมดอายุใน 7 วัน</option>
+                  <option value="14">หมดอายุใน 14 วัน</option>
+                  <option value="30">หมดอายุใน 30 วัน</option>
+                  <option value="60">หมดอายุใน 60 วัน</option>
+                  <option value="custom">กำหนดวันที่สิ้นสุดเอง...</option>
+                </select>
+
+                {editDropExpireMode === 'custom' && (
+                  <input
+                    type="date"
+                    value={editDropCustomDate}
+                    onChange={(e) => setEditDropCustomDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    style={{ width: '100%' }}
+                    required
+                  />
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setEditDropModal(null)} className="btn btn-sm">
+                  {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+                </button>
+                <button type="submit" className="btn btn-sm btn-primary">
+                  {lang === 'th' ? 'บันทึกการแก้ไข' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- VIEW CLAIMED GUILDS MODAL --- */}
+      {viewClaimedModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: 16
+        }}>
+          <div className="glass-panel" style={{ width: 560, maxWidth: '100%', padding: 24, borderRadius: 16, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: 'rgba(0, 255, 136, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--slime-green)'
+                }}>
+                  <Eye size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#FFF' }}>
+                    {lang === 'th' ? 'เซิร์ฟเวอร์ที่เคลมโค้ด' : 'Claimed Guilds'}: <span style={{ color: 'var(--slime-green)', fontFamily: 'monospace' }}>{viewClaimedModal.code}</span>
+                  </h3>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 2 }}>
+                    {viewClaimedModal.name} • {viewClaimedModal.claimedCount || 0} / {viewClaimedModal.maxClaims} {lang === 'th' ? 'สิทธิ์' : 'claims'}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewClaimedModal(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-sub)', cursor: 'pointer', padding: 4 }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, border: '1px solid var(--card-border)', borderRadius: 10, marginBottom: 16 }}>
+              {(!viewClaimedModal.claimedGuilds || viewClaimedModal.claimedGuilds.length === 0) ? (
+                <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-dim)', fontSize: 12 }}>
+                  {lang === 'th' ? 'ยังไม่มีเซิร์ฟเวอร์ใดเข้ามากดเคลมโค้ดนี้ค่ะ' : 'No guilds have claimed this drop yet.'}
+                </div>
+              ) : (
+                <table className="custom-table" style={{ margin: 0 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ fontSize: 11 }}>#</th>
+                      <th style={{ fontSize: 11 }}>{lang === 'th' ? 'ชื่อเซิร์ฟเวอร์' : 'Guild'}</th>
+                      <th style={{ fontSize: 11 }}>Guild ID</th>
+                      <th style={{ fontSize: 11 }}>{lang === 'th' ? 'วันเวลาที่เคลม' : 'Claimed At'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewClaimedModal.claimedGuilds.map((cg, idx) => (
+                      <tr key={cg.guildId + '_' + idx}>
+                        <td style={{ fontSize: 11, color: 'var(--text-dim)' }}>{idx + 1}</td>
+                        <td style={{ fontWeight: 600, color: '#FFF' }}>{cg.guildName || 'Unknown Guild'}</td>
+                        <td style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--text-sub)' }}>{cg.guildId}</td>
+                        <td style={{ fontSize: 11, color: 'var(--slime-green)' }}>
+                          {cg.claimedAt ? new Date(cg.claimedAt).toLocaleString('th-TH') : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setViewClaimedModal(null)} className="btn btn-sm">
+                {lang === 'th' ? 'ปิดหน้าต่าง' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- RESET REFERRAL SEASON MODAL --- */}
+      {resetReferralModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: 16
+        }}>
+          <div className="glass-panel" style={{ width: 440, maxWidth: '100%', padding: 24, borderRadius: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: 'rgba(255, 75, 75, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--danger)'
+              }}>
+                <RotateCw size={18} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--danger)' }}>
+                  {lang === 'th' ? 'รีเซ็ตซีซั่นชวนเพื่อน (Reset Season)' : 'Reset Referral Season'}
+                </h3>
+                <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 2 }}>
+                  {lang === 'th' ? 'เริ่มต้นรอบซีซั่นใหม่สำหรับทุกเซิร์ฟเวอร์' : 'Start a new referral season for all guilds'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(255, 75, 75, 0.08)', border: '1px solid rgba(255, 75, 75, 0.25)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, fontSize: 12, color: 'var(--text-main)', lineHeight: 1.5 }}>
+              <strong style={{ color: 'var(--danger)' }}>⚠️ ผลลัพธ์ของการรีเซ็ต:</strong>
+              <ul style={{ margin: '6px 0 0', paddingLeft: 18, color: 'var(--text-sub)' }}>
+                <li>จำนวนเพื่อนที่ชวนสำเร็จ (<code style={{ color: '#FFF' }}>referralCount</code>) ของทุกกิลด์จะกลับเป็น 0</li>
+                <li>ทุกกิลด์จะสามารถชวนเพื่อนเพื่อรับสิทธิ์รอบใหม่ได้อีกครั้ง</li>
+                <li><strong style={{ color: 'var(--slime-green)' }}>วันใช้งาน Supporter ที่กิลด์ได้รับไปแล้วจะไม่หาย</strong> (ปลอดภัย ไม่กระทบวันใช้งานเดิม)</li>
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', fontSize: 11.5, color: 'var(--text-sub)', marginBottom: 5 }}>
+                {lang === 'th' ? 'ชื่อซีซั่นใหม่ (Audit Note)' : 'New Season Label / Name'}
+              </label>
+              <input
+                type="text"
+                placeholder="เช่น Season 2 หรือ Summer Festival"
+                value={resetSeasonName}
+                onChange={(e) => setResetSeasonName(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setResetReferralModal(false)} className="btn btn-sm">
+                {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmResetReferralSeason}
+                className="btn btn-sm btn-danger"
+                style={{ padding: '8px 18px', fontWeight: 700 }}
+              >
+                {lang === 'th' ? 'ยืนยันเริ่ม Season ใหม่' : 'Confirm Season Reset'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {addNodeModal && (
         <div style={{
           position: 'fixed',

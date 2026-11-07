@@ -21,7 +21,11 @@ class SubscriptionManager extends EventEmitter {
             maxFreeStreams: parseInt(process.env.MAX_FREE_STREAMS || '6', 10),
             maxTotalStreams: parseInt(process.env.MAX_TOTAL_STREAMS || '12', 10),
             maxReferralMonths: parseInt(process.env.MAX_REFERRAL_MONTHS || '6', 10),
-            phoneNumber: process.env.TMW_PHONE_NUMBER || ''
+            phoneNumber: process.env.TMW_PHONE_NUMBER || '',
+            referralEnabled: true,
+            referralMinTopup: 29,
+            referralRewardDays: 30,
+            referralExpiresAt: null
         };
         for (const [k, v] of Object.entries(defaults)) {
             if (existing[k] === undefined) {
@@ -254,6 +258,10 @@ class SubscriptionManager extends EventEmitter {
         const config = this.getConfig();
         const price30Days = config.price30Days || 29;
         const maxReferralMonths = config.maxReferralMonths || 6;
+        const referralEnabled = config.referralEnabled !== false;
+        const referralMinTopup = typeof config.referralMinTopup === 'number' ? config.referralMinTopup : 29;
+        const referralRewardDays = typeof config.referralRewardDays === 'number' ? config.referralRewardDays : 30;
+        const referralExpiresAt = config.referralExpiresAt || null;
 
         const sub = this.getGuildSubscription(guildId, guildName);
         const addedDays = Math.max(1, Math.ceil((amountBaht / price30Days) * 30));
@@ -283,6 +291,7 @@ class SubscriptionManager extends EventEmitter {
         let referrerGuildId = null;
 
         // Referral handling
+        const isSeasonActive = referralEnabled && (!referralExpiresAt || now <= referralExpiresAt);
         let referrer = null;
         const cleanRef = (referralCode || '').trim().toUpperCase();
         const allSubs = dbManager.get('subscriptions') || {};
@@ -293,15 +302,15 @@ class SubscriptionManager extends EventEmitter {
             referrer = allSubs[sub.referredByGuildId];
         }
 
-        if (referrer && referrer.guildId !== guildId) {
+        if (isSeasonActive && referrer && referrer.guildId !== guildId) {
             sub.referredByGuildId = referrer.guildId;
             referrerGuildId = referrer.guildId;
             referrerGuildName = referrer.guildName;
 
-            // Enforce minimum 29 THB voucher threshold before awarding referral bonus days
-            if (!sub.referralRewardTriggered && sub.cumulativePaidBaht >= Math.max(29, price30Days) && amountBaht >= 29) {
+            // Enforce configurable minimum topup threshold before awarding referral bonus days
+            if (!sub.referralRewardTriggered && amountBaht >= referralMinTopup && sub.cumulativePaidBaht >= referralMinTopup) {
                 if ((referrer.referralBonusMonths || 0) < maxReferralMonths) {
-                    const refBonusMs = 30 * 24 * 3600 * 1000;
+                    const refBonusMs = referralRewardDays * 24 * 3600 * 1000;
                     if (referrer.plan === 'SUPPORTER' && referrer.expiresAt > now) {
                         referrer.expiresAt += refBonusMs;
                     } else {
@@ -439,6 +448,94 @@ class SubscriptionManager extends EventEmitter {
         }
 
         return { success: false, error: 'ประเภทโค้ดไม่ถูกต้อง' };
+    }
+
+    /**
+     * Update an existing campaign's configuration (quota, expiry date, reward days, etc.)
+     */
+    updateCampaign(code, updates = {}) {
+        if (!code) return { success: false, error: 'Missing campaign code' };
+        const cleanCode = code.trim().toUpperCase();
+        const campaigns = dbManager.get('campaigns') || {};
+        const campaign = campaigns[cleanCode];
+
+        if (!campaign) {
+            return { success: false, error: 'ไม่พบแคมเปญนี้ค่ะ' };
+        }
+
+        if (updates.name !== undefined) campaign.name = updates.name;
+        if (updates.maxClaims !== undefined) {
+            const parsedClaims = parseInt(updates.maxClaims, 10);
+            if (!isNaN(parsedClaims) && parsedClaims >= (campaign.claimedCount || 0)) {
+                campaign.maxClaims = parsedClaims;
+            } else {
+                return { success: false, error: `โควตาสิทธิ์ต้องไม่น้อยกว่าจำนวนที่ถูกเคลมไปแล้ว (${campaign.claimedCount || 0} สิทธิ์)` };
+            }
+        }
+        if (updates.days !== undefined) {
+            const parsedDays = parseInt(updates.days, 10);
+            if (!isNaN(parsedDays) && parsedDays > 0) {
+                campaign.days = parsedDays;
+            }
+        }
+        if (updates.expiresAt !== undefined) {
+            campaign.expiresAt = updates.expiresAt;
+        }
+
+        campaign.updatedAt = Date.now();
+        dbManager.set('campaigns', cleanCode, campaign);
+        return { success: true, campaign };
+    }
+
+    /**
+     * Reset all guilds referral counters for a new season.
+     * Preserves each guild's active supporter status and days, but resets invite counts and trigger flags.
+     */
+    resetReferralSeason(seasonName = '') {
+        const subs = dbManager.get('subscriptions') || {};
+        let resetCount = 0;
+        const now = Date.now();
+
+        for (const [gId, sub] of Object.entries(subs)) {
+            let changed = false;
+            if (sub.referralRewardTriggered) {
+                sub.referralRewardTriggered = false;
+                changed = true;
+            }
+            if ((sub.referralCount || 0) > 0) {
+                sub.referralCount = 0;
+                changed = true;
+            }
+            if ((sub.referralBonusMonths || 0) > 0) {
+                sub.referralBonusMonths = 0;
+                changed = true;
+            }
+            if (changed) {
+                sub.updatedAt = now;
+                dbManager.set('subscriptions', gId, sub);
+                resetCount++;
+            }
+        }
+
+        // Record audit transaction
+        const txId = `tx_season_${now}_${crypto.randomBytes(3).toString('hex')}`;
+        dbManager.set('transactions', txId, {
+            id: txId,
+            guildId: 'SYSTEM',
+            guildName: 'Referral Season Reset',
+            userId: 'ADMIN',
+            amountBaht: 0,
+            addedDays: 0,
+            voucherCode: seasonName ? `SEASON_RESET: ${seasonName}` : 'REFERRAL_SEASON_RESET',
+            isSystemAction: true,
+            timestamp: now
+        });
+
+        return {
+            success: true,
+            resetCount,
+            seasonName: seasonName || 'New Season'
+        };
     }
 
     /**
