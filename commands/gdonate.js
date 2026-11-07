@@ -83,7 +83,7 @@ module.exports = {
                     },
                     {
                         name: '🎁 รหัสชวนเพื่อนประจำเซิร์ฟเวอร์',
-                        value: `\`${sub.referralCode}\` (ชวนสำเร็จ: **${sub.referralCount || 0}** เซิร์ฟเวอร์)`,
+                        value: `\`${sub.referralCode}\` (ชวนสำเร็จ: **${sub.referralCount || 0} / ${config.maxReferralMonths || 6}** เซิร์ฟเวอร์ • สูงสุด ${config.maxReferralMonths || 6} เซิร์ฟเวอร์)`,
                         inline: false
                     },
                     {

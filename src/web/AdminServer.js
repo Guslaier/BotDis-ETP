@@ -352,6 +352,8 @@ class AdminServer {
                     isSupporter: subscriptionManager.isSupporter(guildId),
                     expiresAt: sub.expiresAt,
                     referralCode: sub.referralCode,
+                    referralCount: sub.referralCount || 0,
+                    maxReferralMonths: subscriptionManager.getConfig()?.maxReferralMonths || 6,
                     earlyBirdUsed: sub.earlyBirdUsed
                 },
                 user: userObj,

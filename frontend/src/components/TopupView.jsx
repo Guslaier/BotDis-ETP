@@ -371,11 +371,20 @@ export default function TopupView({ lang, onToast }) {
                       <Copy size={12} /> {lang === 'th' ? 'คัดลอกลิงก์' : 'Copy'}
                     </button>
                   </div>
-                  <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: '#FFF' }}>
-                    {guildData.guild.referralCode}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                    <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: '#FFF' }}>
+                      {guildData.guild.referralCode}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--slime-green)' }}>
+                      {lang === 'th'
+                        ? `ชวนสำเร็จ: ${guildData.guild.referralCount || 0} / ${guildData.guild.maxReferralMonths || 6} เซิร์ฟเวอร์`
+                        : `Invites: ${guildData.guild.referralCount || 0} / ${guildData.guild.maxReferralMonths || 6}`}
+                    </span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 4 }}>
-                    {lang === 'th' ? 'เพื่อนใช้โค้ดนี้เติมเงิน: คุณได้รับ +7 วัน เพื่อนได้รับ +7 วัน' : 'Invite friends: Both get +7 bonus days!'}
+                    {lang === 'th'
+                      ? `เพื่อนใช้โค้ดนี้ร่วมสนับสนุน (29บ.+): คุณได้รับ +7 วัน เพื่อนได้รับ +7 วัน (สูงสุด ${guildData.guild.maxReferralMonths || 6} เซิร์ฟเวอร์)`
+                      : `Friends support with code (29+ THB): Both get +7 days (Max ${guildData.guild.maxReferralMonths || 6} servers)`}
                   </div>
                 </div>
               )}
