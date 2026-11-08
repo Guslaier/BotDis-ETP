@@ -325,8 +325,8 @@ export default function TopupView({ lang, onToast }) {
             letterSpacing: '-0.01em'
           }}>
             {lang === 'th'
-              ? `สมาชิกทุกคนในห้องเสียงฟังคุณภาพ 96 kbps ทันที ไม่ต้องจ่ายแยกรายคน เพียง ${priceRate} บาท / 30 วัน`
-              : `Instant 96 kbps HQ audio for everyone in your voice channel without per-user fees. Only ${priceRate} THB / 30 Days.`}
+              ? `สมาชิกทุกคนในห้องเสียงฟังคุณภาพ 96 kbps ทันที และฟังเพลงอย่างต่อเนื่องไม่จำกัด เพียง ${priceRate} บาท / 30 วัน`
+              : `Instant 96 kbps HQ audio for everyone in your voice channel with uninterrupted continuous listening. Only ${priceRate} THB / 30 Days.`}
           </p>
 
           {/* Understated Feature Strip */}
@@ -830,7 +830,7 @@ export default function TopupView({ lang, onToast }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 11, fontSize: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#FFFFFF', fontWeight: 600 }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'ปลดล็อกทั้งเซิร์ฟเวอร์ (ไม่ต้องจ่ายรายคน)' : 'Unlocks for whole server'}</span>
+                    <span>{lang === 'th' ? 'ปลดล็อกทั้งเซิร์ฟเวอร์ (ครอบคลุมทุกคน)' : 'Unlocks for whole server'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
