@@ -224,7 +224,7 @@ export default function TopupView({ lang, onToast }) {
 
   const formatExpiry = (timestamp) => {
     if (!timestamp || timestamp <= Date.now()) {
-      return lang === 'th' ? 'ยังไม่มีแพ็กเกจ (ทั่วไป)' : 'No Active Supporter';
+      return lang === 'th' ? 'ยังไม่มีสถานะ Supporter (ทั่วไป)' : 'No Active Supporter';
     }
     const diff = timestamp - Date.now();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -595,7 +595,7 @@ export default function TopupView({ lang, onToast }) {
                     border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
                   }}>
                     <span style={{ fontSize: 12, color: 'var(--text-sub)', whiteSpace: 'nowrap' }}>
-                      {lang === 'th' ? 'สถานะแพ็กเกจ:' : 'Current Tier:'}
+                      {lang === 'th' ? 'สถานะ:' : 'Status:'}
                     </span>
                     <span style={{
                       fontWeight: 800,
@@ -985,7 +985,7 @@ export default function TopupView({ lang, onToast }) {
 
                 <input
                   type="text"
-                  placeholder={isMaxStacked ? (lang === 'th' ? 'เซิร์ฟเวอร์มีวันสะสมครบ 90 วันแล้ว (ล็อกการเติมเงิน)' : 'Server reached 90-day max cap') : "https://gift.truemoney.com/campaign/?v=..."}
+                  placeholder={isMaxStacked ? (lang === 'th' ? 'เซิร์ฟเวอร์มีวันสะสมครบ 90 วันแล้ว (ล็อกการร่วมสนับสนุน)' : 'Server reached 90-day max cap') : "https://gift.truemoney.com/campaign/?v=..."}
                   value={voucher}
                   onChange={(e) => setVoucher(e.target.value)}
                   disabled={isMaxStacked}
@@ -1071,43 +1071,11 @@ export default function TopupView({ lang, onToast }) {
                     {referrerName && (
                       <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
                         <IconCircleCheck size={13} />
-                        <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (+30 วันเมื่อเติมเงิน)` : `Referrer: ${referrerName}`}</span>
+                        <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (+30 วันเมื่อร่วมสนับสนุน)` : `Referrer: ${referrerName}`}</span>
                       </div>
                     )}
                   </>
                 )}
-              </div>
-
-              {/* Order Breakdown / Pricing Summary */}
-              <div style={{
-                marginBottom: 12,
-                padding: '12px 14px',
-                borderRadius: 10,
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-                fontSize: 12
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-sub)' }}>
-                  <span>{lang === 'th' ? 'แพ็กเกจ Supporter Pass (30 วัน)' : 'Supporter Pass (30 Days)'}</span>
-                  <span style={{ fontWeight: 600, color: '#FFF' }}>฿{priceRate}.00</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-sub)' }}>
-                  <span>{lang === 'th' ? 'ค่าธรรมเนียมเกตเวย์' : 'Gateway Fee'}</span>
-                  <span style={{ color: 'var(--slime-green)', fontWeight: 600 }}>{lang === 'th' ? 'ฟรี (฿0.00)' : 'Free (฿0.00)'}</span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingTop: 8,
-                  borderTop: '1px solid rgba(255, 255, 255, 0.06)'
-                }}>
-                  <span style={{ fontWeight: 700, color: '#FFF', fontSize: 13 }}>{lang === 'th' ? 'ยอดชำระสุทธิ' : 'Total Amount'}</span>
-                  <span style={{ fontWeight: 800, color: 'var(--slime-green)', fontSize: 16, fontFamily: 'var(--font-mono)' }}>฿{priceRate}.00</span>
-                </div>
               </div>
 
               {/* Important Contribution & 90-Day Cap Tip Box */}
@@ -1170,8 +1138,8 @@ export default function TopupView({ lang, onToast }) {
                     <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
                   ) : (
                     <>
-                      <IconLock size={16} />
-                      <span>{lang === 'th' ? `ยืนยันการสนับสนุน ฿${priceRate} (เปิดใช้งานทันที)` : `Confirm Support ฿${priceRate} (Instant Activation)`}</span>
+                      <IconSparkles size={16} />
+                      <span>{lang === 'th' ? `ยืนยันการร่วมสนับสนุน ฿${priceRate} (เปิดใช้งานทันที)` : `Confirm Contribution ฿${priceRate} (Instant Activation)`}</span>
                     </>
                   )}
                 </button>
