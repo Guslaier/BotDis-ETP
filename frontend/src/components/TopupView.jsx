@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   IconSparkles, IconCircleCheck, IconAlertCircle, IconGift, IconServer, IconShieldCheck, 
   IconClock, IconArrowRight, IconCopy, IconBolt, IconMusic, IconAward,
-  IconFileText, IconX, IconCheck, IconHeadphones, IconVolume, IconLock,
+  IconFileText, IconX, IconCheck, IconHeadphones, IconLock,
   IconBulb, IconUsers, IconFlame, IconHelp
 } from '@tabler/icons-react';
 
@@ -554,50 +554,57 @@ export default function TopupView({ lang, onToast }) {
                   </div>
                 </div>
 
-                {/* Status Pill Plate */}
+                {/* Status & Expiry 2-Column Stat Grid */}
                 <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '11px 14px',
-                  borderRadius: 10,
-                  background: guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: 10
                 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
-                    {lang === 'th' ? 'สถานะแพ็กเกจ:' : 'Current Tier:'}
-                  </span>
-                  <span style={{
-                    fontWeight: 800,
-                    fontSize: 12,
-                    letterSpacing: '0.04em',
-                    color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-dim)',
+                  {/* Status Pill Plate */}
+                  <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6
+                    justifyContent: 'space-between',
+                    padding: '11px 14px',
+                    borderRadius: 10,
+                    background: guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
                   }}>
-                    {guildData.guild.isSupporter ? <IconShieldCheck size={14} /> : null}
-                    {guildData.guild.isSupporter ? 'SUPPORTER (HQ PASS)' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
-                  </span>
-                </div>
+                    <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                      {lang === 'th' ? 'สถานะแพ็กเกจ:' : 'Current Tier:'}
+                    </span>
+                    <span style={{
+                      fontWeight: 800,
+                      fontSize: 12,
+                      letterSpacing: '0.04em',
+                      color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-dim)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6
+                    }}>
+                      {guildData.guild.isSupporter ? <IconShieldCheck size={14} /> : null}
+                      {guildData.guild.isSupporter ? 'SUPPORTER (HQ PASS)' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
+                    </span>
+                  </div>
 
-                {/* Expiry Details */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '11px 14px',
-                  borderRadius: 10,
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid var(--border-subtle)'
-                }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <IconClock size={13} style={{ color: 'var(--cyan-freq)' }} />
-                    {lang === 'th' ? 'วันใช้งานคงเหลือ:' : 'Remaining Time:'}
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
-                    {formatExpiry(guildData.guild.expiresAt)}
-                  </span>
+                  {/* Expiry Details */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '11px 14px',
+                    borderRadius: 10,
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--border-subtle)'
+                  }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <IconClock size={13} style={{ color: 'var(--cyan-freq)' }} />
+                      {lang === 'th' ? 'วันใช้งานคงเหลือ:' : 'Remaining Time:'}
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
+                      {formatExpiry(guildData.guild.expiresAt)}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Referral Pass Widget */}
@@ -685,8 +692,8 @@ export default function TopupView({ lang, onToast }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  paddingTop: 12,
-                  marginTop: 4,
+                  paddingTop: 11,
+                  marginTop: 2,
                   borderTop: '1px solid rgba(255, 255, 255, 0.06)',
                   fontSize: 11.5,
                   color: 'var(--text-sub)'
@@ -695,9 +702,9 @@ export default function TopupView({ lang, onToast }) {
                     <IconHeadphones size={14} style={{ color: 'var(--slime-green)' }} />
                     <span>{lang === 'th' ? 'สถานะบอท: พร้อมสตรีมเสียง HQ' : 'Bot Engine: Ready for HQ Audio'}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-dim)' }}>
-                    <IconVolume size={14} style={{ color: 'var(--cyan-freq)' }} />
-                    <span>{guildData.guild.voiceChannel || (lang === 'th' ? 'ห้องฟังเพลง #1' : 'Audio Channel #1')}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--slime-green)', fontSize: 11, fontWeight: 700 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--slime-green)' }} />
+                    <span>{lang === 'th' ? 'ระบบออนไลน์' : 'Online'}</span>
                   </div>
                 </div>
               </div>
