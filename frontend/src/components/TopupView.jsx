@@ -3,7 +3,7 @@ import {
   IconSparkles, IconCircleCheck, IconAlertCircle, IconGift, IconServer, IconShieldCheck, 
   IconClock, IconArrowRight, IconCopy, IconBolt, IconMusic, IconAward,
   IconFileText, IconX, IconCheck, IconHeadphones, IconVolume, IconLock,
-  IconQrcode, IconBulb, IconUsers, IconFlame, IconHelp
+  IconBulb, IconUsers, IconFlame, IconHelp
 } from '@tabler/icons-react';
 
 function IconTrueMoneyVoucher({ size = 18, stroke = 1.8, style = {}, className = '', ...props }) {
@@ -41,7 +41,7 @@ export default function TopupView({ lang, onToast }) {
   const [userId, setUserId] = useState('');
   const [guildData, setGuildData] = useState(null);
   const [loadingGuild, setLoadingGuild] = useState(false);
-  const [paymentTab, setPaymentTab] = useState('voucher'); // 'voucher' | 'promptpay'
+  const [formTab, setFormTab] = useState('voucher'); // 'voucher' | 'promo'
   const [showTosModal, setShowTosModal] = useState(false);
   const [showVoucherGuideModal, setShowVoucherGuideModal] = useState(false);
 
@@ -492,89 +492,193 @@ export default function TopupView({ lang, onToast }) {
                 background: 'rgba(5, 7, 12, 0.85)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: 14,
-                padding: '14px 16px'
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                    {guildData.guild.icon ? (
-                      <img
-                        src={guildData.guild.icon}
-                        alt=""
-                        style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 10,
-                          objectFit: 'cover',
-                          border: '1px solid rgba(255, 255, 255, 0.12)'
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 10,
-                        background: 'rgba(0, 255, 135, 0.12)',
-                        border: '1px solid rgba(0, 255, 135, 0.35)',
-                        color: 'var(--slime-green)',
-                        fontWeight: 800,
-                        fontSize: 16,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}>
-                        {guildData.guild.name ? guildData.guild.name.substring(0, 2).toUpperCase() : 'BN'}
-                      </div>
-                    )}
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{
-                          fontWeight: 800,
-                          fontSize: 14.5,
-                          color: '#FFFFFF',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}>
-                          {guildData.guild.name}
-                        </span>
-                        <IconCircleCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span>ID: {guildData.guild.id}</span>
-                        <span>•</span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                          <IconUsers size={12} />
-                          {guildData.guild.memberCount || 0} {lang === 'th' ? 'สมาชิก' : 'members'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginBottom: 2 }}>
-                      {lang === 'th' ? 'สถานะแพ็กเกจ' : 'Tier Status'}
-                    </div>
+                {/* Guild Header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {guildData.guild.icon ? (
+                    <img
+                      src={guildData.guild.icon}
+                      alt=""
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
+                        objectFit: 'cover',
+                        border: '1px solid rgba(255, 255, 255, 0.12)'
+                      }}
+                    />
+                  ) : (
                     <div style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-sub)',
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      background: 'rgba(0, 255, 135, 0.12)',
+                      border: '1px solid rgba(0, 255, 135, 0.35)',
+                      color: 'var(--slime-green)',
+                      fontWeight: 800,
+                      fontSize: 17,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 5,
-                      justifyContent: 'flex-end'
+                      justifyContent: 'center',
+                      flexShrink: 0
                     }}>
+                      {guildData.guild.name ? guildData.guild.name.substring(0, 2).toUpperCase() : 'BN'}
+                    </div>
+                  )}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: guildData.guild.isSupporter ? 'var(--slime-green)' : '#64748B',
-                        display: 'inline-block'
-                      }} />
-                      <span>{guildData.guild.isSupporter ? 'Supporter (HQ Pass)' : 'Standard (Free)'}</span>
+                        fontWeight: 800,
+                        fontSize: 15,
+                        color: '#FFFFFF',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {guildData.guild.name}
+                      </span>
+                      <IconCircleCheck size={16} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-dim)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>ID: {guildData.guild.id}</span>
+                      <span>•</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <IconUsers size={13} />
+                        {guildData.guild.memberCount || 0} {lang === 'th' ? 'สมาชิก' : 'members'}
+                      </span>
                     </div>
                   </div>
                 </div>
+
+                {/* Status Pill Plate */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '11px 14px',
+                  borderRadius: 10,
+                  background: guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
+                }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                    {lang === 'th' ? 'สถานะแพ็กเกจ:' : 'Current Tier:'}
+                  </span>
+                  <span style={{
+                    fontWeight: 800,
+                    fontSize: 12,
+                    letterSpacing: '0.04em',
+                    color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-dim)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    {guildData.guild.isSupporter ? <IconShieldCheck size={14} /> : null}
+                    {guildData.guild.isSupporter ? 'SUPPORTER (HQ PASS)' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
+                  </span>
+                </div>
+
+                {/* Expiry Details */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '11px 14px',
+                  borderRadius: 10,
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid var(--border-subtle)'
+                }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <IconClock size={13} style={{ color: 'var(--cyan-freq)' }} />
+                    {lang === 'th' ? 'วันใช้งานคงเหลือ:' : 'Remaining Time:'}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
+                    {formatExpiry(guildData.guild.expiresAt)}
+                  </span>
+                </div>
+
+                {/* Referral Pass Widget */}
+                {guildData.guild.referralCode && (
+                  <div style={{
+                    padding: '14px 16px',
+                    background: 'linear-gradient(145deg, rgba(255, 43, 133, 0.08) 0%, rgba(14, 20, 34, 0.7) 100%)',
+                    border: '1px solid rgba(255, 43, 133, 0.25)',
+                    borderRadius: 12
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--cyber-pink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {lang === 'th' ? 'รหัสชวนเพื่อนรับวันฟรี' : 'Referral Code'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyReferralLink}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--cyber-pink)',
+                          cursor: 'pointer',
+                          fontSize: 11,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          fontWeight: 700
+                        }}
+                      >
+                        <IconCopy size={12} /> {lang === 'th' ? 'คัดลอกลิงก์' : 'Copy Link'}
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                      <div style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 800,
+                        fontSize: 15,
+                        color: '#FFF',
+                        letterSpacing: '0.06em'
+                      }}>
+                        {guildData.guild.referralCode}
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--slime-green)' }}>
+                        {lang === 'th'
+                          ? `ชวนสำเร็จ: ${guildData.guild.referralCount || 0} / ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6}`
+                          : `Invited: ${guildData.guild.referralCount || 0} / ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6}`}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 8, lineHeight: 1.5 }}>
+                      {guildData?.referralConfig?.enabled === false ? (
+                        <span style={{ color: 'var(--red-alert)', fontWeight: 600 }}>
+                          {lang === 'th' ? '[Paused] แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราว' : '[Paused] Referral program is currently paused'}
+                        </span>
+                      ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
+                        <span style={{ color: 'var(--red-alert)', fontWeight: 600 }}>
+                          {lang === 'th'
+                            ? `[Closed] หมดเขตโปรโมชั่น Season นี้แล้ว (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')})`
+                            : `[Closed] Season ended (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()})`}
+                        </span>
+                      ) : (
+                        <>
+                          <span>
+                            {lang === 'th'
+                              ? `เพื่อนเติมเงินด้วยโค้ดนี้ (ขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท): ผู้แนะนำได้รับวันฟรี +${guildData?.referralConfig?.rewardDays ?? 30} วัน`
+                              : `Friends top up with code (${guildData?.referralConfig?.minTopup ?? 29}+ THB): You get +${guildData?.referralConfig?.rewardDays ?? 30} free days`}
+                          </span>
+                          {guildData?.referralConfig?.expiresAt && (
+                            <div style={{ color: 'var(--amber-warn)', marginTop: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <IconClock size={12} />
+                              <span>
+                                {lang === 'th'
+                                  ? `หมดเขต: ${new Date(guildData.referralConfig.expiresAt).toLocaleString('th-TH')} (${formatCountdown(guildData.referralConfig.expiresAt, 'th')})`
+                                  : `Ends: ${new Date(guildData.referralConfig.expiresAt).toLocaleString()} (${formatCountdown(guildData.referralConfig.expiresAt, 'en')})`}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Bottom Status Info Strip */}
                 <div style={{
@@ -582,7 +686,7 @@ export default function TopupView({ lang, onToast }) {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   paddingTop: 12,
-                  marginTop: 12,
+                  marginTop: 4,
                   borderTop: '1px solid rgba(255, 255, 255, 0.06)',
                   fontSize: 11.5,
                   color: 'var(--text-sub)'
@@ -747,103 +851,88 @@ export default function TopupView({ lang, onToast }) {
         <div className="glass-panel" style={{ padding: '22px 24px', borderRadius: 18, display: 'flex', flexDirection: 'column' }}>
           
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div className="terminal-badge">2</div>
-              <div>
-                <h2 style={{ fontSize: 16, fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
-                  {lang === 'th' ? 'ทำรายการสนับสนุน' : 'Checkout Terminal'}
-                </h2>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                  Checkout Terminal
-                </div>
-              </div>
+              <IconTrueMoneyVoucher size={22} stroke={1.8} style={{ color: 'var(--text-pure)' }} />
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
+                {lang === 'th' ? '2. ทำรายการสนับสนุน (Checkout Terminal)' : '2. Checkout Terminal'}
+              </h2>
             </div>
-
-            <div style={{ textAlign: 'right' }}>
-              <div style={{
-                fontSize: 24,
-                fontWeight: 800,
-                color: 'var(--slime-green)',
-                fontFamily: 'var(--font-mono)',
-                lineHeight: 1
-              }}>
-                ฿{priceRate}
-              </div>
-              <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginTop: 3 }}>
-                {lang === 'th' ? '/ 30 วัน (Auto)' : '/ 30 Days (Auto)'}
-              </div>
-            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              STEP 02
+            </span>
           </div>
 
-          {/* Payment Method Selector Tabs */}
+          {/* Segmented Form Tabs: TrueMoney Voucher | Promo Drop */}
           <div style={{
             display: 'flex',
             gap: 6,
-            background: 'rgba(5, 7, 12, 0.75)',
-            padding: 4,
+            background: 'rgba(255, 255, 255, 0.04)',
+            padding: 3,
             borderRadius: 10,
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid var(--border-subtle)',
             marginBottom: 20
           }}>
             <button
               type="button"
-              onClick={() => setPaymentTab('voucher')}
+              onClick={() => setFormTab('voucher')}
               style={{
                 flex: 1,
-                padding: '8px 14px',
+                padding: '9px 12px',
                 borderRadius: 8,
-                border: 'none',
-                background: paymentTab === 'voucher' ? 'var(--slime-green)' : 'transparent',
-                color: paymentTab === 'voucher' ? '#05070B' : 'var(--text-sub)',
-                fontWeight: paymentTab === 'voucher' ? 700 : 500,
-                fontSize: 12.5,
+                border: formTab === 'voucher' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
+                background: formTab === 'voucher' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: formTab === 'voucher' ? '#FFF' : 'var(--text-sub)',
+                fontWeight: formTab === 'voucher' ? 600 : 500,
+                fontSize: 12,
                 cursor: 'pointer',
+                transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 7,
-                transition: 'all 0.15s ease'
+                boxShadow: formTab === 'voucher' ? '0 2px 6px rgba(0, 0, 0, 0.35)' : 'none'
               }}
             >
-              <IconTrueMoneyVoucher size={16} stroke={2} />
+              <IconTrueMoneyVoucher size={16} stroke={1.8} />
               <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney'}</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setPaymentTab('promptpay')}
+              onClick={() => setFormTab('promo')}
               style={{
                 flex: 1,
-                padding: '8px 14px',
+                padding: '9px 12px',
                 borderRadius: 8,
-                border: 'none',
-                background: paymentTab === 'promptpay' ? 'var(--slime-green)' : 'transparent',
-                color: paymentTab === 'promptpay' ? '#05070B' : 'var(--text-sub)',
-                fontWeight: paymentTab === 'promptpay' ? 700 : 500,
-                fontSize: 12.5,
+                border: formTab === 'promo' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
+                background: formTab === 'promo' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: formTab === 'promo' ? '#FFF' : 'var(--text-sub)',
+                fontWeight: formTab === 'promo' ? 600 : 500,
+                fontSize: 12,
                 cursor: 'pointer',
+                transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 7,
-                transition: 'all 0.15s ease'
+                gap: 6,
+                boxShadow: formTab === 'promo' ? '0 2px 6px rgba(0, 0, 0, 0.35)' : 'none'
               }}
             >
-              <IconQrcode size={16} />
-              <span>PromptPay QR</span>
+              <IconGift size={14} />
+              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Drop)' : 'Promo Drop'}</span>
             </button>
           </div>
 
           {/* Form Content */}
-          {paymentTab === 'voucher' ? (
-            <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column' }}>
+          {formTab === 'voucher' ? (
+            <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               
               {/* Voucher URL Input */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-sub)' }}>
-                    {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney' : 'TrueMoney Voucher Link'} <span style={{ color: '#EF4444' }}>*</span>
+                    {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Voucher Link)' : 'TrueMoney Voucher Link'} <span style={{ color: '#EF4444' }}>*</span>
                   </label>
                   <button
                     type="button"
@@ -882,204 +971,166 @@ export default function TopupView({ lang, onToast }) {
                   required
                 />
 
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: 11,
-                  color: 'var(--amber-warn)',
-                  marginTop: 6
-                }}>
-                  <IconBulb size={13} style={{ flexShrink: 0 }} />
-                  <span>
-                    {lang === 'th'
-                      ? `กำหนดจำนวนเงิน ${priceRate} บาท สุ่มหรือแบ่งเท่ากัน 1 คน ในแอป TrueMoney`
-                      : `Set amount to ${priceRate} THB, 1 recipient in TrueMoney app`}
-                  </span>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
+                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Create voucher set to 1 recipient in TrueMoney app'}
                 </div>
               </div>
 
               {/* Referral Code Input */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'รหัสแนะนำเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
+                  {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
                 </label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="text"
-                    placeholder={lang === 'th' ? 'เช่น REF-27641D หรือ VIPPLUS' : 'e.g. REF-27641D'}
-                    value={referralCode}
-                    onChange={(e) => {
-                      const val = e.target.value.toUpperCase();
-                      setReferralCode(val);
-                      if (!val) setReferrerName('');
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: '10px 14px',
-                      borderRadius: 10,
-                      background: 'rgba(5, 7, 12, 0.8)',
-                      border: '1px solid var(--border-light)',
-                      color: '#FFFFFF',
-                      fontSize: 12.5,
-                      fontFamily: 'var(--font-mono)',
-                      letterSpacing: '0.04em'
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyReferral}
-                    style={{
-                      padding: '0 16px',
-                      borderRadius: 10,
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.16)',
-                      color: '#FFFFFF',
-                      fontWeight: 600,
-                      fontSize: 12.5,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {lang === 'th' ? 'ใช้โค้ด' : 'Apply'}
-                  </button>
-                </div>
-
-                {referrerName && (
-                  <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-                    <IconCircleCheck size={13} />
-                    <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (+30 วันเมื่อเติมเงิน)` : `Referrer: ${referrerName}`}</span>
+                {guildData?.referralConfig?.enabled === false ? (
+                  <div style={{ padding: '10px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--red-alert)' }}>
+                    [Paused] {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral program is temporarily paused'}
                   </div>
+                ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
+                  <div style={{ padding: '10px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--red-alert)' }}>
+                    [Closed] {lang === 'th'
+                      ? `โปรโมชั่นโค้ดชวนเพื่อนหมดเขตแล้ว (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')})`
+                      : `Referral promo has ended (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()})`}
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="text"
+                        placeholder={lang === 'th' ? 'เช่น REF-27641D หรือ VIPPLUS' : 'e.g. REF-27641D'}
+                        value={referralCode}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase();
+                          setReferralCode(val);
+                          if (!val) setReferrerName('');
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '10px 14px',
+                          borderRadius: 10,
+                          background: 'rgba(5, 7, 12, 0.8)',
+                          border: '1px solid var(--border-light)',
+                          color: '#FFFFFF',
+                          fontSize: 12.5,
+                          fontFamily: 'var(--font-mono)',
+                          letterSpacing: '0.04em'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyReferral}
+                        style={{
+                          padding: '0 16px',
+                          borderRadius: 10,
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.16)',
+                          color: '#FFFFFF',
+                          fontWeight: 600,
+                          fontSize: 12.5,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {lang === 'th' ? 'ใช้โค้ด' : 'Apply'}
+                      </button>
+                    </div>
+
+                    {referrerName && (
+                      <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+                        <IconCircleCheck size={13} />
+                        <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (+30 วันเมื่อเติมเงิน)` : `Referrer: ${referrerName}`}</span>
+                      </div>
+                    )}
+                  </>
                 )}
-              </div>
-
-              {/* Price Breakdown Summary */}
-              <div style={{
-                paddingTop: 16,
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                marginBottom: 18
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-sub)', marginBottom: 7 }}>
-                  <span>{lang === 'th' ? 'แพ็กเกจ Supporter Pass (30 วัน)' : 'Supporter Pass (30 Days)'}</span>
-                  <span style={{ color: '#FFFFFF', fontFamily: 'var(--font-mono)' }}>฿{priceRate}.00</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-sub)', marginBottom: 12 }}>
-                  <span>{lang === 'th' ? 'ค่าธรรมเนียมเกตเวย์' : 'Gateway Processing Fee'}</span>
-                  <span style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? 'ฟรี (฿0.00)' : 'Free (฿0.00)'}</span>
-                </div>
-
-                <div style={{ height: 1, background: 'rgba(255, 255, 255, 0.08)', marginBottom: 12 }} />
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: 14.5, fontWeight: 700, color: '#FFFFFF' }}>
-                    {lang === 'th' ? 'ยอดชำระสุทธิ' : 'Total Amount'}
-                  </span>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{
-                      fontSize: 20,
-                      fontWeight: 800,
-                      color: 'var(--slime-green)',
-                      fontFamily: 'var(--font-mono)',
-                      lineHeight: 1
-                    }}>
-                      ฿{priceRate}.00
-                    </div>
-                    <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 3 }}>
-                      {lang === 'th' ? 'รวมภาษีมูลค่าเพิ่มแล้ว' : 'VAT Included'}
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Confirm Support Button */}
-              <button
-                type="submit"
-                disabled={submittingTopup}
-                style={{
-                  width: '100%',
-                  padding: '13px 18px',
-                  borderRadius: 12,
-                  background: 'var(--slime-green)',
-                  color: '#05070B',
-                  border: 'none',
-                  fontWeight: 800,
-                  fontSize: 13.5,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  transition: 'all 0.15s ease',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)'
-                }}
-              >
-                {submittingTopup ? (
-                  <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Processing Transaction...'}</span>
-                ) : (
-                  <>
-                    <IconLock size={17} stroke={2.2} />
-                    <span>
-                      {lang === 'th'
-                        ? `ยืนยันการสนับสนุน ฿${priceRate} (เปิดใช้งานทันที)`
-                        : `Confirm Support ฿${priceRate} (Instant Unlock)`}
-                    </span>
-                  </>
-                )}
-              </button>
+              <div style={{ marginTop: 'auto' }}>
+                <button
+                  type="submit"
+                  disabled={submittingTopup}
+                  className="btn btn-pink"
+                  style={{ width: '100%', padding: '13px 18px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                  {submittingTopup ? (
+                    <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
+                  ) : (
+                    <>
+                      <IconTrueMoneyVoucher size={18} stroke={1.8} />
+                      <span>{lang === 'th' ? 'ยืนยันการร่วมสนับสนุน' : 'Confirm Server Contribution'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           ) : (
-            /* PromptPay QR Interface / Notice */
-            <div style={{
-              background: 'rgba(5, 7, 12, 0.6)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: 14,
-              padding: '28px 20px',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 12
-            }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: 'rgba(0, 229, 255, 0.1)',
-                border: '1px solid rgba(0, 229, 255, 0.28)',
-                color: 'var(--cyan-freq)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <IconQrcode size={26} />
+            /* Promo Code Drop Tab */
+            <form onSubmit={handleRedeemPromo} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'รหัสโค้ดกิจกรรม (Early-Bird Drop Code)' : 'Promo Code'}
+                </label>
+                <input
+                  type="text"
+                  placeholder={lang === 'th' ? 'กรอกรหัสแคมเปญ เช่น EARLY30' : 'Enter promo code...'}
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '11px 14px',
+                    borderRadius: 10,
+                    background: 'rgba(5, 7, 12, 0.8)',
+                    border: '1px solid var(--border-light)',
+                    color: '#FFFFFF',
+                    fontSize: 12.5,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}
+                />
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
+                  {lang === 'th' ? 'รหัสโปรโมชันแจกสิทธิ์ผู้สนับสนุนเซิร์ฟเวอร์ฟรี 30 วัน' : 'Redeem limited campaign code for 30 free Supporter days'}
+                </div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: 14, color: '#FFFFFF' }}>
-                {lang === 'th' ? 'ระบบ PromptPay QR Gateway' : 'PromptPay QR Gateway'}
+
+              <div style={{ marginTop: 'auto' }}>
+                <button
+                  type="submit"
+                  disabled={submittingPromo}
+                  className="btn btn-primary"
+                  style={{ width: '100%', padding: '13px 18px', fontSize: 14 }}
+                >
+                  {submittingPromo ? (
+                    <span>{lang === 'th' ? 'กำลังตรวจสอบสิทธิ์...' : 'Claiming...'}</span>
+                  ) : (
+                    <>
+                      <IconGift size={16} />
+                      <span>{lang === 'th' ? 'ยืนยันรับสิทธิ์โปรโมชัน' : 'Claim Promo Perk'}</span>
+                    </>
+                  )}
+                </button>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--text-sub)', maxWidth: 300, margin: 0, lineHeight: 1.55 }}>
-                {lang === 'th'
-                  ? 'ช่องทาง PromptPay QR อัตโนมัติกำลังเตรียมเปิดให้บริการ กรุณาใช้ช่องทาง "ซอง TrueMoney" เพื่อรับสิทธิ์ทันทีใน 5 วินาที'
-                  : 'PromptPay QR is currently under scheduled deployment. Please use TrueMoney Voucher for instant automated unlock.'}
-              </p>
-              <button
-                type="button"
-                onClick={() => setPaymentTab('voucher')}
-                style={{
-                  marginTop: 6,
-                  padding: '9px 18px',
-                  borderRadius: 10,
-                  background: 'var(--slime-green)',
-                  color: '#05070B',
-                  border: 'none',
-                  fontWeight: 700,
-                  fontSize: 12.5,
-                  cursor: 'pointer'
-                }}
-              >
-                {lang === 'th' ? 'กลับไปที่ซอง TrueMoney' : 'Switch to TrueMoney'}
-              </button>
-            </div>
+            </form>
           )}
+
+          {/* Pricing Standard Tag */}
+          <div style={{
+            marginTop: 20,
+            padding: '11px 14px',
+            borderRadius: 10,
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid var(--border-subtle)',
+            fontSize: 12,
+            color: 'var(--text-sub)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span>{lang === 'th' ? 'เรตผู้สนับสนุนมาตรฐาน:' : 'Standard Supporter Rate:'}</span>
+            <strong style={{ color: '#FFF', letterSpacing: '-0.01em' }}>
+              {priceRate} {lang === 'th' ? 'บาท = 30 วัน (Supporter)' : 'THB = 30 Days (Supporter)'}
+            </strong>
+          </div>
 
           {/* Security & Automation Badges */}
           <div style={{
@@ -1291,7 +1342,7 @@ export default function TopupView({ lang, onToast }) {
           position: 'fixed',
           inset: 0,
           zIndex: 1000,
-          background: 'rgba(5, 7, 11, 0.85)',
+          background: 'rgba(5, 7, 12, 0.85)',
           backdropFilter: 'blur(12px)',
           display: 'flex',
           alignItems: 'center',
