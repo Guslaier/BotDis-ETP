@@ -13,6 +13,7 @@ const proxyManager = require('../helpers/proxyManager');
 const cacheManager = require('../CacheManager');
 const youtubeCircuit = require('../helpers/youtubeCircuit');
 const banManager = require('../moderation/banManager');
+const featureManager = require('../helpers/featureManager');
 
 class AdminServer {
     constructor(client, kazagumo) {
@@ -792,6 +793,7 @@ class AdminServer {
                     },
                     config,
                     billingConfig: config,
+                    features: featureManager.getFeatures(),
                     players: playersList,
                     subscriptions: subsList,
                     guilds: subsList,
@@ -1088,6 +1090,12 @@ class AdminServer {
 
                 const updated = subscriptionManager.updateConfig(configPayload);
                 return this._sendJson(res, 200, { success: true, config: updated });
+            }
+
+            if (pathname === '/api/admin/features' && req.method === 'POST') {
+                const body = await this._parseBody(req);
+                const updated = featureManager.updateFeatures(body);
+                return this._sendJson(res, 200, { success: true, features: updated });
             }
 
             if (pathname.startsWith('/api/admin/nodes/') && pathname.endsWith('/cache/clear') && req.method === 'POST') {

@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const lyricsHelper = require('../src/helpers/lyricsHelper');
+const featureManager = require('../src/helpers/featureManager');
 
 module.exports = {
     data: {
@@ -7,7 +8,18 @@ module.exports = {
         description: 'Search and display lyrics for currently playing track',
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const access = featureManager.checkAccess('lyrics', guildId);
+        if (!access.allowed) {
+            const isSupporterOnly = access.mode === 'supporter_only';
+            const blockEmbed = new EmbedBuilder()
+                .setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
+                .setTitle(isSupporterOnly ? '💎 ฟังก์ชันสำหรับผู้สนับสนุน (Supporter Only)' : '⛔ ฟังก์ชันปิดปรับปรุงชั่วคราว')
+                .setDescription(access.reason);
+            return interaction.reply({ embeds: [blockEmbed], flags: 64 });
+        }
+
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing || !player.queue.current) {

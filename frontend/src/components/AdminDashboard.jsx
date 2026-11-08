@@ -90,6 +90,17 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const hasInitializedSettingsRef = useRef(false);
   const isSettingsDirtyRef = useRef(false);
 
+  // Feature Flags State
+  const [featureFlags, setFeatureFlags] = useState({
+    filter: { id: 'filter', name: 'Audio Equalizer & Filter', command: '/gfilter', description: 'DSP audio equalizer presets and acoustic tone processing (Bass Boost, Nightcore, etc.)', mode: 'supporter_only', customMessage: '' },
+    autoplay: { id: 'autoplay', name: 'Autoplay Engine', command: '/gautoplay', description: 'Autonomous continuous smart track queueing when playlist reaches end', mode: 'supporter_only', customMessage: '' },
+    lyrics: { id: 'lyrics', name: 'Lyrics Search', command: '/glyrics', description: 'Online synchronized and plain text song lyrics retrieval', mode: 'all', customMessage: '' },
+    seek: { id: 'seek', name: 'Playback Scrubbing & Seek', command: '/gseek, /gforward, /gbackward', description: 'Jump to specific track timestamp and fast-forward or rewind audio playback', mode: 'all', customMessage: '' }
+  });
+  const [savingFeatures, setSavingFeatures] = useState(false);
+  const hasInitializedFeaturesRef = useRef(false);
+  const isFeaturesDirtyRef = useRef(false);
+
   const fetchData = async () => {
     if (!token) return;
     try {
@@ -128,6 +139,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             expireMode: exp ? 'custom' : 'never',
             customDate: exp ? new Date(exp).toISOString().split('T')[0] : ''
           });
+        }
+        if (json.features && !hasInitializedFeaturesRef.current && !isFeaturesDirtyRef.current) {
+          hasInitializedFeaturesRef.current = true;
+          setFeatureFlags(json.features);
         }
       }
     } catch (err) {
@@ -672,6 +687,36 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       }
     } catch (err) {
       onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleSaveFeatures = async (e) => {
+    if (e) e.preventDefault();
+    setSavingFeatures(true);
+    try {
+      const res = await fetch('/api/admin/features', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(featureFlags)
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'บันทึกสถานะฟังก์ชันและข้อความแจ้งเตือนสำเร็จ' : 'Feature Flags Saved');
+        isFeaturesDirtyRef.current = false;
+        if (resJson.features) {
+          setFeatureFlags(resJson.features);
+        }
+        fetchData();
+      } else {
+        onToast('error', 'Error', resJson.error || 'Failed to update feature flags');
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    } finally {
+      setSavingFeatures(false);
     }
   };
 
@@ -1997,150 +2042,403 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
 
       {/* --- TAB 6: SETTINGS & CONFIG --- */}
       {activeSubTab === 'settings' && (
-        <div className="glass-panel fade-in" style={{ padding: 24, maxWidth: 640 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Settings size={18} style={{ color: 'var(--slime-green)' }} />
-            <span>{lang === 'th' ? 'ตั้งค่าระบบด่วน (Live Config)' : 'System Configuration'}</span>
-          </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: 20, alignItems: 'start' }}>
+          {/* Card 1: System Live Configuration */}
+          <div className="glass-panel fade-in" style={{ padding: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Settings size={18} style={{ color: 'var(--slime-green)' }} />
+              <span>{lang === 'th' ? 'ตั้งค่าระบบด่วน (Live Config)' : 'System Configuration'}</span>
+            </h3>
 
-          {/* Cluster Physical Capacity Reference Banner */}
-          {data?.stats?.clusterCapacity && (
-            <div style={{
-              background: 'rgba(0, 210, 255, 0.08)',
-              border: '1px solid rgba(0, 210, 255, 0.25)',
-              borderRadius: 10,
-              padding: '12px 16px',
-              marginBottom: 20,
-              fontSize: 12
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontWeight: 700, color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Server size={14} />
-                  {lang === 'th' ? 'ภาระสตรีมจริงของทุกโหนดรวมกัน:' : 'Cluster Total Physical Capacity:'}
-                </span>
+            {/* Cluster Physical Capacity Reference Banner */}
+            {data?.stats?.clusterCapacity && (
+              <div style={{
+                background: 'rgba(0, 210, 255, 0.08)',
+                border: '1px solid rgba(0, 210, 255, 0.25)',
+                borderRadius: 10,
+                padding: '12px 16px',
+                marginBottom: 20,
+                fontSize: 12
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <span style={{ fontWeight: 700, color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Server size={14} />
+                    {lang === 'th' ? 'ภาระสตรีมจริงของทุกโหนดรวมกัน:' : 'Cluster Total Physical Capacity:'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      isSettingsDirtyRef.current = true;
+                      setSettingsForm(prev => ({
+                        ...prev,
+                        maxTotalStreams: data.stats.clusterCapacity.clusterMaxTotal,
+                        maxFreeStreams: data.stats.clusterCapacity.clusterMaxFree
+                      }));
+                    }}
+                    className="btn btn-sm"
+                    style={{ fontSize: 10.5, padding: '3px 8px', background: 'rgba(0, 210, 255, 0.15)', color: 'var(--accent-blue)', border: 'none' }}
+                  >
+                    ⚡ {lang === 'th' ? 'ซิงค์ตามโหนดจริง' : 'Auto-Sync with Nodes'}
+                  </button>
+                </div>
+                <div style={{ color: '#FFF', fontSize: 13, fontWeight: 700 }}>
+                  {data.stats.clusterCapacity.clusterMaxTotal} {lang === 'th' ? 'ห้องรวมสูงสุด' : 'Total Max Rooms'} 
+                  <span style={{ fontWeight: 400, color: 'var(--text-sub)', fontSize: 11.5, marginLeft: 8 }}>
+                    (🟢 สายฟรี {data.stats.clusterCapacity.clusterMaxFree} ห้อง • 💎 สำรอง VIP {data.stats.clusterCapacity.clusterSupporterReserved} ห้อง)
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                  {lang === 'th' 
+                    ? `* โควตาสตรีมรวมที่ตั้งด้านล่างไม่ควรเกินภาระสตรีมจริง (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง) เพื่อป้องกันเครื่องทำงานหนักเกินพิกัด`
+                    : `* System quotas should not exceed physical cluster capacity (${data.stats.clusterCapacity.clusterMaxTotal} rooms)`}
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveSettings}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'โหมดการชำระเงิน (Payment Mode)' : 'Payment Mode'}
+                </label>
+                <select
+                  value={settingsForm.paymentMode}
+                  onChange={(e) => {
+                    isSettingsDirtyRef.current = true;
+                    setSettingsForm(prev => ({ ...prev, paymentMode: e.target.value }));
+                  }}
+                >
+                  <option value="sandbox">โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)</option>
+                  <option value="production">โหมดใช้งานจริง (PRODUCTION - รับซอง TrueMoney จริง)</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'ราคาผู้สนับสนุน (บาท / 30 วัน)' : 'Supporter Price (THB / 30 Days)'}
+                </label>
+                <input
+                  type="number"
+                  value={settingsForm.price30Days}
+                  onChange={(e) => {
+                    isSettingsDirtyRef.current = true;
+                    const v = e.target.value;
+                    setSettingsForm(prev => ({ ...prev, price30Days: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                  }}
+                  min="0"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                    {lang === 'th' ? 'โควตาสตรีมสายฟรี (Max Free)' : 'Max Free Slots'}
+                  </label>
+                  <input
+                    type="number"
+                    value={settingsForm.maxFreeStreams}
+                    onChange={(e) => {
+                      isSettingsDirtyRef.current = true;
+                      const v = e.target.value;
+                      setSettingsForm(prev => ({ ...prev, maxFreeStreams: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                    }}
+                    min="0"
+                    style={data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree ? { borderColor: 'var(--danger)' } : undefined}
+                  />
+                  {data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree && (
+                    <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>
+                      ⚠️ {lang === 'th' ? `เกินโควตาสายฟรีของโหนด (${data.stats.clusterCapacity.clusterMaxFree} ห้อง)` : `Exceeds cluster free limit (${data.stats.clusterCapacity.clusterMaxFree})`}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                    {lang === 'th' ? 'โควตาสตรีมรวมสูงสุด (Max Total)' : 'Max Total Slots'}
+                  </label>
+                  <input
+                    type="number"
+                    value={settingsForm.maxTotalStreams}
+                    onChange={(e) => {
+                      isSettingsDirtyRef.current = true;
+                      const v = e.target.value;
+                      setSettingsForm(prev => ({ ...prev, maxTotalStreams: v === '' ? '' : (parseInt(v, 10) || 0) }));
+                    }}
+                    min="1"
+                    style={data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal ? { borderColor: 'var(--danger)' } : undefined}
+                  />
+                  {data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal && (
+                    <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>
+                      ⚠️ {lang === 'th' ? `เกินภาระสตรีมจริงของโหนด (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง)` : `Exceeds cluster hardware limit (${data.stats.clusterCapacity.clusterMaxTotal})`}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   type="button"
                   onClick={() => {
-                    isSettingsDirtyRef.current = true;
-                    setSettingsForm(prev => ({
-                      ...prev,
-                      maxTotalStreams: data.stats.clusterCapacity.clusterMaxTotal,
-                      maxFreeStreams: data.stats.clusterCapacity.clusterMaxFree
-                    }));
+                    if (data?.config) {
+                      isSettingsDirtyRef.current = false;
+                      setSettingsForm({
+                        paymentMode: data.config.paymentMode || 'sandbox',
+                        price30Days: data.config.price30Days ?? 29,
+                        maxFreeStreams: data.config.maxFreeStreams ?? 2,
+                        maxTotalStreams: data.config.maxTotalStreams ?? 4,
+                        maxReferralMonths: data.config.maxReferralMonths ?? 6,
+                        phoneNumber: data.config.phoneNumber || ''
+                      });
+                      onToast('info', lang === 'th' ? 'คืนค่าล่าสุดจากเซิร์ฟเวอร์แล้ว' : 'Reset to server config');
+                    }
                   }}
                   className="btn btn-sm"
-                  style={{ fontSize: 10.5, padding: '3px 8px', background: 'rgba(0, 210, 255, 0.15)', color: 'var(--accent-blue)', border: 'none' }}
+                  style={{ flex: '0 0 auto', padding: '12px 18px' }}
+                  title="Reset to current server values"
                 >
-                  ⚡ {lang === 'th' ? 'ซิงค์ตามโหนดจริง' : 'Auto-Sync with Nodes'}
+                  <RefreshCw size={14} />
+                  <span>{lang === 'th' ? 'รีเซ็ตค่าเดิม' : 'Reset'}</span>
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px 18px' }}>
+                  <Save size={15} />
+                  <span>{lang === 'th' ? 'บันทึกการตั้งค่าระบบ' : 'Save System Settings'}</span>
                 </button>
               </div>
-              <div style={{ color: '#FFF', fontSize: 13, fontWeight: 700 }}>
-                {data.stats.clusterCapacity.clusterMaxTotal} {lang === 'th' ? 'ห้องรวมสูงสุด' : 'Total Max Rooms'} 
-                <span style={{ fontWeight: 400, color: 'var(--text-sub)', fontSize: 11.5, marginLeft: 8 }}>
-                  (🟢 สายฟรี {data.stats.clusterCapacity.clusterMaxFree} ห้อง • 💎 สำรอง VIP {data.stats.clusterCapacity.clusterSupporterReserved} ห้อง)
-                </span>
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
-                {lang === 'th' 
-                  ? `* โควตาสตรีมรวมที่ตั้งด้านล่างไม่ควรเกินภาระสตรีมจริง (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง) เพื่อป้องกันเครื่องทำงานหนักเกินพิกัด`
-                  : `* System quotas should not exceed physical cluster capacity (${data.stats.clusterCapacity.clusterMaxTotal} rooms)`}
-              </div>
-            </div>
-          )}
+            </form>
 
-          <form onSubmit={handleSaveSettings}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                {lang === 'th' ? 'โหมดการชำระเงิน (Payment Mode)' : 'Payment Mode'}
-              </label>
-              <select
-                value={settingsForm.paymentMode}
-                onChange={(e) => {
-                  isSettingsDirtyRef.current = true;
-                  setSettingsForm(prev => ({ ...prev, paymentMode: e.target.value }));
-                }}
+            <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 16, marginTop: 16 }}>
+              <button
+                onClick={handleForceSweep}
+                className="btn btn-sm"
+                style={{ width: '100%', padding: '10px' }}
               >
-                <option value="sandbox">โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)</option>
-                <option value="production">โหมดใช้งานจริง (PRODUCTION - รับซอง TrueMoney จริง)</option>
-              </select>
+                <RefreshCw size={14} />
+                <span>{lang === 'th' ? 'สั่ง Sweep เคลียร์ห้องหมดอายุทันที (Force Sweep)' : 'Force Sweep Idle Rooms'}</span>
+              </button>
             </div>
+          </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                {lang === 'th' ? 'ราคาผู้สนับสนุน (บาท / 30 วัน)' : 'Supporter Price (THB / 30 Days)'}
-              </label>
-              <input
-                type="number"
-                value={settingsForm.price30Days}
-                onChange={(e) => {
-                  isSettingsDirtyRef.current = true;
-                  const v = e.target.value;
-                  setSettingsForm(prev => ({ ...prev, price30Days: v === '' ? '' : (parseInt(v, 10) || 0) }));
-                }}
-                min="0"
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+          {/* Card 2: Feature Flags & Maintenance Notices */}
+          <div className="glass-panel fade-in" style={{ padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'โควตาสตรีมสายฟรี (Max Free)' : 'Max Free Slots'}
-                </label>
-                <input
-                  type="number"
-                  value={settingsForm.maxFreeStreams}
-                  onChange={(e) => {
-                    isSettingsDirtyRef.current = true;
-                    const v = e.target.value;
-                    setSettingsForm(prev => ({ ...prev, maxFreeStreams: v === '' ? '' : (parseInt(v, 10) || 0) }));
-                  }}
-                  min="0"
-                  style={data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree ? { borderColor: 'var(--danger)' } : undefined}
-                />
-                {data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree && (
-                  <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>
-                    ⚠️ {lang === 'th' ? `เกินโควตาสายฟรีของโหนด (${data.stats.clusterCapacity.clusterMaxFree} ห้อง)` : `Exceeds cluster free limit (${data.stats.clusterCapacity.clusterMaxFree})`}
-                  </div>
-                )}
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'โควตาสตรีมรวมสูงสุด (Max Total)' : 'Max Total Slots'}
-                </label>
-                <input
-                  type="number"
-                  value={settingsForm.maxTotalStreams}
-                  onChange={(e) => {
-                    isSettingsDirtyRef.current = true;
-                    const v = e.target.value;
-                    setSettingsForm(prev => ({ ...prev, maxTotalStreams: v === '' ? '' : (parseInt(v, 10) || 0) }));
-                  }}
-                  min="1"
-                  style={data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal ? { borderColor: 'var(--danger)' } : undefined}
-                />
-                {data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal && (
-                  <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>
-                    ⚠️ {lang === 'th' ? `เกินภาระสตรีมจริงของโหนด (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง)` : `Exceeds cluster hardware limit (${data.stats.clusterCapacity.clusterMaxTotal})`}
-                  </div>
-                )}
+                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Sliders size={18} style={{ color: 'var(--cyber-pink)' }} />
+                  <span>{lang === 'th' ? 'สวิตช์ฟังก์ชัน & ข้อความแจ้งเตือน (Feature Flags)' : 'Feature Flags & Maintenance'}</span>
+                </h3>
+                <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 4 }}>
+                  {lang === 'th'
+                    ? 'สลับสิทธิ์การใช้งาน (ทุกคน / เฉพาะ VIP / ปิดปรับปรุง) พร้อมกำหนดข้อความแจ้งเตือนพิเศษเมื่อคำสั่งถูกระงับ'
+                    : 'Toggle feature access tiers (Public, VIP Supporter, or Disabled) and configure custom notice messages'}
+                </div>
               </div>
             </div>
 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
+              {Object.entries(featureFlags).map(([key, feat]) => {
+                const isAll = feat.mode === 'all';
+                const isSupporter = feat.mode === 'supporter_only';
+                const isDisabled = feat.mode === 'disabled';
+
+                return (
+                  <div
+                    key={key}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: `1px solid ${isDisabled ? 'rgba(239, 68, 68, 0.4)' : (isSupporter ? 'rgba(255, 46, 147, 0.3)' : 'var(--card-border)')}`,
+                      borderRadius: 10,
+                      padding: 16,
+                      transition: 'border-color 0.2s'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {key === 'filter' && <Sliders size={16} style={{ color: '#00D2FF' }} />}
+                        {key === 'autoplay' && <RotateCw size={16} style={{ color: '#FF2E93' }} />}
+                        {key === 'lyrics' && <Search size={16} style={{ color: '#10B981' }} />}
+                        {key === 'seek' && <FastForward size={16} style={{ color: '#F59E0B' }} />}
+                        <span style={{ fontWeight: 700, fontSize: 14 }}>{feat.name}</span>
+                        <code style={{ fontSize: 11, background: 'rgba(255, 255, 255, 0.08)', padding: '2px 6px', borderRadius: 4, color: 'var(--accent-blue)' }}>
+                          {feat.command}
+                        </code>
+                      </div>
+                      <div>
+                        {isAll && (
+                          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: 600 }}>
+                            🟢 {lang === 'th' ? 'เปิดทุกคน' : 'Public'}
+                          </span>
+                        )}
+                        {isSupporter && (
+                          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(255, 46, 147, 0.15)', color: '#FF2E93', fontWeight: 600 }}>
+                            💎 {lang === 'th' ? 'เฉพาะ VIP' : 'Supporter'}
+                          </span>
+                        )}
+                        {isDisabled && (
+                          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', fontWeight: 600 }}>
+                            ⛔ {lang === 'th' ? 'ปิดปรับปรุง' : 'Disabled'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <p style={{ fontSize: 11.5, color: 'var(--text-sub)', margin: '0 0 12px 0' }}>
+                      {feat.description}
+                    </p>
+
+                    {/* Segmented Mode Selector */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr 1fr',
+                      gap: 6,
+                      background: 'rgba(0, 0, 0, 0.25)',
+                      padding: 4,
+                      borderRadius: 8,
+                      marginBottom: 12
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          isFeaturesDirtyRef.current = true;
+                          setFeatureFlags(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key], mode: 'all' }
+                          }));
+                        }}
+                        style={{
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '6px 8px',
+                          fontSize: 11,
+                          fontWeight: isAll ? 700 : 500,
+                          cursor: 'pointer',
+                          background: isAll ? '#10B981' : 'transparent',
+                          color: isAll ? '#FFFFFF' : 'var(--text-sub)',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        🟢 {lang === 'th' ? 'ทุกคน (Public)' : 'Public'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          isFeaturesDirtyRef.current = true;
+                          setFeatureFlags(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key], mode: 'supporter_only' }
+                          }));
+                        }}
+                        style={{
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '6px 8px',
+                          fontSize: 11,
+                          fontWeight: isSupporter ? 700 : 500,
+                          cursor: 'pointer',
+                          background: isSupporter ? '#FF2E93' : 'transparent',
+                          color: isSupporter ? '#FFFFFF' : 'var(--text-sub)',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        💎 {lang === 'th' ? 'เฉพาะ VIP' : 'VIP Only'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          isFeaturesDirtyRef.current = true;
+                          setFeatureFlags(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key], mode: 'disabled' }
+                          }));
+                        }}
+                        style={{
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '6px 8px',
+                          fontSize: 11,
+                          fontWeight: isDisabled ? 700 : 500,
+                          cursor: 'pointer',
+                          background: isDisabled ? '#EF4444' : 'transparent',
+                          color: isDisabled ? '#FFFFFF' : 'var(--text-sub)',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        ⛔ {lang === 'th' ? 'ปิดปรับปรุง' : 'Disabled'}
+                      </button>
+                    </div>
+
+                    {/* Custom Maintenance / VIP Notice */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-sub)' }}>
+                          {lang === 'th' ? 'ข้อความแจ้งเตือนผู้ใช้กรณีพิเศษ (Custom Notice):' : 'Custom Notice Message:'}
+                        </label>
+                        {feat.customMessage && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              isFeaturesDirtyRef.current = true;
+                              setFeatureFlags(prev => ({
+                                ...prev,
+                                [key]: { ...prev[key], customMessage: '' }
+                              }));
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: 10.5,
+                              cursor: 'pointer',
+                              padding: '0 4px'
+                            }}
+                          >
+                            {lang === 'th' ? '✕ เคลียร์ข้อความ' : '✕ Clear'}
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={feat.customMessage || ''}
+                        onChange={(e) => {
+                          isFeaturesDirtyRef.current = true;
+                          const val = e.target.value;
+                          setFeatureFlags(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key], customMessage: val }
+                          }));
+                        }}
+                        placeholder={
+                          isDisabled
+                            ? (lang === 'th' ? 'เช่น ปิดปรับปรุงชั่วคราวเนื่องจาก YouTube อัปเดต API คาดว่าจะเปิดเวลา 22:00 น.' : 'e.g. Maintenance due to upstream API update...')
+                            : isSupporter
+                              ? (lang === 'th' ? 'เช่น ฟังก์ชันนี้เปิดเฉพาะ Supporter VIP เท่านั้น พิมพ์ /gdonate เพื่อร่วมสนับสนุน' : 'e.g. Supporter VIP only...')
+                              : (lang === 'th' ? 'ปกติเปิดให้ทุกคนใช้งานได้ (เว้นว่างเพื่อใช้ค่าเริ่มต้น)' : 'Default: Public access for all')
+                        }
+                        style={{
+                          fontSize: 12,
+                          padding: '7px 10px',
+                          borderColor: feat.customMessage ? 'rgba(0, 210, 255, 0.4)' : undefined
+                        }}
+                      />
+                      <div style={{ fontSize: 10.5, marginTop: 4, color: feat.customMessage ? 'var(--accent-blue)' : 'var(--text-dim)' }}>
+                        {feat.customMessage 
+                          ? `✨ ${lang === 'th' ? 'กำลังใช้ข้อความกำหนดเองข้างต้น แจ้งเตือนใน Discord' : 'Using custom notice in Discord responses'}`
+                          : `ℹ️ ${lang === 'th' ? 'เว้นว่างไว้ ระบบจะใช้ข้อความมาตรฐานอัตโนมัติ' : 'Empty: system will use default notice'}`}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Actions for Feature Flags */}
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="button"
                 onClick={() => {
-                  if (data?.config) {
-                    isSettingsDirtyRef.current = false;
-                    setSettingsForm({
-                      paymentMode: data.config.paymentMode || 'sandbox',
-                      price30Days: data.config.price30Days ?? 29,
-                      maxFreeStreams: data.config.maxFreeStreams ?? 2,
-                      maxTotalStreams: data.config.maxTotalStreams ?? 4,
-                      maxReferralMonths: data.config.maxReferralMonths ?? 6,
-                      phoneNumber: data.config.phoneNumber || ''
-                    });
-                    onToast('info', lang === 'th' ? 'คืนค่าล่าสุดจากเซิร์ฟเวอร์แล้ว' : 'Reset to server config');
+                  if (data?.features) {
+                    isFeaturesDirtyRef.current = false;
+                    setFeatureFlags(data.features);
+                    onToast('info', lang === 'th' ? 'คืนค่าสถานะฟังก์ชันล่าสุดแล้ว' : 'Reset features to server');
                   }
                 }}
                 className="btn btn-sm"
@@ -2150,22 +2448,21 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 <RefreshCw size={14} />
                 <span>{lang === 'th' ? 'รีเซ็ตค่าเดิม' : 'Reset'}</span>
               </button>
-              <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px 18px' }}>
+              <button
+                type="button"
+                onClick={handleSaveFeatures}
+                disabled={savingFeatures}
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '12px 18px' }}
+              >
                 <Save size={15} />
-                <span>{lang === 'th' ? 'บันทึกการตั้งค่าระบบ' : 'Save System Settings'}</span>
+                <span>
+                  {savingFeatures
+                    ? (lang === 'th' ? 'กำลังบันทึก...' : 'Saving...')
+                    : (lang === 'th' ? 'บันทึกการตั้งค่าฟังก์ชัน' : 'Save Feature Flags')}
+                </span>
               </button>
             </div>
-          </form>
-
-          <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 16 }}>
-            <button
-              onClick={handleForceSweep}
-              className="btn btn-sm"
-              style={{ width: '100%', padding: '10px' }}
-            >
-              <RefreshCw size={14} />
-              <span>{lang === 'th' ? 'สั่ง Sweep เคลียร์ห้องหมดอายุทันที (Force Sweep)' : 'Force Sweep Idle Rooms'}</span>
-            </button>
           </div>
         </div>
       )}

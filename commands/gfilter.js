@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const subscriptionManager = require('../src/billing/subscriptionManager');
+const featureManager = require('../src/helpers/featureManager');
 const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
@@ -25,10 +26,10 @@ module.exports = {
     },
     run: async (client, interaction, kazagumo) => {
         const guildId = interaction.guild.id;
-        const isSupporter = subscriptionManager.isSupporter(guildId);
+        const access = featureManager.checkAccess('filter', guildId);
         const embed = new EmbedBuilder();
 
-        if (!isSupporter) {
+        if (!access.allowed) {
             subscriptionManager.setGuildAudioFilter(guildId, 'off');
             const player = kazagumo.players.get(guildId);
             if (player) {
@@ -37,9 +38,10 @@ module.exports = {
                     try { player.seek(player.position); } catch {}
                 }
             }
-            embed.setColor('#FF2E93')
-                .setTitle('💎 Supporter Feature')
-                .setDescription(i18n.t(guildId, 'FILTER_SUPPORTER_ONLY'));
+            const isSupporterOnly = access.mode === 'supporter_only';
+            embed.setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
+                .setTitle(isSupporterOnly ? '💎 ฟังก์ชันสำหรับผู้สนับสนุน (Supporter Only)' : '⛔ ฟังก์ชันปิดปรับปรุงชั่วคราว')
+                .setDescription(access.reason);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

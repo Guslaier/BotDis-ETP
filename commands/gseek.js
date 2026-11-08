@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const i18n = require('../src/helpers/i18nHelper');
+const featureManager = require('../src/helpers/featureManager');
 
 module.exports = {
     data: {
@@ -15,8 +16,19 @@ module.exports = {
         ],
     },
     run: async (client, interaction, kazagumo) => {
+        const guildId = interaction.guild.id;
+        const access = featureManager.checkAccess('seek', guildId);
+        if (!access.allowed) {
+            const isSupporterOnly = access.mode === 'supporter_only';
+            const blockEmbed = new EmbedBuilder()
+                .setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
+                .setTitle(isSupporterOnly ? '💎 ฟังก์ชันสำหรับผู้สนับสนุน (Supporter Only)' : '⛔ ฟังก์ชันปิดปรับปรุงชั่วคราว')
+                .setDescription(access.reason);
+            return interaction.reply({ embeds: [blockEmbed], flags: 64 });
+        }
+
         const timeInput = interaction.options.getString('time');
-        const player = kazagumo.players.get(interaction.guild.id);
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {

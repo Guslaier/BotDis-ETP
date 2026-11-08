@@ -1,6 +1,7 @@
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
 const subscriptionManager = require('../src/billing/subscriptionManager');
+const featureManager = require('../src/helpers/featureManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -9,10 +10,10 @@ module.exports = {
 
     run: async (client, interaction, kazagumo) => {
         const guildId = interaction.guild.id;
-        const isSupporter = subscriptionManager.isSupporter(guildId);
+        const access = featureManager.checkAccess('autoplay', guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
-        if (!isSupporter) {
+        if (!access.allowed) {
             settingsManager.setGuildAutoplay(guildId, false);
             const player = kazagumo.players.get(guildId);
             if (player) {
@@ -23,9 +24,10 @@ module.exports = {
                     player._autoplayPreloadTimer = null;
                 }
             }
-            embed.setColor('#FF2E93')
-                .setTitle('💎 ฟีเจอร์สำหรับผู้สนับสนุนเซิร์ฟเวอร์')
-                .setDescription('ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) สงวนไว้สำหรับเซิร์ฟเวอร์ **Supporter** ครับ!\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุนค่าเซิร์ฟเวอร์เริ่มต้นเพียง **29฿/เดือน** ครับ 💖');
+            const isSupporterOnly = access.mode === 'supporter_only';
+            embed.setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
+                .setTitle(isSupporterOnly ? '💎 ฟีเจอร์สำหรับผู้สนับสนุนเซิร์ฟเวอร์' : '⛔ ฟังก์ชันปิดปรับปรุงชั่วคราว')
+                .setDescription(access.reason);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
