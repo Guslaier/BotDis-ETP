@@ -1176,7 +1176,7 @@ export default function TopupView({ lang, onToast }) {
                   }}
                 />
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'รหัสโปรโมชันแจกสิทธิ์ผู้สนับสนุนเซิร์ฟเวอร์ฟรี 30 วัน' : 'Redeem limited campaign code for 30 free Supporter days'}
+                  {lang === 'th' ? 'รหัสโปรโมชันแจกสิทธิ์ผู้สนับสนุนเซิร์ฟเวอร์ฟรี' : 'Redeem limited campaign code for free Supporter perks'}
                 </div>
               </div>
 
