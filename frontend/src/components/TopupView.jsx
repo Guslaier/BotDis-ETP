@@ -765,19 +765,16 @@ export default function TopupView({ lang, onToast }) {
             {/* 2-Column Comparison Layout */}
             <div className="benefit-grid-columns">
               
-              {/* Column A: Standard Free */}
+              {/* Column A: Standard */}
               <div style={{
                 background: 'rgba(5, 7, 12, 0.55)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: 12,
                 padding: '16px'
               }}>
-                <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', minHeight: 22, marginBottom: 14 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: '#E2E8F0' }}>
-                    {lang === 'th' ? 'ทั่วไป (Standard Free)' : 'Standard Free'}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                    {lang === 'th' ? 'หรือบอทฟรี' : 'Baseline Bot'}
+                    {lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD'}
                   </div>
                 </div>
 
@@ -805,7 +802,7 @@ export default function TopupView({ lang, onToast }) {
                 </div>
               </div>
 
-              {/* Column B: Supporter HQ Pass (Highlighted) */}
+              {/* Column B: Supporter (Highlighted) */}
               <div style={{
                 background: 'rgba(0, 255, 135, 0.04)',
                 border: '1px solid rgba(0, 255, 135, 0.4)',
@@ -813,9 +810,9 @@ export default function TopupView({ lang, onToast }) {
                 padding: '16px',
                 position: 'relative'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 22, marginBottom: 14 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--slime-green)' }}>
-                    SUPPORTER (HQ PASS)
+                    SUPPORTER
                   </div>
                   <span style={{
                     fontSize: 9.5,
