@@ -5,22 +5,33 @@ import {
   IconFileText, IconX, IconCheck, IconRadio, IconHeadphones
 } from '@tabler/icons-react';
 
-function TrueMoneyVoucherIcon({ size = 18, style = {} }) {
+function IconTrueMoneyVoucher({ size = 18, stroke = 1.8, style = {}, className = '', ...props }) {
   return (
-    <img
-      src="/truemoney-voucher.png"
-      alt="TrueMoney Voucher"
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
       width={size}
-      height={Math.round(size * 0.81)}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
       style={{
         display: 'inline-block',
         verticalAlign: 'middle',
-        objectFit: 'contain',
         flexShrink: 0,
-        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
         ...style
       }}
-    />
+      {...props}
+    >
+      <rect x="3" y="4" width="18" height="16" rx="3" />
+      <path d="M3 9.5c2.5 1.5 4.5 2.5 6.2 2.5" />
+      <path d="M14.8 12c1.7 0 3.7-1 6.2-2.5" />
+      <circle cx="12" cy="12" r="2.8" />
+      <path d="M10.8 11.2l.6 1.6l.6-1.2l.6 1.2l.6-1.6" strokeWidth={Math.max(1, stroke * 0.72)} />
+    </svg>
   );
 }
 
@@ -603,7 +614,7 @@ export default function TopupView({ lang, onToast }) {
         <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
-              <TrueMoneyVoucherIcon size={20} />
+              <IconTrueMoneyVoucher size={19} stroke={1.8} />
               <span>{lang === 'th' ? '2. ทำรายการสนับสนุน (Checkout Terminal)' : '2. Checkout Terminal'}</span>
             </h2>
             <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
@@ -642,7 +653,7 @@ export default function TopupView({ lang, onToast }) {
                 boxShadow: formTab === 'voucher' ? '0 2px 6px rgba(0, 0, 0, 0.35)' : 'none'
               }}
             >
-              <TrueMoneyVoucherIcon size={17} />
+              <IconTrueMoneyVoucher size={16} stroke={1.8} />
               <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney Voucher'}</span>
             </button>
             <button
@@ -741,7 +752,7 @@ export default function TopupView({ lang, onToast }) {
                     <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
                   ) : (
                     <>
-                      <TrueMoneyVoucherIcon size={20} />
+                      <IconTrueMoneyVoucher size={18} stroke={1.8} />
                       <span>{lang === 'th' ? 'ยืนยันการร่วมสนับสนุน' : 'Confirm Server Contribution'}</span>
                     </>
                   )}
