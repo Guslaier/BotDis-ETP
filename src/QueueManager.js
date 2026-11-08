@@ -22,7 +22,30 @@ class Track {
     constructor(data, requester) {
         this.title = data.title || 'Unknown Title';
         this.author = data.uploader || data.channel || data.author || data.artist || 'Unknown Artist';
-        this.uri = data.url || (data.id ? `https://www.youtube.com/watch?v=${data.id}` : data.uri);
+
+        const isSoundCloud = Boolean(
+            data.extractor?.includes('soundcloud') || 
+            data.extractor_key?.includes('Soundcloud') || 
+            (data.url && data.url.includes('soundcloud.com')) || 
+            (data.webpage_url && data.webpage_url.includes('soundcloud.com'))
+        );
+        const isSpotify = Boolean(
+            data.extractor?.includes('spotify') || 
+            (data.url && data.url.includes('spotify.com')) || 
+            (data.webpage_url && data.webpage_url.includes('spotify.com'))
+        );
+
+        if (isSoundCloud) {
+            this.uri = data.webpage_url || (data.url && !data.url.includes('api.soundcloud.com') ? data.url : (data.id ? `https://soundcloud.com/tracks/${data.id}` : data.uri));
+            this.realSource = 'SoundCloud';
+        } else if (isSpotify) {
+            this.uri = data.webpage_url || data.url || data.uri;
+            this.realSource = 'Spotify';
+        } else {
+            this.uri = data.webpage_url || data.url || (data.id ? `https://www.youtube.com/watch?v=${data.id}` : data.uri);
+            this.realSource = data.realSource || 'YouTube';
+        }
+
         this.identifier = data.id || data.identifier || (this.uri ? crypto.createHash('md5').update(this.uri).digest('hex').slice(0, 16) : '');
         this.length = (data.duration ? data.duration * 1000 : (data.length || 0));
         this.duration = data.duration || (this.length ? Math.round(this.length / 1000) : 0);

@@ -417,7 +417,8 @@ class Player {
                 {
                     audioFilter: this.audioFilter || 'off',
                     bitrate: this.getBitrate(),
-                    node: this.node
+                    node: this.node,
+                    player: this
                 }
             );
 
@@ -894,7 +895,8 @@ class Player {
                 {
                     audioFilter: this.audioFilter || 'off',
                     bitrate: this.getBitrate(),
-                    node: this.node
+                    node: this.node,
+                    player: this
                 }
             );
 

@@ -560,8 +560,9 @@ class AdminServer {
 
                             const currentDuration = p.queue.current?.length || 0;
                             const currentPos = p.position || 0;
-                            const isSoundCloud = p.queue.current?.uri?.includes('soundcloud.com');
-                            const sourceLabel = isSoundCloud ? 'SoundCloud' : 'YouTube';
+                            const isSoundCloud = p.queue.current?.uri?.includes('soundcloud.com') || p.queue.current?.realSource?.includes('SoundCloud');
+                            const isBypass = p.queue.current?.realSource?.includes('Bypass');
+                            const sourceLabel = isBypass ? 'SoundCloud (Bypass)' : (isSoundCloud ? 'SoundCloud' : 'YouTube');
 
                             playersList.push({
                                 guildId: gId,

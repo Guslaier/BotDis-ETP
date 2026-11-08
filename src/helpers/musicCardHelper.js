@@ -65,21 +65,21 @@ function createNowPlayingCard(player, track, options = {}) {
     const channelName = voiceChannel ? voiceChannel.name : 'Voice Channel';
     const membersCount = voiceChannel ? voiceChannel.members.filter(m => !m.user.bot).size : 1;
 
-    let sourceBadge = '🔴 นกแดง';
+    let sourceBadge = '🔴 YouTube';
     if (track?.realSource) {
         if (track.realSource.includes('Bypass')) {
-            sourceBadge = '🟠 เมฆส้ม (Bypass)';
+            sourceBadge = '🟠 SoundCloud (Bypass)';
         } else if (track.realSource.includes('SoundCloud')) {
-            sourceBadge = '🟠 เมฆส้ม';
+            sourceBadge = '🟠 SoundCloud';
         } else if (track.realSource.includes('Spotify')) {
-            sourceBadge = '🟢 นกเขียว';
+            sourceBadge = '🟢 Spotify';
         } else {
-            sourceBadge = '🔴 นกแดง';
+            sourceBadge = '🔴 YouTube';
         }
     } else if (track?.uri && track.uri.includes('soundcloud.com')) {
-        sourceBadge = '🟠 เมฆส้ม';
+        sourceBadge = '🟠 SoundCloud';
     } else if (track?.uri && track.uri.includes('spotify.com')) {
-        sourceBadge = '🟢 นกเขียว';
+        sourceBadge = '🟢 Spotify';
     }
 
     const isSupporter = subscriptionManager.isSupporter(player.guildId);
@@ -105,7 +105,7 @@ function createNowPlayingCard(player, track, options = {}) {
             iconURL: player.manager.client.user.displayAvatarURL()
         })
         .setTitle(safeTitle)
-        .setURL(track?.uri || 'https://discord.com')
+        .setURL((track?.realSource?.includes('Bypass') && track?.fallbackUri) ? track.fallbackUri : (track?.uri || 'https://discord.com'))
         .setDescription(
             `**${safeAuthor}**${requesterTag}\n\n` +
             (isPreparing ? `\`⏳ ${statusText}\`  \`⚡ Buffering...\`\n\n` : `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n`) +
