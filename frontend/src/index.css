@@ -367,3 +367,46 @@ input::placeholder, textarea::placeholder {
 .audio-meter span:nth-child(2) { animation-delay: 0.3s; }
 .audio-meter span:nth-child(3) { animation-delay: 0.2s; }
 .audio-meter span:nth-child(4) { animation-delay: 0.4s; }
+
+/* Supporter Portal 2-Column Command Layout */
+.donate-grid-layout {
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .donate-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.benefit-grid-columns {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 14px;
+}
+
+@media (max-width: 620px) {
+  .benefit-grid-columns {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.terminal-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--slime-green);
+  color: #05070B;
+  font-weight: 800;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+

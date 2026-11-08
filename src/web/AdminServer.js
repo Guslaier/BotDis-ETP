@@ -348,6 +348,7 @@ class AdminServer {
             }
 
             const config = subscriptionManager.getConfig();
+            const voiceChannelName = guild.members?.me?.voice?.channel?.name || null;
             return this._sendJson(res, 200, {
                 success: true,
                 guild: {
@@ -360,7 +361,8 @@ class AdminServer {
                     referralCode: sub.referralCode,
                     referralCount: sub.referralCount || 0,
                     maxReferralMonths: config?.maxReferralMonths || 6,
-                    earlyBirdUsed: sub.earlyBirdUsed
+                    earlyBirdUsed: sub.earlyBirdUsed,
+                    voiceChannel: voiceChannelName
                 },
                 config: {
                     price30Days: config?.price30Days || 29,

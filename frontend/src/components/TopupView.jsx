@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   IconSparkles, IconCircleCheck, IconAlertCircle, IconGift, IconServer, IconShieldCheck, 
   IconClock, IconArrowRight, IconCopy, IconBolt, IconMusic, IconAward,
-  IconFileText, IconX, IconCheck, IconRadio, IconHeadphones
+  IconFileText, IconX, IconCheck, IconHeadphones, IconVolume, IconLock,
+  IconQrcode, IconBulb, IconUsers, IconFlame, IconHelp
 } from '@tabler/icons-react';
 
 function IconTrueMoneyVoucher({ size = 18, stroke = 1.8, style = {}, className = '', ...props }) {
@@ -40,16 +41,15 @@ export default function TopupView({ lang, onToast }) {
   const [userId, setUserId] = useState('');
   const [guildData, setGuildData] = useState(null);
   const [loadingGuild, setLoadingGuild] = useState(false);
-  const [formTab, setFormTab] = useState('voucher'); // 'voucher' | 'promo'
+  const [paymentTab, setPaymentTab] = useState('voucher'); // 'voucher' | 'promptpay'
   const [showTosModal, setShowTosModal] = useState(false);
+  const [showVoucherGuideModal, setShowVoucherGuideModal] = useState(false);
 
   // Forms
   const [voucher, setVoucher] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [referrerName, setReferrerName] = useState('');
-  const [promoCode, setPromoCode] = useState('');
   const [submittingTopup, setSubmittingTopup] = useState(false);
-  const [submittingPromo, setSubmittingPromo] = useState(false);
 
   const formatCountdown = (targetMs, l) => {
     if (!targetMs) return null;
@@ -106,18 +106,29 @@ export default function TopupView({ lang, onToast }) {
     try {
       const res = await fetch(`/api/public/verify-referral?code=${encodeURIComponent(code.trim())}&guildId=${encodeURIComponent(guildId.trim())}`);
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.referrerGuildName) {
         setReferrerName(data.referrerGuildName);
+        onToast('success', lang === 'th' ? 'พบรหัสแนะนำเพื่อน' : 'Referral Applied', lang === 'th' ? `เซิร์ฟเวอร์: ${data.referrerGuildName}` : `Referrer: ${data.referrerGuildName}`);
       } else {
         setReferrerName('');
+        onToast('info', lang === 'th' ? 'บันทึกโค้ดแล้ว' : 'Code Saved', lang === 'th' ? 'ระบบจะตรวจสอบเมื่อกดยืนยันการสนับสนุน' : 'Will be validated on confirmation');
       }
     } catch {
       setReferrerName('');
     }
   };
 
+  const handleApplyReferral = (e) => {
+    if (e) e.preventDefault();
+    if (!referralCode.trim()) {
+      onToast('warning', lang === 'th' ? 'กรุณาระบุโค้ด' : 'Enter Code');
+      return;
+    }
+    verifyReferral(referralCode);
+  };
+
   const handleTopup = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!guildId.trim()) {
       onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID', lang === 'th' ? 'เลือกหรือกรอกไอดีเซิร์ฟเวอร์ก่อนครับ' : 'Provide Guild ID first');
       return;
@@ -154,43 +165,6 @@ export default function TopupView({ lang, onToast }) {
     }
   };
 
-  const handleRedeemPromo = async (e) => {
-    e.preventDefault();
-    if (!guildId.trim()) {
-      onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID');
-      return;
-    }
-    if (!promoCode.trim()) {
-      onToast('warning', lang === 'th' ? 'กรุณาระบุโค้ด' : 'Missing Code');
-      return;
-    }
-
-    setSubmittingPromo(true);
-    try {
-      const res = await fetch('/api/public/redeem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          guildId: guildId.trim(),
-          userId: userId.trim(),
-          code: promoCode.trim()
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        onToast('success', lang === 'th' ? 'เคลมสิทธิ์สำเร็จ!' : 'Code Redeemed!', lang === 'th' ? `ได้รับสิทธิ์ ${data.campaignName} (+${data.addedDays} วัน)` : `Received +${data.addedDays} days`);
-        setPromoCode('');
-        verifyGuild(guildId, userId);
-      } else {
-        onToast('error', lang === 'th' ? 'เคลมไม่สำเร็จ' : 'Redeem Failed', data.error || 'Code invalid');
-      }
-    } catch (err) {
-      onToast('error', 'Error', err.message);
-    } finally {
-      setSubmittingPromo(false);
-    }
-  };
-
   const copyReferralLink = () => {
     if (!guildData?.guild?.referralCode) return;
     const link = `${window.location.origin}/?ref=${guildData.guild.referralCode}`;
@@ -211,851 +185,848 @@ export default function TopupView({ lang, onToast }) {
   const priceRate = guildData?.config?.price30Days ?? 29;
 
   return (
-    <div style={{ maxWidth: 1040, margin: '24px auto', padding: '0 20px' }} className="fade-in">
-      {/* 1. HERO SOUNDSTAGE HEADER */}
-      <section style={{
-        textAlign: 'center',
-        padding: '36px 20px 28px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Ambient Studio Audio Frequency Waveform Background */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 'min(760px, 96vw)',
-          height: 150,
-          pointerEvents: 'none',
-          opacity: 0.12,
-          zIndex: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 5
-        }}>
-          {[22, 38, 28, 54, 42, 70, 48, 34, 65, 84, 58, 92, 68, 80, 46, 62, 38, 74, 44, 58, 30, 46, 24].map((h, i) => (
-            <div
-              key={i}
-              style={{
-                flex: 1,
-                height: `${h}%`,
-                borderRadius: 2,
-                background: 'linear-gradient(180deg, var(--slime-green) 0%, rgba(0, 229, 255, 0.4) 60%, transparent 100%)'
-              }}
-            />
-          ))}
-        </div>
-
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '4px 14px',
-            borderRadius: 999,
-            background: 'rgba(0, 255, 135, 0.08)',
-            border: '1px solid rgba(0, 255, 135, 0.25)',
-            color: 'var(--slime-green)',
-            fontSize: 11.5,
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            marginBottom: 16
-          }}>
-            <IconBolt size={14} stroke={1.8} />
-            <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับสตูดิโอ' : 'GOOLIX High-Fidelity Audio Core'}</span>
-          </div>
-
-          <h1 style={{
-            fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            lineHeight: 1.15,
-            color: '#FFFFFF',
-            margin: '0 0 12px 0'
-          }}>
-            {lang === 'th' ? (
-              <>
-                ปลดล็อกเสียงคมชัดระดับ <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span><br />
-                ให้ทุกคนในเซิร์ฟเวอร์ของคุณ
-              </>
-            ) : (
-              <>
-                Upgrade to <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span> Sound<br />
-                For Your Entire Community
-              </>
-            )}
-          </h1>
-
-          <p style={{
-            maxWidth: 620,
-            margin: '0 auto 20px',
-            color: 'var(--text-sub)',
-            fontSize: 14,
-            lineHeight: 1.6
-          }}>
-            {lang === 'th'
-              ? `สิทธิ์ Supporter ผูกระดับเซิร์ฟเวอร์ สมาชิกทุกคนในห้องเสียงฟังเพลงคุณภาพ 96 kbps และเข้าใช้งาน Priority Slot พร้อมกันโดยไม่ต้องจ่ายรายคน เพียง ${priceRate} บาท / 30 วัน`
-              : `One single guild unlock covers everyone in the voice channel with Opus 96k Studio HQ streaming and instant Priority Lane access for ${priceRate} THB / 30 Days.`}
-          </p>
-
-          {/* Feature Pills Strip */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 10,
-            flexWrap: 'wrap',
-            fontSize: 12,
-            color: 'var(--text-sub)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-              <IconHeadphones size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-              <span>96 kbps Studio HQ</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-              <IconBolt size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-              <span>Priority Fast Slot</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-              <IconClock size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-              <span>Unlimited Duration</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-              <IconMusic size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-              <span>50-Track Queue</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-              <IconSparkles size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-              <span>Smart Autoplay</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. EARLY-BIRD DROP BANNER (When Active) */}
-      {guildData?.campaign && (
-        <div className="glass-panel" style={{
-          padding: '16px 22px',
-          marginBottom: 24,
-          border: '1px solid rgba(0, 255, 135, 0.35)',
-          background: 'linear-gradient(135deg, rgba(0, 255, 135, 0.08) 0%, rgba(14, 20, 34, 0.98) 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 16
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{
-              width: 42,
-              height: 42,
-              borderRadius: 12,
-              background: 'rgba(0, 255, 135, 0.12)',
-              border: '1px solid rgba(0, 255, 135, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--slime-green)'
-            }}>
-              <IconGift size={20} stroke={1.8} />
-            </div>
-            <div>
+    <div style={{ maxWidth: 1080, margin: '24px auto', padding: '0 18px' }} className="fade-in">
+      {/* MAIN WORKFLOW: 2-COLUMN COMMAND LAYOUT */}
+      <div className="donate-grid-layout" style={{ marginBottom: 28 }}>
+        
+        {/* LEFT COLUMN: TARGET GUILD (STEP 1) + BENEFIT COMPARISON */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          
+          {/* CARD 1: TARGET GUILD (STEP 01) */}
+          <div className="glass-panel" style={{ padding: '22px 24px', borderRadius: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontWeight: 800, fontSize: 14.5, color: '#FFF' }}>
-                  {guildData.campaign.name}
-                </span>
-                <span className="slime-badge" style={{ fontSize: 10, padding: '2px 8px' }}>
-                  FREE {guildData.campaign.days || 30} DAYS
-                </span>
+                <div className="terminal-badge">1</div>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
+                  {lang === 'th' ? 'เซิร์ฟเวอร์เป้าหมาย (Target Guild)' : 'Target Guild (Server Selection)'}
+                </h2>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
-                {lang === 'th' ? 'สิทธิ์เปิดตัวเซิร์ฟเวอร์ เหลือเพียง' : 'Launch Drop remaining:'}{' '}
-                <strong style={{ color: 'var(--slime-green)' }}>{guildData.campaign.remaining}</strong> / {guildData.campaign.maxClaims} {lang === 'th' ? 'สิทธิ์' : 'claims'}
-                {guildData.campaign.expiresAt && (
-                  <span style={{ marginLeft: 8 }}>
-                    • {lang === 'th' ? 'หมดเขต:' : 'Ends:'} <strong style={{ color: 'var(--amber-warn)' }}>{new Date(guildData.campaign.expiresAt).toLocaleDateString('th-TH')}</strong>
-                  </span>
-                )}
-              </div>
+              <span style={{
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: 'var(--slime-green)',
+                padding: '2px 9px',
+                borderRadius: 999,
+                border: '1px solid rgba(0, 255, 135, 0.3)',
+                background: 'rgba(0, 255, 135, 0.05)',
+                letterSpacing: '0.04em'
+              }}>
+                Step 01
+              </span>
             </div>
-          </div>
 
-          <form onSubmit={handleRedeemPromo} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder={lang === 'th' ? 'กรอกรหัสแคมเปญ...' : 'Promo code...'}
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-              style={{ width: 140, padding: '8px 12px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}
-            />
-            <button type="submit" disabled={submittingPromo} className="btn btn-sm btn-primary">
-              {submittingPromo ? '...' : (lang === 'th' ? 'รับสิทธิ์' : 'Claim')}
-            </button>
-          </form>
-        </div>
-      )}
+            <p style={{ fontSize: 12, color: 'var(--text-dim)', margin: '0 0 16px 0' }}>
+              {lang === 'th' ? 'กรอก Discord Guild ID (Server ID) เพื่อตรวจสอบสถานะบอท' : 'Enter Discord Guild ID to verify connection status'}
+            </p>
 
-      {/* 3. MAIN WORKFLOW: 2-COLUMN PRO-CONSOLE */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-        gap: 22,
-        marginBottom: 32
-      }}>
-        {/* Left Column: Target Server Identification & Live Status */}
-        <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
-              <IconServer size={18} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-              <span>{lang === 'th' ? '1. เซิร์ฟเวอร์เป้าหมาย (Target Guild)' : '1. Target Guild'}</span>
-            </h2>
-            <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              Step 01
-            </span>
-          </div>
+            {/* Guild ID Input Bar */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <input
+                type="text"
+                placeholder={lang === 'th' ? '809106810929807361' : 'Discord Server ID...'}
+                value={guildId}
+                onChange={(e) => setGuildId(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && verifyGuild()}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  background: 'rgba(5, 7, 12, 0.75)',
+                  border: '1px solid var(--border-light)',
+                  color: '#FFFFFF',
+                  fontSize: 13,
+                  fontFamily: 'var(--font-mono)'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => verifyGuild()}
+                disabled={loadingGuild}
+                style={{
+                  padding: '0 20px',
+                  borderRadius: 10,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {loadingGuild ? '...' : (lang === 'th' ? 'ค้นหา' : 'Search')}
+              </button>
+            </div>
 
-          {/* Search Box */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-            <input
-              type="text"
-              placeholder={lang === 'th' ? 'ระบุ Discord Server ID (เช่น 123456...)' : 'Discord Server ID...'}
-              value={guildId}
-              onChange={(e) => setGuildId(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && verifyGuild()}
-              style={{ flex: 1 }}
-            />
-            <button
-              onClick={() => verifyGuild()}
-              disabled={loadingGuild}
-              className="btn btn-primary"
-              style={{ padding: '0 18px', whiteSpace: 'nowrap' }}
-            >
-              {loadingGuild ? '...' : (lang === 'th' ? 'ค้นหา' : 'Inspect')}
-            </button>
-          </div>
-
-          {guildData?.guild ? (
-            <div style={{
-              background: 'rgba(5, 7, 11, 0.7)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 14,
-              padding: 18,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14
-            }}>
-              {/* Guild Header Info */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                {guildData.guild.icon ? (
-                  <img
-                    src={guildData.guild.icon}
-                    alt=""
-                    style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 14,
-                      objectFit: 'cover',
-                      border: '1px solid var(--border-light)'
-                    }}
-                  />
-                ) : (
-                  <div style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 14,
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border-subtle)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: 20,
-                    color: 'var(--text-sub)'
-                  }}>
-                    {guildData.guild.name.charAt(0)}
-                  </div>
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontWeight: 800,
-                    fontSize: 16,
-                    color: '#FFF',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    letterSpacing: '-0.01em'
-                  }}>
-                    {guildData.guild.name}
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-dim)', marginTop: 2 }}>
-                    ID: <span style={{ fontFamily: 'var(--font-mono)' }}>{guildData.guild.id}</span> • {guildData.guild.memberCount} {lang === 'th' ? 'สมาชิก' : 'members'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Status Pill Plate */}
+            {/* Verified Guild Status Plate */}
+            {guildData?.guild ? (
               <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '11px 14px',
-                borderRadius: 10,
-                background: guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
+                background: 'rgba(5, 7, 12, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 14,
+                padding: '14px 16px'
               }}>
-                <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
-                  {lang === 'th' ? 'สถานะแพ็กเกจ:' : 'Current Tier:'}
-                </span>
-                <span style={{
-                  fontWeight: 800,
-                  fontSize: 12,
-                  letterSpacing: '0.04em',
-                  color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-dim)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}>
-                  {guildData.guild.isSupporter ? <IconShieldCheck size={14} /> : null}
-                  {guildData.guild.isSupporter ? 'SUPPORTER (HQ PASS)' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
-                </span>
-              </div>
-
-              {/* Expiry Details */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '11px 14px',
-                borderRadius: 10,
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid var(--border-subtle)'
-              }}>
-                <span style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <IconClock size={13} style={{ color: 'var(--cyan-freq)' }} />
-                  {lang === 'th' ? 'วันใช้งานคงเหลือ:' : 'Remaining Time:'}
-                </span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
-                  {formatExpiry(guildData.guild.expiresAt)}
-                </span>
-              </div>
-
-              {/* Referral Pass Widget */}
-              {guildData.guild.referralCode && (
-                <div style={{
-                  padding: '14px 16px',
-                  background: 'linear-gradient(145deg, rgba(255, 43, 133, 0.08) 0%, rgba(14, 20, 34, 0.7) 100%)',
-                  border: '1px solid rgba(255, 43, 133, 0.25)',
-                  borderRadius: 12
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--cyber-pink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {lang === 'th' ? 'รหัสชวนเพื่อนรับวันฟรี' : 'Referral Code'}
-                    </span>
-                    <button
-                      onClick={copyReferralLink}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--cyber-pink)',
-                        cursor: 'pointer',
-                        fontSize: 11,
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                    {guildData.guild.icon ? (
+                      <img
+                        src={guildData.guild.icon}
+                        alt=""
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 10,
+                          objectFit: 'cover',
+                          border: '1px solid rgba(255, 255, 255, 0.12)'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 10,
+                        background: 'rgba(0, 255, 135, 0.12)',
+                        border: '1px solid rgba(0, 255, 135, 0.35)',
+                        color: 'var(--slime-green)',
+                        fontWeight: 800,
+                        fontSize: 16,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 4,
-                        fontWeight: 700
-                      }}
-                    >
-                      <IconCopy size={12} /> {lang === 'th' ? 'คัดลอกลิงก์' : 'Copy Link'}
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                    <div style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 800,
-                      fontSize: 15,
-                      color: '#FFF',
-                      letterSpacing: '0.06em'
-                    }}>
-                      {guildData.guild.referralCode}
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--slime-green)' }}>
-                      {lang === 'th'
-                        ? `ชวนสำเร็จ: ${guildData.guild.referralCount || 0} / ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6}`
-                        : `Invited: ${guildData.guild.referralCount || 0} / ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6}`}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 8, lineHeight: 1.5 }}>
-                    {guildData?.referralConfig?.enabled === false ? (
-                      <span style={{ color: 'var(--red-alert)', fontWeight: 600 }}>
-                        {lang === 'th' ? '[Paused] แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราว' : '[Paused] Referral program is currently paused'}
-                      </span>
-                    ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
-                      <span style={{ color: 'var(--red-alert)', fontWeight: 600 }}>
-                        {lang === 'th'
-                          ? `[Closed] หมดเขตโปรโมชั่น Season นี้แล้ว (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')})`
-                          : `[Closed] Season ended (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()})`}
-                      </span>
-                    ) : (
-                      <>
-                        <span>
-                          {lang === 'th'
-                            ? `เพื่อนเติมเงินด้วยโค้ดนี้ (ขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท): ผู้แนะนำได้รับวันฟรี +${guildData?.referralConfig?.rewardDays ?? 30} วัน`
-                            : `Friends top up with code (${guildData?.referralConfig?.minTopup ?? 29}+ THB): You get +${guildData?.referralConfig?.rewardDays ?? 30} free days`}
-                        </span>
-                        {guildData?.referralConfig?.expiresAt && (
-                          <div style={{ color: 'var(--amber-warn)', marginTop: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <IconClock size={12} />
-                            <span>
-                              {lang === 'th'
-                                ? `หมดเขต: ${new Date(guildData.referralConfig.expiresAt).toLocaleString('th-TH')} (${formatCountdown(guildData.referralConfig.expiresAt, 'th')})`
-                                : `Ends: ${new Date(guildData.referralConfig.expiresAt).toLocaleString()} (${formatCountdown(guildData.referralConfig.expiresAt, 'en')})`}
-                            </span>
-                          </div>
-                        )}
-                      </>
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        {guildData.guild.name ? guildData.guild.name.substring(0, 2).toUpperCase() : 'BN'}
+                      </div>
                     )}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{
+                          fontWeight: 800,
+                          fontSize: 14.5,
+                          color: '#FFFFFF',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {guildData.guild.name}
+                        </span>
+                        <IconCircleCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>ID: {guildData.guild.id}</span>
+                        <span>•</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <IconUsers size={12} />
+                          {guildData.guild.memberCount || 0} {lang === 'th' ? 'สมาชิก' : 'members'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginBottom: 2 }}>
+                      {lang === 'th' ? 'สถานะแพ็กเกจ' : 'Tier Status'}
+                    </div>
+                    <div style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-sub)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      justifyContent: 'flex-end'
+                    }}>
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: guildData.guild.isSupporter ? 'var(--slime-green)' : '#64748B',
+                        display: 'inline-block'
+                      }} />
+                      <span>{guildData.guild.isSupporter ? 'Supporter (HQ Pass)' : 'Standard (Free)'}</span>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              padding: '36px 16px',
-              color: 'var(--text-dim)',
-              fontSize: 12.5,
-              border: '1px dashed var(--border-subtle)',
-              borderRadius: 14,
-              background: 'rgba(5, 7, 11, 0.3)'
-            }}>
-              <IconServer size={28} style={{ color: 'var(--text-dim)', marginBottom: 10, opacity: 0.6 }} />
-              <div>{lang === 'th' ? 'ระบุ Discord Server ID ด้านบนเพื่อเริ่มรายการ' : 'Enter Discord Server ID above to inspect status'}</div>
-            </div>
-          )}
-        </div>
 
-        {/* Right Column: Instant Support & Voucher Terminal */}
-        <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
-              <IconTrueMoneyVoucher size={19} stroke={1.8} />
-              <span>{lang === 'th' ? '2. ทำรายการสนับสนุน (Checkout Terminal)' : '2. Checkout Terminal'}</span>
-            </h2>
-            <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              Step 02
-            </span>
+                {/* Bottom Status Info Strip */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: 12,
+                  marginTop: 12,
+                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                  fontSize: 11.5,
+                  color: 'var(--text-sub)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <IconHeadphones size={14} style={{ color: 'var(--slime-green)' }} />
+                    <span>{lang === 'th' ? 'สถานะบอท: พร้อมสตรีมเสียง HQ' : 'Bot Engine: Ready for HQ Audio'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-dim)' }}>
+                    <IconVolume size={14} style={{ color: 'var(--cyan-freq)' }} />
+                    <span>{guildData.guild.voiceChannel || (lang === 'th' ? 'ห้องฟังเพลง #1' : 'Audio Channel #1')}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                background: 'rgba(5, 7, 12, 0.5)',
+                border: '1px dashed rgba(255, 255, 255, 0.1)',
+                borderRadius: 14,
+                padding: '20px 16px',
+                textAlign: 'center',
+                color: 'var(--text-dim)',
+                fontSize: 12
+              }}>
+                <IconServer size={22} style={{ color: 'var(--text-dim)', marginBottom: 6, opacity: 0.6 }} />
+                <div>{lang === 'th' ? 'กรอก Discord Guild ID ด้านบนเพื่อตรวจสอบสถานะเซิร์ฟเวอร์' : 'Enter Discord Guild ID above to inspect status'}</div>
+              </div>
+            )}
           </div>
 
-          {/* Segmented Mode Selector */}
+          {/* CARD 2: BENEFIT COMPARISON */}
+          <div className="glass-panel" style={{ padding: '22px 24px', borderRadius: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <IconFlame size={17} style={{ color: 'var(--slime-green)' }} />
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+                    {lang === 'th' ? 'เปรียบเทียบสิทธิประโยชน์' : 'Tier Comparison Matrix'}
+                  </h3>
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-dim)', marginTop: 3 }}>
+                  {lang === 'th' ? 'สิทธิ์ระดับเซิร์ฟเวอร์ ปลดล็อกพร้อมกันทุกคนในห้องเสียง' : 'Server-wide unlock for everyone in voice channel'}
+                </div>
+              </div>
+              <span style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--text-sub)',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                padding: '3px 10px',
+                borderRadius: 999,
+                whiteSpace: 'nowrap'
+              }}>
+                {priceRate} {lang === 'th' ? 'บาท / 30 วัน' : 'THB / 30 Days'}
+              </span>
+            </div>
+
+            {/* 2-Column Comparison Layout */}
+            <div className="benefit-grid-columns">
+              
+              {/* Column A: Standard Free */}
+              <div style={{
+                background: 'rgba(5, 7, 12, 0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: 12,
+                padding: '14px 16px'
+              }}>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-sub)' }}>
+                    {lang === 'th' ? 'ทั่วไป (Standard Free)' : 'Standard Free'}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginTop: 1 }}>
+                    {lang === 'th' ? 'หรือบอทฟรี' : 'Baseline Bot'}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 11.5 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-sub)' }}>
+                    <IconCheck size={14} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'คุณภาพเสียงมาตรฐาน 64 kbps' : 'Standard 64 kbps audio'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-sub)' }}>
+                    <IconCheck size={14} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'คิวเพลงสูงสุด 10 เพลง' : 'Max 10 songs in queue'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
+                    <IconX size={14} style={{ color: '#EF4444', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'จำกัดความยาว 30 นาที/เพลง' : 'Track capped at 30 mins'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
+                    <IconX size={14} style={{ color: '#EF4444', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'แชร์ช่องสัญญาณ (หากเต็มต้องรอคิว)' : 'Shared stream slot queue'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
+                    <IconX size={14} style={{ color: '#EF4444', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'ไม่มีระบบเล่นเพลงต่อเนื่อง (Autoplay)' : 'No continuous Autoplay'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Column B: Supporter HQ Pass (Highlighted) */}
+              <div style={{
+                background: 'rgba(0, 255, 135, 0.03)',
+                border: '1px solid rgba(0, 255, 135, 0.35)',
+                borderRadius: 12,
+                padding: '14px 16px',
+                position: 'relative'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--slime-green)' }}>
+                    SUPPORTER (HQ PASS)
+                  </div>
+                  <span style={{
+                    fontSize: 9.5,
+                    fontWeight: 800,
+                    color: 'var(--slime-green)',
+                    background: 'rgba(0, 255, 135, 0.1)',
+                    border: '1px solid rgba(0, 255, 135, 0.3)',
+                    padding: '2px 7px',
+                    borderRadius: 6,
+                    letterSpacing: '0.04em'
+                  }}>
+                    RECOMMENDED
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 11.5 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#E2E8F0', fontWeight: 600 }}>
+                    <IconCheck size={14} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'ปลดล็อกทั้งเซิร์ฟเวอร์ (ไม่ต้องจ่ายรายคน)' : 'Unlocks for whole server'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#E2E8F0' }}>
+                    <IconCheck size={14} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'คุณภาพเสียงสูงสุด 96 kbps Studio HQ' : '96 kbps Studio HQ sound'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#E2E8F0' }}>
+                    <IconCheck size={14} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'Priority Fast Slot เปิดเพลงได้ทันที' : 'Priority Slot: instant access'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#E2E8F0' }}>
+                    <IconCheck size={14} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'ไม่จำกัดความยาวเพลง (เกิน 30 นาทีได้)' : 'No track length limit'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#E2E8F0' }}>
+                    <IconCheck size={14} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'ขยายคิวเพลงสูงสุด 50 เพลง' : 'Expand queue to 50 songs'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#E2E8F0' }}>
+                    <IconCheck size={14} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'Smart Autoplay เพลงต่อเนื่องไม่มีสะดุด' : 'Smart continuous Autoplay'}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        {/* RIGHT COLUMN: CHECKOUT TERMINAL (STEP 2) */}
+        <div className="glass-panel" style={{ padding: '22px 24px', borderRadius: 18, display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="terminal-badge">2</div>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
+                  {lang === 'th' ? 'ทำรายการสนับสนุน' : 'Checkout Terminal'}
+                </h2>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                  Checkout Terminal
+                </div>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'right' }}>
+              <div style={{
+                fontSize: 24,
+                fontWeight: 800,
+                color: 'var(--slime-green)',
+                fontFamily: 'var(--font-mono)',
+                lineHeight: 1
+              }}>
+                ฿{priceRate}
+              </div>
+              <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginTop: 3 }}>
+                {lang === 'th' ? '/ 30 วัน (Auto)' : '/ 30 Days (Auto)'}
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Method Selector Tabs */}
           <div style={{
             display: 'flex',
-            gap: 4,
-            marginBottom: 20,
-            background: 'rgba(255, 255, 255, 0.04)',
-            padding: 3,
+            gap: 6,
+            background: 'rgba(5, 7, 12, 0.75)',
+            padding: 4,
             borderRadius: 10,
-            border: '1px solid var(--border-subtle)'
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            marginBottom: 20
           }}>
             <button
               type="button"
-              onClick={() => setFormTab('voucher')}
+              onClick={() => setPaymentTab('voucher')}
               style={{
                 flex: 1,
-                padding: '9px 12px',
+                padding: '8px 14px',
                 borderRadius: 8,
-                border: formTab === 'voucher' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
-                background: formTab === 'voucher' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: formTab === 'voucher' ? '#FFF' : 'var(--text-sub)',
-                fontWeight: formTab === 'voucher' ? 600 : 500,
-                fontSize: 12,
+                border: 'none',
+                background: paymentTab === 'voucher' ? 'var(--slime-green)' : 'transparent',
+                color: paymentTab === 'voucher' ? '#05070B' : 'var(--text-sub)',
+                fontWeight: paymentTab === 'voucher' ? 700 : 500,
+                fontSize: 12.5,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 7,
-                boxShadow: formTab === 'voucher' ? '0 2px 6px rgba(0, 0, 0, 0.35)' : 'none'
+                transition: 'all 0.15s ease'
               }}
             >
-              <IconTrueMoneyVoucher size={16} stroke={1.8} />
-              <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney Voucher'}</span>
+              <IconTrueMoneyVoucher size={16} stroke={2} />
+              <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney'}</span>
             </button>
+
             <button
               type="button"
-              onClick={() => setFormTab('promo')}
+              onClick={() => setPaymentTab('promptpay')}
               style={{
                 flex: 1,
-                padding: '9px 12px',
+                padding: '8px 14px',
                 borderRadius: 8,
-                border: formTab === 'promo' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
-                background: formTab === 'promo' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: formTab === 'promo' ? '#FFF' : 'var(--text-sub)',
-                fontWeight: formTab === 'promo' ? 600 : 500,
-                fontSize: 12,
+                border: 'none',
+                background: paymentTab === 'promptpay' ? 'var(--slime-green)' : 'transparent',
+                color: paymentTab === 'promptpay' ? '#05070B' : 'var(--text-sub)',
+                fontWeight: paymentTab === 'promptpay' ? 700 : 500,
+                fontSize: 12.5,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
-                boxShadow: formTab === 'promo' ? '0 2px 6px rgba(0, 0, 0, 0.35)' : 'none'
+                gap: 7,
+                transition: 'all 0.15s ease'
               }}
             >
-              <IconGift size={14} />
-              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Drop)' : 'Promo Drop'}</span>
+              <IconQrcode size={16} />
+              <span>PromptPay QR</span>
             </button>
           </div>
 
-          {formTab === 'voucher' ? (
-            <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+          {/* Form Content */}
+          {paymentTab === 'voucher' ? (
+            <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column' }}>
+              
+              {/* Voucher URL Input */}
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Voucher Link)' : 'Gift Voucher URL'}
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-sub)' }}>
+                    {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney' : 'TrueMoney Voucher Link'} <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowVoucherGuideModal(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--slime-green)',
+                      fontSize: 11,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: 0
+                    }}
+                  >
+                    <IconHelp size={13} />
+                    <span>{lang === 'th' ? `วิธีสร้างซอง ${priceRate} บาท?` : `How to create voucher?`}</span>
+                  </button>
+                </div>
+
                 <input
                   type="text"
                   placeholder="https://gift.truemoney.com/campaign/?v=..."
                   value={voucher}
                   onChange={(e) => setVoucher(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '11px 14px',
+                    borderRadius: 10,
+                    background: 'rgba(5, 7, 12, 0.8)',
+                    border: '1px solid var(--border-light)',
+                    color: '#FFFFFF',
+                    fontSize: 12.5
+                  }}
                   required
                 />
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Create voucher set to 1 recipient in TrueMoney app'}
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: 11,
+                  color: 'var(--amber-warn)',
+                  marginTop: 6
+                }}>
+                  <IconBulb size={13} style={{ flexShrink: 0 }} />
+                  <span>
+                    {lang === 'th'
+                      ? `กำหนดจำนวนเงิน ${priceRate} บาท สุ่มหรือแบ่งเท่ากัน 1 คน ในแอป TrueMoney`
+                      : `Set amount to ${priceRate} THB, 1 recipient in TrueMoney app`}
+                  </span>
                 </div>
               </div>
 
+              {/* Referral Code Input */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
+                  {lang === 'th' ? 'รหัสแนะนำเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
                 </label>
-                {guildData?.referralConfig?.enabled === false ? (
-                  <div style={{ padding: '10px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--red-alert)' }}>
-                    [Paused] {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral program is temporarily paused'}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    placeholder={lang === 'th' ? 'เช่น REF-27641D หรือ VIPPLUS' : 'e.g. REF-27641D'}
+                    value={referralCode}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      setReferralCode(val);
+                      if (!val) setReferrerName('');
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      background: 'rgba(5, 7, 12, 0.8)',
+                      border: '1px solid var(--border-light)',
+                      color: '#FFFFFF',
+                      fontSize: 12.5,
+                      fontFamily: 'var(--font-mono)',
+                      letterSpacing: '0.04em'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyReferral}
+                    style={{
+                      padding: '0 16px',
+                      borderRadius: 10,
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                      color: '#FFFFFF',
+                      fontWeight: 600,
+                      fontSize: 12.5,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {lang === 'th' ? 'ใช้โค้ด' : 'Apply'}
+                  </button>
+                </div>
+
+                {referrerName && (
+                  <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+                    <IconCircleCheck size={13} />
+                    <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (+30 วันเมื่อเติมเงิน)` : `Referrer: ${referrerName}`}</span>
                   </div>
-                ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
-                  <div style={{ padding: '10px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--red-alert)' }}>
-                    [Closed] {lang === 'th'
-                      ? `โปรโมชั่นโค้ดชวนเพื่อนหมดเขตแล้ว (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')})`
-                      : `Referral promo has ended (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()})`}
-                  </div>
-                ) : (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="REF-XXXXXX"
-                      value={referralCode}
-                      onChange={(e) => {
-                        const val = e.target.value.toUpperCase();
-                        setReferralCode(val);
-                        verifyReferral(val);
-                      }}
-                      style={{ letterSpacing: '0.04em' }}
-                    />
-                    {referrerName && (
-                      <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-                        <IconCircleCheck size={13} />
-                        <span>
-                          {lang === 'th'
-                            ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (ผู้ชวนรับโบนัส +${guildData?.referralConfig?.rewardDays ?? 30} วัน เมื่อยอดเติมขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท)`
-                            : `Referrer: ${referrerName} (Gets +${guildData?.referralConfig?.rewardDays ?? 30} days on ${guildData?.referralConfig?.minTopup ?? 29}+ THB)`}
-                        </span>
-                      </div>
-                    )}
-                  </>
                 )}
               </div>
 
-              <div style={{ marginTop: 'auto' }}>
-                <button
-                  type="submit"
-                  disabled={submittingTopup}
-                  className="btn btn-pink"
-                  style={{ width: '100%', padding: '13px 18px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                >
-                  {submittingTopup ? (
-                    <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
-                  ) : (
-                    <>
-                      <IconTrueMoneyVoucher size={18} stroke={1.8} />
-                      <span>{lang === 'th' ? 'ยืนยันการร่วมสนับสนุน' : 'Confirm Server Contribution'}</span>
-                    </>
-                  )}
-                </button>
+              {/* Price Breakdown Summary */}
+              <div style={{
+                paddingTop: 16,
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                marginBottom: 18
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-sub)', marginBottom: 7 }}>
+                  <span>{lang === 'th' ? 'แพ็กเกจ Supporter Pass (30 วัน)' : 'Supporter Pass (30 Days)'}</span>
+                  <span style={{ color: '#FFFFFF', fontFamily: 'var(--font-mono)' }}>฿{priceRate}.00</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-sub)', marginBottom: 12 }}>
+                  <span>{lang === 'th' ? 'ค่าธรรมเนียมเกตเวย์' : 'Gateway Processing Fee'}</span>
+                  <span style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? 'ฟรี (฿0.00)' : 'Free (฿0.00)'}</span>
+                </div>
+
+                <div style={{ height: 1, background: 'rgba(255, 255, 255, 0.08)', marginBottom: 12 }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 14.5, fontWeight: 700, color: '#FFFFFF' }}>
+                    {lang === 'th' ? 'ยอดชำระสุทธิ' : 'Total Amount'}
+                  </span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{
+                      fontSize: 20,
+                      fontWeight: 800,
+                      color: 'var(--slime-green)',
+                      fontFamily: 'var(--font-mono)',
+                      lineHeight: 1
+                    }}>
+                      ฿{priceRate}.00
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 3 }}>
+                      {lang === 'th' ? 'รวมภาษีมูลค่าเพิ่มแล้ว' : 'VAT Included'}
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* Confirm Support Button */}
+              <button
+                type="submit"
+                disabled={submittingTopup}
+                style={{
+                  width: '100%',
+                  padding: '13px 18px',
+                  borderRadius: 12,
+                  background: 'var(--slime-green)',
+                  color: '#05070B',
+                  border: 'none',
+                  fontWeight: 800,
+                  fontSize: 13.5,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  transition: 'all 0.15s ease',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)'
+                }}
+              >
+                {submittingTopup ? (
+                  <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Processing Transaction...'}</span>
+                ) : (
+                  <>
+                    <IconLock size={17} stroke={2.2} />
+                    <span>
+                      {lang === 'th'
+                        ? `ยืนยันการสนับสนุน ฿${priceRate} (เปิดใช้งานทันที)`
+                        : `Confirm Support ฿${priceRate} (Instant Unlock)`}
+                    </span>
+                  </>
+                )}
+              </button>
             </form>
           ) : (
-            <form onSubmit={handleRedeemPromo} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'รหัสโค้ดกิจกรรม (Early-Bird Drop Code)' : 'Promo Code'}
-                </label>
-                <input
-                  type="text"
-                  placeholder={lang === 'th' ? 'กรอกรหัสแคมเปญ เช่น EARLY30' : 'Enter promo code...'}
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  required
-                  style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}
-                />
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'รหัสโปรโมชันแจกสิทธิ์ผู้สนับสนุนเซิร์ฟเวอร์ฟรี 30 วัน' : 'Redeem limited campaign code for 30 free Supporter days'}
-                </div>
+            /* PromptPay QR Interface / Notice */
+            <div style={{
+              background: 'rgba(5, 7, 12, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 14,
+              padding: '28px 20px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 12
+            }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: 'rgba(0, 229, 255, 0.1)',
+                border: '1px solid rgba(0, 229, 255, 0.28)',
+                color: 'var(--cyan-freq)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <IconQrcode size={26} />
               </div>
-
-              <div style={{ marginTop: 'auto' }}>
-                <button
-                  type="submit"
-                  disabled={submittingPromo}
-                  className="btn btn-primary"
-                  style={{ width: '100%', padding: '13px 18px', fontSize: 14 }}
-                >
-                  {submittingPromo ? (
-                    <span>{lang === 'th' ? 'กำลังตรวจสอบสิทธิ์...' : 'Claiming...'}</span>
-                  ) : (
-                    <>
-                      <IconGift size={16} />
-                      <span>{lang === 'th' ? 'ยืนยันรับสิทธิ์โปรโมชัน' : 'Claim Promo Perk'}</span>
-                    </>
-                  )}
-                </button>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#FFFFFF' }}>
+                {lang === 'th' ? 'ระบบ PromptPay QR Gateway' : 'PromptPay QR Gateway'}
               </div>
-            </form>
+              <p style={{ fontSize: 12, color: 'var(--text-sub)', maxWidth: 300, margin: 0, lineHeight: 1.55 }}>
+                {lang === 'th'
+                  ? 'ช่องทาง PromptPay QR อัตโนมัติกำลังเตรียมเปิดให้บริการ กรุณาใช้ช่องทาง "ซอง TrueMoney" เพื่อรับสิทธิ์ทันทีใน 5 วินาที'
+                  : 'PromptPay QR is currently under scheduled deployment. Please use TrueMoney Voucher for instant automated unlock.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setPaymentTab('voucher')}
+                style={{
+                  marginTop: 6,
+                  padding: '9px 18px',
+                  borderRadius: 10,
+                  background: 'var(--slime-green)',
+                  color: '#05070B',
+                  border: 'none',
+                  fontWeight: 700,
+                  fontSize: 12.5,
+                  cursor: 'pointer'
+                }}
+              >
+                {lang === 'th' ? 'กลับไปที่ซอง TrueMoney' : 'Switch to TrueMoney'}
+              </button>
+            </div>
           )}
 
-          {/* Pricing Standard Tag */}
+          {/* Security & Automation Badges */}
           <div style={{
-            marginTop: 20,
-            padding: '11px 14px',
-            borderRadius: 10,
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid var(--border-subtle)',
-            fontSize: 12,
-            color: 'var(--text-sub)',
             display: 'flex',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            paddingTop: 16,
+            marginTop: 18,
+            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            fontSize: 11,
+            color: 'var(--text-dim)'
           }}>
-            <span>{lang === 'th' ? 'เรตผู้สนับสนุนมาตรฐาน:' : 'Standard Supporter Rate:'}</span>
-            <strong style={{ color: '#FFF', letterSpacing: '-0.01em' }}>
-              {priceRate} {lang === 'th' ? 'บาท = 30 วัน (Supporter)' : 'THB = 30 Days (Supporter)'}
-            </strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <IconCircleCheck size={14} style={{ color: 'var(--slime-green)' }} />
+              <span>{lang === 'th' ? 'ระบบอัตโนมัติ 24 ชม.' : 'Auto 24/7'}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <IconBolt size={14} style={{ color: 'var(--slime-green)' }} />
+              <span>{lang === 'th' ? 'รับสิทธิ์ทันทีใน 5 วิ' : 'Instant in 5s'}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <IconLock size={14} style={{ color: 'var(--slime-green)' }} />
+              <span>SSL 256-Bit</span>
+            </div>
           </div>
+
         </div>
+
       </div>
 
-      {/* 4. FEATURE SPECIFICATIONS & TIER COMPARISON MATRIX */}
-      <section className="glass-panel" style={{ padding: 28, marginBottom: 32 }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em', marginBottom: 4 }}>
-            {lang === 'th' ? 'เปรียบเทียบสิทธิประโยชน์แพ็กเกจ' : 'Tier Specifications & Audio Matrix'}
-          </h3>
-          <p style={{ fontSize: 12, color: 'var(--text-dim)' }}>
-            {lang === 'th' ? 'สิทธิ์ระดับเซิร์ฟเวอร์ ปลดล็อกพร้อมกันทุกคนในห้องเสียง' : 'Server-wide unlock • Shared equally across every voice listener'}
-          </p>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 20
-        }}>
-          {/* General / Free Tier */}
-          <div style={{
-            background: 'rgba(5, 7, 11, 0.6)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 16,
-            padding: 24,
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid var(--border-subtle)' }}>
-              <div>
-                <span style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-sub)' }}>
-                  {lang === 'th' ? 'ทั่วไป' : 'STANDARD'}
-                </span>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                  {lang === 'th' ? 'สำหรับผู้เริ่มต้นใช้งาน' : 'Essential baseline tier'}
-                </div>
-              </div>
-              <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-dim)' }}>
-                {lang === 'th' ? 'ฟรีตลอดชีพ' : 'Free Forever'}
-              </span>
-            </div>
-
-            <ul style={{ listStyle: 'none', fontSize: 12.5, color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 12, margin: 0, padding: 0 }}>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <IconCircleCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'คุณภาพเสียงระดับมาตรฐาน (64 kbps)' : 'Standard audio quality (64 kbps)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <IconCircleCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'รองรับลิงก์สตรีมเสียงและวิดีโอชั้นนำ (นกแดง / เมฆส้ม)' : 'Supports leading streaming providers'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'คิวเพลงสูงสุด 10 เพลง (เพลย์ลิสต์ 5 เพลง)' : 'Queue limit 10 songs (5 per playlist)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ความยาวคลิปไม่เกิน 30 นาทีต่อเพลง' : 'Maximum track duration 30 minutes'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'แชร์ช่องสัญญาณทั่วไป (หากเต็มต้องรอคิว)' : 'Shared stream slots (subject to wait queue)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ไม่รองรับระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)' : 'No continuous Autoplay'}</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Supporter VIP Soundstage Tier */}
-          <div className="deck-panel-highlight" style={{
-            borderRadius: 16,
-            padding: 24,
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'relative'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid rgba(0, 255, 135, 0.2)' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--slime-green)', letterSpacing: '0.04em' }}>SUPPORTER</span>
-                  <span className="slime-badge" style={{ fontSize: 10, padding: '2px 8px' }}>RECOMMENDED</span>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>
-                  {lang === 'th' ? 'สิทธิ์ระดับเซิร์ฟเวอร์แบบ Full Access' : 'Server-Wide Soundstage HQ'}
-                </div>
-              </div>
-              <span style={{ fontWeight: 800, fontSize: 15, color: '#FFF', letterSpacing: '-0.01em' }}>
-                {priceRate} {lang === 'th' ? 'บาท / 30 วัน' : 'THB / 30 Days'}
-              </span>
-            </div>
-
-            <ul style={{ listStyle: 'none', fontSize: 12.5, color: '#FFF', display: 'flex', flexDirection: 'column', gap: 12, margin: 0, padding: 0 }}>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, paddingBottom: 8, borderBottom: '1px solid rgba(0, 255, 135, 0.12)' }}>
-                <IconShieldCheck size={16} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 1 }} />
-                <strong style={{ color: 'var(--slime-green)', fontSize: 13, lineHeight: 1.4 }}>
-                  {lang === 'th' ? 'ปลดล็อกสิทธิ์ใช้งานร่วมกันทั้งเซิร์ฟเวอร์ (ไม่ต้องจ่ายรายคน)' : 'Unlocks perks for the entire server (No per-user fees)'}
-                </strong>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <IconBolt size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <strong>{lang === 'th' ? 'คุณภาพเสียงคมชัดสูงพิเศษ (96 kbps Studio HQ)' : 'Pristine Opus 96k Studio HQ audio streaming'}</strong>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <IconMusic size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ช่องสัญญาณด่วนพิเศษ (Priority Slot) เปิดเพลงได้ทันที ไม่ต้องรอคิว' : 'Dedicated Priority Slot — instant playback, bypass wait queue'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <IconClock size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ฟังเพลงและไลฟ์สดยาวได้ไม่จำกัดความยาว (เกิน 30 นาทีได้)' : 'Unlimited duration for full albums and live broadcasts'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <IconAward size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ขยายคิวเพลงสูงสุด 50 เพลง (เพลย์ลิสต์ครั้งละ 25 เพลง)' : 'Expanded queue up to 50 songs (25 songs per playlist)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <IconSparkles size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) ปาร์ตี้ไม่มีสะดุด' : 'Intelligent continuous Autoplay stream continuation'}</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. TERMS OF SERVICE & LEGAL DISCLAIMER SUMMARY */}
-      <section style={{
-        padding: '22px 26px',
-        borderRadius: 16,
+      {/* FOOTER: TERMS OF SERVICE SUMMARY STRIP */}
+      <div style={{
+        padding: '16px 20px',
+        borderRadius: 14,
         background: 'rgba(255, 255, 255, 0.02)',
         border: '1px solid var(--border-subtle)',
-        color: 'var(--text-sub)',
-        fontSize: 12,
-        lineHeight: 1.65,
-        marginBottom: 24
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+        fontSize: 11.5,
+        color: 'var(--text-dim)'
       }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <IconFileText size={15} style={{ color: 'var(--slime-green)' }} />
+          <span>{lang === 'th' ? 'การสนับสนุนเซิร์ฟเวอร์ผูกตาม Guild ID • บอททำหน้าที่เป็นตัวกลางส่งผ่านเสียงชั่วคราว (Data Forwarder)' : 'Server contribution bound to Guild ID • Transient audio forwarder'}</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowTosModal(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--slime-green)',
+            fontSize: 11.5,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4
+          }}
+        >
+          <span>{lang === 'th' ? 'ข้อกำหนดการใช้งานฉบับเต็ม' : 'Read Full Terms'}</span>
+          <IconArrowRight size={13} />
+        </button>
+      </div>
+
+      {/* MODAL 1: HOW TO CREATE TRUEMONEY VOUCHER GUIDE */}
+      {showVoucherGuideModal && (
         <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
+          background: 'rgba(5, 7, 12, 0.85)',
+          backdropFilter: 'blur(10px)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
-          paddingBottom: 12,
-          borderBottom: '1px solid var(--border-subtle)',
-          flexWrap: 'wrap',
-          gap: 12
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 13, color: '#FFF' }}>
-            <IconFileText size={16} style={{ color: 'var(--slime-green)' }} />
-            <span>{lang === 'th' ? 'ข้อกำหนดและเงื่อนไขการสนับสนุน (Disclaimer & Terms of Use)' : 'Terms of Service & Disclaimer'}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowTosModal(true)}
-            style={{
-              background: 'rgba(0, 255, 135, 0.08)',
-              border: '1px solid rgba(0, 255, 135, 0.28)',
-              color: 'var(--slime-green)',
-              borderRadius: 8,
-              padding: '5px 12px',
-              fontSize: 11.5,
-              fontWeight: 700,
-              cursor: 'pointer',
+          justifyContent: 'center',
+          padding: 20
+        }} onClick={() => setShowVoucherGuideModal(false)}>
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-light)',
+            borderRadius: 18,
+            width: '100%',
+            maxWidth: 520,
+            overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              transition: 'all 0.18s ease'
-            }}
-          >
-            <span>{lang === 'th' ? 'อ่านข้อตกลงฉบับเต็ม' : 'Read Full Terms'}</span>
-            <IconArrowRight size={13} />
-          </button>
+              justifyContent: 'space-between',
+              padding: '18px 22px',
+              borderBottom: '1px solid var(--border-subtle)'
+            }}>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <IconTrueMoneyVoucher size={18} stroke={2} />
+                <span>{lang === 'th' ? `วิธีสร้างซองของขวัญ ${priceRate} บาท` : `How to Create ${priceRate} THB Voucher`}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowVoucherGuideModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-sub)',
+                  cursor: 'pointer'
+                }}
+              >
+                <IconX size={18} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px 22px', fontSize: 12.5, color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0, 255, 135, 0.15)', color: 'var(--slime-green)', fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>1</div>
+                <div>{lang === 'th' ? 'เปิดแอปพลิเคชัน TrueMoney ในโทรศัพท์ของคุณ' : 'Open the TrueMoney app on your phone'}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0, 255, 135, 0.15)', color: 'var(--slime-green)', fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>2</div>
+                <div>{lang === 'th' ? 'เลือกเมนู "ส่งของขวัญ" หรือ "ซองของขวัญ"' : 'Select "Send Gift" or "Gift Voucher" menu'}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0, 255, 135, 0.15)', color: 'var(--slime-green)', fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>3</div>
+                <div>
+                  {lang === 'th' ? `กรอกยอดเงิน ` : 'Enter amount '}
+                  <strong style={{ color: 'var(--slime-green)' }}>{priceRate} {lang === 'th' ? 'บาท' : 'THB'}</strong>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0, 255, 135, 0.15)', color: 'var(--slime-green)', fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>4</div>
+                <div>
+                  {lang === 'th' ? 'เลือกประเภท ' : 'Choose '}
+                  <strong style={{ color: '#FFFFFF' }}>"{lang === 'th' ? 'แบ่งจำนวนเงินเท่ากัน' : 'Equal amount'}"</strong>
+                  {lang === 'th' ? ' และระบุจำนวนคนรับ ' : ' and set recipients to '}
+                  <strong style={{ color: 'var(--slime-green)' }}>1 {lang === 'th' ? 'คน' : 'person'}</strong>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0, 255, 135, 0.15)', color: 'var(--slime-green)', fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>5</div>
+                <div>{lang === 'th' ? 'กดสร้างซอง แล้วกด "คัดลอกลิงก์" นำมาวางในช่องลิงก์ซองของขวัญ' : 'Generate voucher, copy the link, and paste into the voucher input'}</div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowVoucherGuideModal(false)}
+                style={{
+                  marginTop: 10,
+                  padding: '11px',
+                  borderRadius: 10,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer'
+                }}
+              >
+                {lang === 'th' ? 'เข้าใจแล้ว' : 'Got it'}
+              </button>
+            </div>
+          </div>
         </div>
+      )}
 
-        <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 9, color: 'var(--text-dim)', fontSize: 11.5 }}>
-          <li>
-            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'สถานะผู้ส่งผ่านข้อมูล:' : 'Data Forwarder Status:'}</strong>{' '}
-            {lang === 'th'
-              ? 'GOOLIX ทำหน้าที่เป็นเพียงตัวกลางส่งผ่านสัญญาณเสียงแบบชั่วคราว (Data Forwarder) ไปยัง Discord โดยไม่มีการเก็บรวบรวมหรือบันทึกไฟล์สื่อถาวรไว้บนเซิร์ฟเวอร์'
-              : 'GOOLIX operates strictly as a transient data forwarder (Mere Conduit) to Discord without retaining or hosting permanent media files.'}
-          </li>
-          <li>
-            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'การร่วมสนับสนุนค่าเซิร์ฟเวอร์:' : 'Server Contribution:'}</strong>{' '}
-            {lang === 'th'
-              ? 'การทำรายการผ่านซองของขวัญ TrueMoney เป็นการร่วมสนับสนุนค่าบำรุงรักษาเซิร์ฟเวอร์โดยสมัครใจ (ผูกสิทธิ์ตาม Guild ID ให้ใช้งานได้ทั้งเซิร์ฟเวอร์) เมื่อระบบเพิ่มวันใช้งานแล้ว ไม่สามารถขอคืนเงินหรือโอนย้ายสิทธิ์ข้ามเซิร์ฟเวอร์ได้ในทุกกรณี'
-              : 'TrueMoney voucher redemptions are voluntary server contributions bound to the target Guild ID. Once processed, contributions are strictly non-refundable and non-transferable.'}
-          </li>
-          <li>
-            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'ความเสถียรของระบบ:' : 'System Reliability:'}</strong>{' '}
-            {lang === 'th'
-              ? 'ระบบให้บริการตามสภาพจริง (As-Is) ไม่รับประกันการออนไลน์ 100% ตลอด 24 ชั่วโมง และขอสงวนสิทธิ์ในการตัดสายอัตโนมัติเมื่อไม่มีผู้ฟังในห้องเสียง ปิดปรับปรุงชั่วคราว หรือระงับสิทธิ์เซิร์ฟเวอร์ที่ใช้งานผิดปกติโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
-              : 'Service is provided on an "As-Is" basis with no guarantee of uninterrupted 24/7 uptime. We reserve the right to auto-disconnect empty channels, perform maintenance, or suspend abusive guilds without prior notice.'}
-          </li>
-          <li>
-            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'การปรับเปลี่ยนและบำรุงรักษาฟังก์ชัน:' : 'Feature Maintenance & Availability:'}</strong>{' '}
-            {lang === 'th'
-              ? 'ฟังก์ชันและตัวเลือกการประมวลผลเสียงเสริมต่าง ๆ (เช่น ระบบเล่นต่อเนื่อง หรือฟิลเตอร์เสียง) อาจถูกเปิด-ปิด ปรับปรุง หรือระงับชั่วคราวตามสถานะภาระเครื่องเซิร์ฟเวอร์และการเปลี่ยนแปลงของแพลตฟอร์มต้นทาง เพื่อรักษาเสถียรภาพการสตรีมเสียงของส่วนรวมเป็นหลัก'
-              : 'Add-on audio features and processing options may undergo temporary maintenance, throttling, or toggling based on cluster hardware load and upstream platform changes to ensure overall streaming stability.'}
-          </li>
-        </ol>
-      </section>
-
-      {/* 6. FULL TERMS OF SERVICE MODAL DIALOG */}
+      {/* MODAL 2: FULL TERMS OF SERVICE */}
       {showTosModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
           zIndex: 1000,
-          background: 'rgba(5, 7, 11, 0.85)',
+          background: 'rgba(5, 7, 12, 0.85)',
           backdropFilter: 'blur(12px)',
           display: 'flex',
           alignItems: 'center',
@@ -1071,20 +1042,18 @@ export default function TopupView({ lang, onToast }) {
             maxHeight: '85vh',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 255, 135, 0.08)',
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.85)',
             overflow: 'hidden'
           }} onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '20px 26px',
-              borderBottom: '1px solid var(--border-subtle)',
-              background: 'rgba(255, 255, 255, 0.02)'
+              borderBottom: '1px solid var(--border-subtle)'
             }}>
               <div>
-                <div style={{ fontWeight: 800, fontSize: 16, color: '#FFF', letterSpacing: '-0.01em' }}>
+                <div style={{ fontWeight: 800, fontSize: 16, color: '#FFFFFF' }}>
                   {lang === 'th' ? 'ข้อตกลงและเงื่อนไขการใช้งาน (Terms of Service)' : 'Terms of Service (Full Agreement)'}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>
@@ -1104,170 +1073,41 @@ export default function TopupView({ lang, onToast }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
+                  cursor: 'pointer'
                 }}
               >
                 <IconX size={16} />
               </button>
             </div>
 
-            {/* Modal Content */}
             <div style={{
-              padding: '26px',
+              padding: '24px 26px',
               overflowY: 'auto',
               fontSize: 12.5,
               lineHeight: 1.7,
               color: 'var(--text-sub)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 22
+              gap: 18
             }}>
-              <p style={{ margin: 0, color: 'var(--text-dim)', fontStyle: 'italic', paddingBottom: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+              <div>
+                <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '1. การส่งผ่านข้อมูลชั่วคราว:' : '1. Transient Forwarding:'}</strong>{' '}
                 {lang === 'th'
-                  ? 'การใช้งานบอทและการทำรายการบนหน้าเว็บไซต์ของ GOOLIX ถือว่าผู้ใช้งานได้อ่าน เข้าใจ และยอมรับข้อตกลงดังต่อไปนี้ทุกประการ:'
-                  : 'By using the GOOLIX bot and web portal, you acknowledge that you have read, understood, and agreed to all terms below:'}
-              </p>
-
-              {/* Section 1 */}
-              <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
-                  {lang === 'th'
-                    ? '1. สถานะตัวกลางส่งผ่านข้อมูลและเนื้อหา (Mere Conduit & Content Disclaimer)'
-                    : '1. Mere Conduit & Content Disclaimer'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
-                  <div>
-                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ไม่มีการจัดเก็บไฟล์ถาวร:' : '• No Permanent Storage:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ระบบทำงานในฐานะท่อส่งผ่านข้อมูลชั่วคราว (Transmission Buffer) จากแหล่งต้นทางที่ผู้ใช้งานเป็นผู้ระบุคำสั่งไปยังห้องเสียงของ Discord เท่านั้น ไม่มีการจัดเก็บ ดัดแปลง หรือเผยแพร่ไฟล์เสียงและวิดีโอไว้ในฐานข้อมูลถาวร (ระบบแคชทำงานแบบชั่วคราวเพื่อลดความหน่วงของเครือข่ายและถูกลบออกอัตโนมัติ)'
-                      : 'The system functions solely as a transient transmission buffer routing stream data requested by users directly to Discord voice channels. No media files are permanently hosted, altered, or distributed.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ความรับผิดชอบต่อเนื้อหา:' : '• Content Responsibility:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ผู้ใช้งานเป็นผู้รับผิดชอบต่อลิงก์และคำค้นหาที่สั่งให้บอทประมวลผลแต่เพียงผู้เดียว ทางผู้พัฒนาไม่สามารถตรวจสอบหรือควบคุมเนื้อหาต้นทางจากผู้ให้บริการภายนอกได้ และไม่มีส่วนรับผิดชอบต่อเนื้อหาที่ถูกส่งต่อไปยังเซิร์ฟเวอร์ของผู้ใช้งาน'
-                      : 'Users bear sole legal responsibility for all media queries dispatched to the bot. Developers do not curate external content and assume no liability for relayed streams.'}
-                  </div>
-                </div>
+                  ? 'ระบบทำงานเป็นตัวกลางส่งผ่านสัญญาณเสียงชั่วคราว (Data Forwarder) ไปยัง Discord โดยตรง ไม่มีการเก็บบันทึกไฟล์สื่อถาวรไว้บนเซิร์ฟเวอร์'
+                  : 'The system functions solely as a transient audio forwarder without hosting or saving media files.'}
               </div>
-
-              {/* Section 2 */}
               <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
-                  {lang === 'th'
-                    ? '2. เงื่อนไขการร่วมสนับสนุนและสิทธิประโยชน์ (Supporter & Billing Terms)'
-                    : '2. Supporter & Billing Terms'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• ลักษณะการสนับสนุน:' : '• Voluntary Nature:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ยอดเงินที่ทำรายการผ่านลิงก์ซองของขวัญ TrueMoney เป็นการร่วมบริจาคสนับสนุนค่าเช่าเซิร์ฟเวอร์และแบนด์วิธเพื่อขับเคลื่อนคอมมูนิตี้ ไม่ใช่การซื้อขายสินค้าหรือบริการเชิงพาณิชย์'
-                      : 'Redemptions via TrueMoney vouchers represent voluntary community contributions toward server hosting and bandwidth infrastructure, not commercial retail transactions.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• สิทธิ์ระดับเซิร์ฟเวอร์ (Server-Wide Access):' : '• Server-Wide Access:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'สิทธิพิเศษของผู้สนับสนุน (Supporter) จะผูกกับรหัสเซิร์ฟเวอร์ (Guild ID) ที่ระบุเท่านั้น สมาชิกทุกคนในเซิร์ฟเวอร์ดังกล่าวสามารถรับสิทธิ์ร่วมกันได้ทันที โดยไม่สามารถขอเปลี่ยนหรือโอนย้ายวันใช้งานไปยังเซิร์ฟเวอร์อื่นได้ในทุกกรณี'
-                      : 'Supporter privileges bind exclusively to the specified Guild ID and extend to all members in that guild. Perks cannot be transferred to alternative servers.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• การคำนวณและการทบวันใช้งาน:' : '• Duration Stacking:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ระบบคำนวณวันใช้งานตามสัดส่วนยอดเงินสนับสนุนจริง ตามอัตรามาตรฐานที่ระบุไว้บนหน้าเว็บไซต์ ณ ขณะทำรายการ หากทำรายการซ้ำก่อนวันหมดอายุ ระบบจะบวกทบเวลาต่อท้ายจากวันหมดอายุเดิมให้ตามจริงโดยไม่ตัดวันคงเหลือทิ้ง (จำกัดการสะสมวันใช้งานสูงสุดไม่เกิน 365 วันต่อเซิร์ฟเวอร์)'
-                      : 'Durations calculate pro-rata based on actual contributions at the standard rate displayed on the web portal at the time of redemption. Consecutive contributions stack cumulatively from the current expiration date up to a 365-day safety ceiling.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• เงื่อนไขรหัสชวนเพื่อนและโค้ดกิจกรรม:' : '• Referral & Drop Codes:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'โบนัสวันใช้งานพิเศษสำหรับผู้ชวน จะทำงานเมื่อเซิร์ฟเวอร์ผู้ถูกชวนทำรายการสนับสนุนด้วยยอดเงินตามเกณฑ์ขั้นต่ำที่กำหนดในรอบซีซั่นนั้น ๆ และต้องอยู่ภายในระยะเวลาของแคมเปญ ส่วนโค้ดกิจกรรม (Early-Bird Drop) จำกัดสิทธิ์การใช้งาน 1 โค้ดต่อ 1 เซิร์ฟเวอร์และมีจำนวนจำกัดตามโควตาที่กำหนด'
-                      : 'Referral bonus days trigger only when the referred server contributes the qualifying minimum amount set for that campaign season. Early-Bird Drop codes are single-use per server and strictly quota-governed.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• นโยบายไม่คืนเงิน (No Refund Policy):' : '• No Refund Policy:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'เมื่อระบบทำการรับซองของขวัญและอนุมัติวันใช้งานเข้าสู่ระบบสำเร็จแล้ว ไม่สามารถขอคืนเงิน ยกเลิก หรือแลกเปลี่ยนเป็นสิ่งอื่นได้ในทุกกรณี'
-                      : 'Once a voucher is successfully redeemed and days are credited, all contributions are strictly non-refundable and irrevocable.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• ความพร้อมใช้งานและการปรับปรุงฟังก์ชัน (Feature Availability & Maintenance):' : '• Feature Availability & Maintenance:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'สิทธิประโยชน์ของผู้สนับสนุนเน้นการขยายขีดความสามารถหลัก ได้แก่ โควตาสตรีม คิวเพลง และสิทธิ์เข้าใช้งานช่องสัญญาณด่วน (Priority Slot) โดยฟังก์ชันเสริมเฉพาะทาง (เช่น Autoplay หรือตัวปรับแต่งเสียงขั้นสูง) อาจมีการปิดปรับปรุงชั่วคราว ปรับเปลี่ยน หรือจำกัดสิทธิ์ตามสถานการณ์ภาระเซิร์ฟเวอร์และการอัปเดตของ API ต้นทาง เพื่อรักษาความต่อเนื่องของสัญญาณเสียงส่วนรวมเป็นสำคัญ โดยไม่ถือเป็นการผิดข้อตกลงหรือเงื่อนไขการสนับสนุน'
-                      : 'Supporter privileges primarily ensure elevated stream capacity, extended queues, and Priority Slot access. Add-on features (such as Autoplay or advanced audio filters) may be temporarily suspended or adjusted based on server load and upstream changes to guarantee collective audio stability, without constituting a breach of service terms.'}
-                  </div>
-                </div>
+                <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '2. สิทธิ์ผู้สนับสนุน:' : '2. Supporter Tier:'}</strong>{' '}
+                {lang === 'th'
+                  ? 'การร่วมสนับสนุนผ่านซอง TrueMoney เป็นการสนับสนุนค่าบำรุงรักษาระบบเซิร์ฟเวอร์โดยสมัครใจ ผูกสิทธิ์ตาม Guild ID ไม่สามารถขอคืนเงินหรือโอนสิทธิ์ข้ามเซิร์ฟเวอร์ได้'
+                  : 'TrueMoney contributions support server maintenance and bind to target Guild ID. Strictly non-refundable.'}
               </div>
-
-              {/* Section 3 */}
               <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
-                  {lang === 'th'
-                    ? '3. การจำกัดความรับผิดชอบและความพร้อมใช้งาน (Availability & Liability)'
-                    : '3. Availability & Liability'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
-                  <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การรับประกันสถานะออนไลน์:' : '• Uptime Warranty:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ทางทีมพัฒนาพยายามดูแลให้ระบบทำงานได้อย่างราบรื่นที่สุด แต่ไม่รับประกันว่าบอทจะออนไลน์ตลอด 24 ชั่วโมงโดยไม่มีอาการกระตุกหรือดีเลย์ เนื่องจากคุณภาพสัญญาณขึ้นอยู่กับเซิร์ฟเวอร์ต้นทาง ระบบ Discord Gateway และโควตาเครือข่ายในแต่ละช่วงเวลา'
-                      : 'While the team strives for maximum stability, continuous 24/7 uninterrupted uptime cannot be guaranteed due to dependencies on Discord gateways and upstream providers.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การปรับปรุงและยุติบริการ:' : '• Maintenance & Suspension:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ทีมพัฒนาขอสงวนสิทธิ์ในการรีสตาร์ทโหนด ปิดปรับปรุงระบบชั่วคราว ปรับเปลี่ยนโควตาช่องสัญญาณ หรือยุติการให้บริการเมื่อใดก็ได้โดยไม่จำเป็นต้องแจ้งให้ทราบล่วงหน้า'
-                      : 'We reserve the right to deploy maintenance updates, adjust audio buffer parameters, or modify service endpoints without prior notification.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• ความปลอดภัยของเซิร์ฟเวอร์:' : '• Indemnification:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ทีมพัฒนาไม่รับผิดชอบต่อความเสียหายใดๆ ที่อาจเกิดขึ้นกับเซิร์ฟเวอร์ Discord หรือบัญชีของผู้ใช้งานจากการนำบอทไปติดตั้งใช้งาน'
-                      : 'The development team shall not be held liable for any damages, strikes, or penalties incurred on Discord guilds or accounts.'}
-                  </div>
-                </div>
+                <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '3. ความเสถียรของระบบ:' : '3. Service Reliability:'}</strong>{' '}
+                {lang === 'th'
+                  ? 'ให้บริการตามสภาพจริง (As-Is) เพื่อเสถียรภาพของส่วนรวม ระบบอาจมีการตัดสายเมื่อไม่มีผู้ฟังในห้องเสียง หรือปิดบำรุงรักษาชั่วคราวตามความจำเป็น'
+                  : 'Provided on an As-Is basis. Empty channels may auto-disconnect to optimize resource allocation.'}
               </div>
-
-              {/* Section 4 */}
-              <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
-                  {lang === 'th'
-                    ? '4. นโยบายการใช้งานที่เหมาะสม (Fair Use & Anti-Abuse Policy)'
-                    : '4. Fair Use & Anti-Abuse Policy'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
-                  <div>
-                    <strong style={{ color: 'var(--red-alert)' }}>{lang === 'th' ? '• การจัดการทรัพยากรอัตโนมัติ:' : '• Automated Resource Governance:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'เพื่อรักษาคุณภาพเสียงของส่วนรวม ระบบจะตัดการเชื่อมต่อจากห้องเสียงอัตโนมัติหากไม่มีผู้ฟังอยู่ในห้อง หรือมีการเปิดสตรีมต่อเนื่องยาวนานเกินเกณฑ์ที่กำหนดโดยไม่มีการโต้ตอบ'
-                      : 'To conserve cluster resources, the bot will auto-disconnect from empty voice channels or prolonged unmonitored streams.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--red-alert)' }}>{lang === 'th' ? '• การระงับสิทธิ์ (Ban Policy):' : '• Abuse & Ban Policy:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ห้ามใช้บอทหรือสคริปต์อัตโนมัติเฝ้าห้องเพื่อดึงแบนด์วิธตลอด 24 ชั่วโมง ห้ามยิงคำสั่งรัวเพื่อก่อกวนระบบ (Spam/Flood) และห้ามอาศัยช่องโหว่ในการปั๊มวันใช้งานฟรี หากระบบตรวจพบการกระทำดังกล่าว ทีมพัฒนาขอสงวนสิทธิ์ในการระงับการใช้งานเซิร์ฟเวอร์นั้นถาวร (Ban Guild) และยกเลิกวันใช้งานคงเหลือทั้งหมดทันทีโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
-                      : 'Automated 24/7 socket idling, command flooding, and exploitation of promotional codes are strictly prohibited. Violating guilds are subject to immediate permanent guild bans and forfeiture of remaining days.'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{
-              padding: '16px 26px',
-              borderTop: '1px solid var(--border-subtle)',
-              background: 'rgba(255, 255, 255, 0.02)',
-              display: 'flex',
-              justifyContent: 'flex-end'
-            }}>
-              <button
-                type="button"
-                onClick={() => setShowTosModal(false)}
-                className="btn btn-primary"
-                style={{ padding: '9px 24px', fontSize: 13 }}
-              >
-                {lang === 'th' ? 'เข้าใจและยอมรับข้อตกลง' : 'I Understand & Agree'}
-              </button>
             </div>
           </div>
         </div>
