@@ -31,9 +31,16 @@ module.exports = {
             player.nowPlayingMessage = null;
         }
 
+        if (player._repositionTimeout) {
+            clearTimeout(player._repositionTimeout);
+            player._repositionTimeout = null;
+        }
+
         const cardData = createNowPlayingCard(player, track);
         const replyMsg = await interaction.reply({ ...cardData, fetchReply: true });
         player.nowPlayingMessage = replyMsg;
+        player.messagesSinceCard = 0;
+        player.lastRepositionAt = Date.now();
         return replyMsg;
     }
 };

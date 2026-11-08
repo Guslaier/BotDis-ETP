@@ -14,7 +14,8 @@ const onboardingHelper = require('./src/helpers/onboardingHelper');
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildVoiceStates
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages
     ],
     makeCache: Options.cacheWithLimits({
         ApplicationCommandManager: 0,
@@ -70,6 +71,66 @@ kazagumo.on("playerPrepare", async (player, track) => {
     } catch {}
 });
 
+// Smart Auto-Reposition functions for Now Playing Card
+async function repositionNowPlayingCard(player) {
+    if (!player || player._destroyed || !player.connection) return;
+    if (!player.playing || !player.queue?.current) return;
+    if (player._repositioning) return;
+    player._repositioning = true;
+
+    try {
+        if (player._repositionTimeout) {
+            clearTimeout(player._repositionTimeout);
+            player._repositionTimeout = null;
+        }
+
+        if (!player.textId) return;
+        const channel = client.channels.cache.get(player.textId);
+        if (!channel) return;
+
+        const track = player.queue.current;
+        if (!track) return;
+
+        // Delete previous card to avoid duplicate/floating cards
+        if (player.nowPlayingMessage) {
+            try {
+                await player.nowPlayingMessage.delete().catch(() => {});
+            } catch {}
+            player.nowPlayingMessage = null;
+        }
+
+        const cardData = createNowPlayingCard(player, track);
+        const newMsg = await channel.send(cardData);
+        player.nowPlayingMessage = newMsg;
+        player.messagesSinceCard = 0;
+        player.lastRepositionAt = Date.now();
+    } catch (err) {
+        console.error('[RepositionCard] Error:', err.message);
+    } finally {
+        player._repositioning = false;
+    }
+}
+
+function scheduleReposition(player) {
+    if (!player || !player.playing || !player.queue?.current) return;
+    if (player._repositionTimeout) return;
+
+    const now = Date.now();
+    const elapsed = now - (player.lastRepositionAt || 0);
+    const delay = Math.max(0, 15000 - elapsed);
+
+    if (delay === 0) {
+        repositionNowPlayingCard(player);
+    } else {
+        player._repositionTimeout = setTimeout(() => {
+            player._repositionTimeout = null;
+            if (player && player.playing && player.queue?.current && (player.messagesSinceCard || 0) >= 3) {
+                repositionNowPlayingCard(player);
+            }
+        }, delay);
+    }
+}
+
 // Event เมื่อเริ่มเล่นเพลง
 kazagumo.on("playerStart", async (player, track) => {
     if (!player || player._destroyed || !player.connection) return;
@@ -79,17 +140,24 @@ kazagumo.on("playerStart", async (player, track) => {
     if (!channel) return;
 
     try {
-        const cardData = createNowPlayingCard(player, track);
+        if (player._repositionTimeout) {
+            clearTimeout(player._repositionTimeout);
+            player._repositionTimeout = null;
+        }
+
+        // Delete previous card so the new track card is always at the bottom of the chat
         if (player.nowPlayingMessage) {
             try {
-                await player.nowPlayingMessage.edit(cardData);
-                return;
-            } catch {
-                player.nowPlayingMessage = null;
-            }
+                await player.nowPlayingMessage.delete().catch(() => {});
+            } catch {}
+            player.nowPlayingMessage = null;
         }
+
+        const cardData = createNowPlayingCard(player, track);
         const msg = await channel.send(cardData);
         player.nowPlayingMessage = msg;
+        player.messagesSinceCard = 0;
+        player.lastRepositionAt = Date.now();
     } catch (err) {
         console.error('[playerStart] Error sending now playing card:', err.message);
     }
@@ -124,6 +192,10 @@ kazagumo.on("playerEnd", (player, track) => {
 
 // Event เมื่อคิวหมด
 kazagumo.on("playerEmpty", player => {
+    if (player._repositionTimeout) {
+        clearTimeout(player._repositionTimeout);
+        player._repositionTimeout = null;
+    }
     if (!player.textId) return;
     const channel = client.channels.cache.get(player.textId);
     if (channel) {
@@ -181,6 +253,20 @@ client.on('guildDelete', guild => {
 
 client.on('guildUnavailable', guild => {
     console.warn(`[GuildUnavailable] Guild is unavailable: ${guild.name} (${guild.id})`);
+});
+
+// Smart Auto-Reposition trigger on channel chat & commands
+client.on('messageCreate', async message => {
+    if (!message.guildId) return;
+    const player = kazagumo.players.get(message.guildId);
+    if (!player || !player.playing || !player.queue?.current) return;
+    if (player.textId !== message.channelId) return;
+    if (player.nowPlayingMessage && message.id === player.nowPlayingMessage.id) return;
+
+    player.messagesSinceCard = (player.messagesSinceCard || 0) + 1;
+    if (player.messagesSinceCard >= 3) {
+        scheduleReposition(player);
+    }
 });
 
 client.on('interactionCreate', async interaction => {
