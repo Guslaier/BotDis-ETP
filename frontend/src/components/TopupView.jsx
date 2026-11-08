@@ -570,7 +570,7 @@ export default function TopupView({ lang, onToast }) {
                     background: guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.08)' : 'rgba(255, 255, 255, 0.03)',
                     border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
                   }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-sub)', whiteSpace: 'nowrap' }}>
                       {lang === 'th' ? 'สถานะแพ็กเกจ:' : 'Current Tier:'}
                     </span>
                     <span style={{
@@ -580,10 +580,11 @@ export default function TopupView({ lang, onToast }) {
                       color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-dim)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 6
+                      gap: 6,
+                      whiteSpace: 'nowrap'
                     }}>
                       {guildData.guild.isSupporter ? <IconShieldCheck size={14} /> : null}
-                      {guildData.guild.isSupporter ? 'SUPPORTER (HQ PASS)' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
+                      {guildData.guild.isSupporter ? 'SUPPORTER' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
                     </span>
                   </div>
 
