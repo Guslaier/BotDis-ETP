@@ -958,14 +958,14 @@ export default function TopupView({ lang, onToast }) {
                   <div>
                     <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• การคำนวณและการทบวันใช้งาน:' : '• Duration Stacking:'}</strong>{' '}
                     {lang === 'th'
-                      ? 'ระบบคำนวณวันใช้งานตามสัดส่วนยอดเงินจริง (อัตราอ้างอิง 29 บาท = 30 วัน) หากทำรายการซ้ำก่อนวันหมดอายุ ระบบจะบวกทบเวลาต่อท้ายจากวันหมดอายุเดิมให้ตามจริงโดยไม่ตัดวันคงเหลือทิ้ง (จำกัดการสะสมวันใช้งานสูงสุดไม่เกิน 365 วันต่อเซิร์ฟเวอร์)'
-                      : 'Durations calculate pro-rata based on contributions (nominal rate: 29 THB = 30 days). Consecutive contributions stack cumulatively up to a maximum safety ceiling of 365 days.'}
+                      ? 'ระบบคำนวณวันใช้งานตามสัดส่วนยอดเงินสนับสนุนจริง ตามอัตรามาตรฐานที่ระบุไว้บนหน้าเว็บไซต์ ณ ขณะทำรายการ หากทำรายการซ้ำก่อนวันหมดอายุ ระบบจะบวกทบเวลาต่อท้ายจากวันหมดอายุเดิมให้ตามจริงโดยไม่ตัดวันคงเหลือทิ้ง (จำกัดการสะสมวันใช้งานสูงสุดไม่เกิน 365 วันต่อเซิร์ฟเวอร์)'
+                      : 'Durations calculate pro-rata based on actual contributions at the standard rate displayed on the web portal at the time of redemption. Consecutive contributions stack cumulatively from the current expiration date up to a 365-day safety ceiling.'}
                   </div>
                   <div>
                     <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• เงื่อนไขรหัสชวนเพื่อนและโค้ดกิจกรรม:' : '• Referral & Drop Codes:'}</strong>{' '}
                     {lang === 'th'
-                      ? `โบนัสวันใช้งานพิเศษสำหรับผู้ชวน จะทำงานเมื่อเซิร์ฟเวอร์ผู้ถูกชวนทำรายการสนับสนุนด้วยซองของขวัญที่มียอดตั้งแต่ ${guildData?.referralConfig?.minTopup ?? 29} บาทขึ้นไป เท่านั้น และต้องอยู่ภายในระยะเวลาของรอบซีซั่น ส่วนโค้ดกิจกรรม (Early-Bird Drop) จำกัดสิทธิ์การใช้งาน 1 โค้ดต่อ 1 เซิร์ฟเวอร์และมีจำนวนจำกัดตามโควตาที่กำหนด`
-                      : `Referral bonus days trigger only when the referred server contributes ${guildData?.referralConfig?.minTopup ?? 29} THB or greater within the active season period. Early-Bird Drop codes are single-use per server and strictly quota-governed.`}
+                      ? 'โบนัสวันใช้งานพิเศษสำหรับผู้ชวน จะทำงานเมื่อเซิร์ฟเวอร์ผู้ถูกชวนทำรายการสนับสนุนด้วยยอดเงินตามเกณฑ์ขั้นต่ำที่กำหนดในรอบซีซั่นนั้น ๆ และต้องอยู่ภายในระยะเวลาของแคมเปญ ส่วนโค้ดกิจกรรม (Early-Bird Drop) จำกัดสิทธิ์การใช้งาน 1 โค้ดต่อ 1 เซิร์ฟเวอร์และมีจำนวนจำกัดตามโควตาที่กำหนด'
+                      : 'Referral bonus days trigger only when the referred server contributes the qualifying minimum amount set for that campaign season. Early-Bird Drop codes are single-use per server and strictly quota-governed.'}
                   </div>
                   <div>
                     <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• นโยบายไม่คืนเงิน (No Refund Policy):' : '• No Refund Policy:'}</strong>{' '}
