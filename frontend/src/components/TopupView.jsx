@@ -325,8 +325,8 @@ export default function TopupView({ lang, onToast }) {
             letterSpacing: '-0.01em'
           }}>
             {lang === 'th'
-              ? 'สมาชิกทุกคนในห้องเสียงฟังคุณภาพ 96 kbps ทันที และฟังเพลงอย่างต่อเนื่องไม่จำกัด เพียงสนับสนุนเรา'
-              : 'Instant 96 kbps HQ audio for everyone in your voice channel with uninterrupted continuous listening, simply by supporting us.'}
+              ? 'สมาชิกทุกคนในห้องเสียงฟังเสียงคุณภาพสูงทันที และฟังเพลงอย่างต่อเนื่องไม่จำกัด เพียงสนับสนุนเรา'
+              : 'Instant high-quality audio for everyone in your voice channel with uninterrupted continuous listening, simply by supporting us.'}
           </p>
 
           {/* Understated Feature Strip */}
