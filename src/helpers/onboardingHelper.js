@@ -75,7 +75,6 @@ class OnboardingHelper {
                         '⚡ **Priority Lane** — Instant stream slot, no waiting in line',
                         '🎵 **Extended Queue** — Up to 50 songs & 25 playlist items',
                         '📻 **Unlimited Stream** — Stream tracks and live broadcasts without length limits',
-                        '🎛️ **Audio FX** — BassBoost & Equalizer filters (`/gfilter`)',
                         '🔄 **Autoplay Engine** — Automatic continuous music streaming',
                         '🎧 **Studio Quality** — Pristine Opus 96k Studio HQ audio'
                     ].join('\n'),

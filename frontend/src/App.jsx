@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import TopupView from './components/TopupView';
 import AdminDashboard from './components/AdminDashboard';
@@ -48,12 +48,12 @@ export default function App() {
 
       <Toast toasts={toasts} onDismiss={dismissToast} />
 
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, paddingBottom: 32 }}>
         {!isAdmin ? (
-          /* Public Portal: Only Topup / Donate / Guild lookup */
+          /* Public Portal: Supporter & VIP Soundstage Pass */
           <TopupView lang={lang} onToast={addToast} />
         ) : token ? (
-          /* Admin Dedicated Portal: Only Master Console */
+          /* Admin Dedicated Portal: Master Cluster Console */
           <AdminDashboard
             lang={lang}
             token={token}
@@ -71,15 +71,19 @@ export default function App() {
 
       <footer style={{
         textAlign: 'center',
-        padding: '24px 16px',
-        borderTop: '1px solid var(--card-border)',
+        padding: '28px 16px',
+        borderTop: '1px solid var(--border-subtle)',
         fontSize: 12,
         color: 'var(--text-dim)',
-        marginTop: 'auto'
+        marginTop: 'auto',
+        background: 'rgba(5, 7, 11, 0.4)',
+        backdropFilter: 'blur(10px)'
       }}>
-        {isAdmin 
-          ? 'GOOLIX Master Console • Internal Cluster Administration & Governance' 
-          : 'GOOLIX • Cosmic Slime Music Engine & Community Support'}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span>{isAdmin ? 'GOOLIX Master Console' : 'GOOLIX Audio Engine'}</span>
+          <span style={{ color: 'var(--border-light)' }}>•</span>
+          <span>{isAdmin ? 'Internal Cluster Administration & Governance' : 'Cosmic Slime Music Network & Community Support'}</span>
+        </div>
       </footer>
     </div>
   );
