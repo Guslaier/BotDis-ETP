@@ -1,330 +1,245 @@
 <div align="center">
   <h1>GOOLIX MusicBot</h1>
-  <p><strong>Ultra-Light High-Performance Standalone Discord Music Bot</strong></p>
+  <p><strong>Ultra-Light High-Performance Standalone Discord Music Bot & Hybrid Audio Cluster</strong></p>
   
   [![Discord.js](https://img.shields.io/badge/Discord.js-v14-blue?logo=discord&logoColor=white)](https://discord.js.org/)
   [![Node.js](https://img.shields.io/badge/Node.js-18.x+-green?logo=node.js&logoColor=white)](https://nodejs.org/)
-  [![Audio Engine](https://img.shields.io/badge/Audio%20Engine-yt--dlp%20%2B%20FFmpeg%20%2B%20Opus-red)](https://github.com/yt-dlp/yt-dlp)
+  [![Audio Engine](https://img.shields.io/badge/Audio%20Engine-Hybrid%203.1%20WebmOpus%20Passthrough-red)](https://github.com/yt-dlp/yt-dlp)
+  [![Cluster](https://img.shields.io/badge/Cluster-Scale--Out%20Audio%20Nodes-orange)](https://github.com/Guslaier/DisLava-MusicBot)
   [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 </div>
 
 <br />
 
-**GOOLIX** is a modern, high-performance Discord Music Bot powered directly by **Discord.js v14**, **@discordjs/voice**, embedded **yt-dlp**, and **FFmpeg**. It runs as an ultra-light, self-contained standalone Node.js service without needing Java, Lavalink, or external server daemons.
+**GOOLIX** is a modern, enterprise-grade Discord Music Bot powered directly by **Discord.js v14**, **@discordjs/voice**, embedded **yt-dlp**, and **FFmpeg**. It runs as an ultra-light, self-contained standalone Node.js service without requiring Java, Lavalink, or external server daemons.
 
-It features local NVMe caching, direct Opus stream encoding, YouTube Radio Mix Autoplay with artist diversity, an interactive 3-row player card, LRCLIB + YouTube description lyrics search, favorites management, and automatic dead card self-cleaning.
+It features **Hybrid 3.1 Zero-Copy WebmOpus Passthrough** (0% FFmpeg CPU usage on standard playback), background NVMe pre-caching, YouTube Radio Mix Autoplay with artist diversity, an interactive 4-row player card, LRCLIB + YouTube description lyrics search, favorites management, isolated ProtonVPN policy routing, centralized Tinyproxy tunnel sharing for distributed worker nodes, and an automated TrueMoney VIP subscription billing portal.
 
-> **Note for general users:** This project is Open Source and designed to be self-hosted on your own servers or Cloud VPS.
+> **Production Hardware Sizing:** For comprehensive benchmarks, formulas, and slot capacity calculations across Micro VPS, ARM TV boxes (Amlogic S905X4), Raspberry Pi, and Mini PCs (Intel N100 / Core i5), consult [`AUDIO_NODE_CAPACITY_FORMULA.md`](AUDIO_NODE_CAPACITY_FORMULA.md).
 
 ---
 
 ## Key Features
 
 - **Standalone Architecture**: 100% pure Node.js runtime. No Java runtime or Lavalink server required.
-- **Ultra-Light Footprint**: Optimized memory consumption (~15–30 MB RAM baseline) with V8 GC tuning.
-- **Instant Playback & Pre-Caching**: Background pre-fetches and pre-caches upcoming songs to disk for 0s instantaneous skips (~160ms dispatch).
+- **Ultra-Light Footprint**: Optimized memory consumption (~15–30 MB RAM baseline) with V8 Garbage Collection tuning.
+- **Hybrid 3.1 Zero-Copy Passthrough**: Feeds pre-encoded WebmOpus packets directly from `yt-dlp` to `@discordjs/voice`, completely bypassing FFmpeg when volume is 100% and no DSP filters are active (Zero FFmpeg CPU overhead).
+- **Instant Playback & Pre-Caching**: Background pre-fetches and pre-caches upcoming songs to NVMe/RAM disk (`/dev/shm`) for 0s instantaneous skips (~160ms dispatch).
 - **Smart Autoplay (YouTube Radio Mix)**: Continuous playback powered by YouTube's official Radio Mix (`list=RD`) featuring **Artist Diversity Filtering** to maintain musical tone without repeating the same artist consecutively.
-- **Interactive 3-Row Player Card**: Beautiful Hot Pink Discord Embed with interactive buttons:
-  - Row 1: `[ ⏮️ Prev ] [ ⏪ -10s ] [ ⏯️ Play/Pause ] [ ⏩ +10s ] [ ⏭️ Skip ]`
-  - Row 2: `[ 🔀 Shuffle ] [ 🔁 Loop ] [ 📋 Queue ] [ 📄 Lyrics ] [ 💖 Favorites ]`
-  - Row 3: `[ 🔊 Volume ] [ 📻 Autoplay ] [ 🛑 Stop/Leave ]`
+- **Interactive 4-Row Player Card V3**:
+  - **Row 1 (Playback & Seek)**: `[ ⏮️ Prev ] [ ⏪ -10s ] [ ⏯️ Play/Pause ] [ ⏩ +10s ] [ ⏭️ Skip ]`
+  - **Row 2 (Library & Features)**: `[ 🔀 Shuffle ] [ 🔁 Loop ] [ 📋 Queue ] [ 📄 Lyrics ] [ 💖 Favorites ]`
+  - **Row 3 (Quick Actions)**: `[ ➕ ขอเพลง ] [ 📑 เพลย์ลิสต์ ] [ 🔊 Volume ] [ 📻 Autoplay ]`
+  - **Row 4 (Secondary Row)**: `[ 🛑 ปิดแอป ]`
+  - **Real-Time Badges**: Dynamic status indicators reflecting actual source:
+    - `🔴 YouTube` — Direct YouTube stream.
+    - `🟠 SoundCloud (Bypass)` — Seamless SoundCloud fallback when YouTube restricts datacenter IPs.
+    - `🟠 SoundCloud` — Direct SoundCloud search.
+    - `🟢 Spotify` — Spotify search and stream.
+    - `⚡ 96k Supporter` / `📻 64k Standard` — Dynamic bitrate badge.
 - **Dead Card Auto-Cleaner**: Stale cards from previous tracks or bot restarts automatically delete themselves on interaction, plus on-demand `/gcleancard` channel sweep.
-- **Guild Settings Persistence**: Server volume and autoplay states are automatically saved per-guild in `data/guildSettings.json`, persisting across restarts and bot leaves.
+- **Centralized VPN Proxy Tunneling (Tinyproxy Integration)**: The main Controller VPS shares its isolated ProtonVPN tunnel as a secured HTTP proxy (`PORT 11905`). Remote worker nodes (cloud containers, home ARM TV boxes) can route `yt-dlp` through this proxy without requiring root/VPN setup on the worker.
+- **Distributed Scale-Out Audio Cluster**:
+  - Dynamic worker node registry (`data/nodesRegistry.json`) manageable live from the Admin Dashboard.
+  - NodeRouter load balancer with real-time health checks, telemetry, and **Drain Mode** (`⏳ Drain`) for zero-downtime rolling maintenance.
+- **Dual-Port Web Architecture & TrueMoney VIP Billing**:
+  - **Public Portal (Port 11901)**: Mobile-optimized React/Vite portal for TrueMoney Gift Voucher (อั่งเปา) redemption, granting instant Supporter VIP tier (96 kbps audio, Autoplay, priority cluster node allocation).
+  - **Admin Console (Port 11902)**: Real-time governance dashboard displaying cluster telemetry, active rooms, stream termination controls, and revenue analytics.
+- **Male DJ Persona**: Refined, polite, and energetic male DJ tone (`ครับ`, `ยินดีรับใช้ครับ`).
 - **Hybrid Lyrics Engine**: Dual-tier lyrics provider querying LRCLIB first, with automatic YouTube Video Description regex fallback for Thai indie and rap releases.
-- **Isolated VPN Tunnel Egress**: Supports ProtonVPN/OpenVPN isolated policy routing (`--source-address`) for full YouTube access without altering host default routing or endangering SSH access.
-- **Dynamic Free Proxy Pool & Circuit Breaker**: Auto-benchmarks proxies with 6-hour anti-bot quarantine and transparent SoundCloud bypass when YouTube restricts datacenter IPs.
-- **Favorites System**: Personal bookmarking (`/gfav`) to store and playback your favorite tracks anytime.
 
 ---
 
 ## Environment Configuration (.env)
 
-All bot behavior, network egress, and VPN options are controlled via `.env`:
+All bot behavior, network egress, streaming parameters, and cluster options are controlled via `.env`:
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `DISCORD_TOKEN` | *Required* | Your Discord Bot Token from Discord Developer Portal. |
 | `ENABLE_VPN` | `true` | Enable isolated VPN tunnel egress via `tun0` interface. |
+| `AUTO_ROTATE_VPN` | `true` | Automatically failover to next VPN server if YouTube blocks current IP. |
 | `VPN_SOURCE_IP` | *Auto* | Manual override for VPN source IP. If blank, auto-detected from `tun0` or `/root/vpn/vpn_ip.txt`. |
 | `VPN_USERNAME` | *Optional* | OpenVPN credentials for auto-provisioning `/root/vpn/auth.txt`. |
 | `VPN_PASSWORD` | *Optional* | OpenVPN password for auto-provisioning `/root/vpn/auth.txt`. |
 | `ENABLE_FREE_PROXY` | `false` | Enable background discovery and benchmark of public regional proxies. |
-| `PROXY_URL` | *Optional* | Static VIP proxy URL (e.g. `http://user:pass@host:port`). |
-| `USE_IPV6` | `true` | Force IPv6 egress when no VPN or proxy is present. |
-| `STREAM_MODE` | `auto` | Streaming mode: `auto` (hybrid disk cache for <=6m songs, pipe for long mixes), `pipe` (live stream), or `cache`. |
+| `PROXY_URL` | *Optional* | Static VIP proxy URL (e.g. `http://user:pass@host:11905`). Used by worker nodes to route through Controller VPN. |
+| `USE_IPV6` | `true` | Enable IPv6 egress when no VPN or proxy is configured. |
+| `STREAM_MODE` | `auto` | Streaming mode: `auto` (hybrid disk cache for <=30m songs, direct live pipe for long mixes), `pipe` (live stream only), or `cache`. |
+| `MAX_CACHE_DURATION_SEC`| `1800` | Maximum track duration in seconds allowed for full NVMe disk pre-caching (30 minutes). |
+| `PRIMARY_STREAM_TIMEOUT_MS` | `20000` | Timeout in milliseconds before falling back to SoundCloud if YouTube extraction stalls. |
+| `REMOTE_NODE_TIMEOUT_MS` | `30000` | HTTP socket timeout in milliseconds when streaming audio from remote worker nodes. |
+| `STREAM_BUFFER_SIZE` | `512K` | Stream buffer size allocated per audio pipe. |
+| `STREAM_CHUNK_SIZE` | `512K` | Chunk size for HTTP streaming requests. |
+| `OPUS_BITRATE` | `96k` | Default audio bitrate (Supporter: 96k, Standard: 64k). |
 | `DEFAULT_VOLUME` | `100` | Default playback volume (0-150) for newly joined servers. |
+| `WEB_PORT` | `3000` | Internal backend Express API port. |
+| `PUBLIC_WEB_PORT` | `11901` | Public port for Topup & Donation portal (reverse proxied via Nginx). |
+| `ADMIN_PORT` | `11902` | Dedicated port for Admin Governance Dashboard. |
+| `PAYMENT_MODE` | `sandbox` | Billing mode: `sandbox` (simulates TEST10, TEST29 vouchers) or `production` (redeems real TrueMoney vouchers). |
+| `TMW_PHONE_NUMBER` | *Required* | Phone number for receiving TrueMoney gift vouchers. |
+| `PRICE_30_DAYS` | `29` | Price in THB for 30-day Supporter VIP access. |
+| `MAX_FREE_STREAMS` | `4` | Maximum concurrent playback rooms for non-supporter servers. |
+| `MAX_TOTAL_STREAMS` | `12` | Maximum concurrent playback rooms allowed on this instance. |
+| `NODE_PORT` | `2333` | Worker port when running as a dedicated Audio Node (`npm run node`). |
+| `NODE_ID` | `node-1` | Unique identifier for this worker node. |
+| `NODE_AUTH_SECRET` | *Secret* | Shared cluster authentication secret between Controller and Worker Nodes. |
+| `SUPABASE_URL` | *Optional* | Supabase Cloud Database URL for persistent cloud storage. |
+| `SUPABASE_SECRET_KEY` | *Optional* | Supabase Service Role secret key. |
 
 ---
 
-## Prerequisites
-
-- [Node.js](https://nodejs.org/) (Version 18.0.0 or higher recommended)
-- [PM2](https://pm2.keymetrics.io/) (Recommended for 24/7 background process management: `npm install pm2 -g`)
-- Discord Bot Token (Obtain from the [Discord Developer Portal](https://discord.com/developers/applications))
-
----
-
-## Installation & Setup
-
-1. **Clone the repository and install dependencies**
-   ```bash
-   git clone https://github.com/Guslaier/DisLava-MusicBot.git
-   cd DisLava-MusicBot
-   npm install
-   ```
-
-2. **Environment Variables Configuration**
-   - Copy `.env.example` to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Insert your bot token inside `.env`:
-     ```env
-     DISCORD_TOKEN=your_discord_bot_token_here
-     ```
-
-3. **yt-dlp Binary Setup**
-   Ensure the `yt-dlp` binary located in `bin/` has execution permissions:
-   ```bash
-   chmod +x bin/yt-dlp
-   ```
-   *(Note: FFmpeg is automatically discovered from `/usr/bin/ffmpeg` or bundled in `bin/`!)*
-
-4. **Network & Anti-Ban Options (Do I need OpenVPN?)**
-
-   OpenVPN is **completely optional**. Choose your setup based on your hosting environment:
-
-   - **Scenario 1: Running on a Home PC / Residential IP**
-     - You **do NOT need OpenVPN**. Residential IPs are not blocked by YouTube.
-     - In `.env`, set:
-       ```env
-       ENABLE_VPN=false
-       ```
-     - Run `node index.js` and play music directly.
-
-   - **Scenario 2: Running on a Cloud VPS without VPN (Zero-Config Fallback)**
-     - If your VPS IP is blocked by YouTube and you do not want to setup a VPN:
-       ```env
-       ENABLE_VPN=false
-       ```
-     - The bot's built-in **YouTube Circuit Breaker** will automatically detect datacenter restrictions and seamlessly stream tracks through high-bitrate SoundCloud bypass without any extra setup.
-
-   - **Scenario 3: Running on a Cloud VPS with Isolated VPN (Recommended for Full YouTube Access)**
-     - Automated isolated VPN installer:
-       ```bash
-       sudo bash scripts/setup-vpn.sh
-       ```
-     - Place your `proton.ovpn` (with `route-nopull` enabled) and `auth.txt` inside `/root/vpn/`.
-     - In `.env`, set:
-       ```env
-       ENABLE_VPN=true
-       ```
-     - **Safety Guarantee:** The setup script utilizes Linux Policy Routing (Table 100) and binds traffic solely to `tun0`. It **never alters the host default gateway**, meaning your active SSH session will **never disconnect or be locked out**.
-
----
-
-## 🌐 Audio Nodes Architecture & VPN per Node Setup Guide
-
-### 1. Architecture: Standalone Core vs Distributed Audio Nodes
-
-GOOLIX MusicBot supports two operational topologies:
+## Architecture: Standalone vs Distributed Audio Cluster
 
 ```
-[ Single Node Topology (Default / Current Setup) ]
+[ Standalone Topology (Default Single VPS) ]
 +-------------------------------------------------------------+
-| VPS Host (15.235.164.106)                                   |
+| Main VPS Host (e.g. 15.235.164.106)                         |
 | +---------------------------------------------------------+ |
 | | Controller Core (LocalNode-0)                           | |
-| | - Discord Gateway & Slash Commands                      | |
-| | - Web Admin Dashboard (Port 11901)                      | |
-| | - Database & Billing Engine                             | |
-| | - Audio Pipeline: yt-dlp + FFmpeg + @discordjs/voice    | |
+| | - Discord Gateway & Command Handler                     | |
+| | - Public Topup Portal (Port 11901)                      | |
+| | - Admin Dashboard (Port 11902)                          | |
+| | - Audio Pipeline: yt-dlp + Hybrid 3.1 Passthrough       | |
 | +---------------------------------------------------------+ |
-| | Isolated VPN Egress (tun0: 10.96.0.9 -> Exit: SG-FREE)  | |
+| | Isolated VPN Egress (tun0: 10.96.0.7 -> SG Exit IP)     | |
+| | Tinyproxy Forwarder (Port 11905 -> Bound to tun0)       | |
 | +---------------------------------------------------------+ |
 +-------------------------------------------------------------+
 
-[ Multi-Node Cluster Topology (Scale-Out) ]
-+---------------------------+
-| Main Controller VPS       |
-| - Discord.js Gateway      |
-| - Admin & Subscription    |
-| - NodeRouter Load Balancer|
-+-------------+-------------+
-              |
-     +--------+--------+
-     |                 |
-+----+--------+   +----+--------+
-| AudioNode 1 |   | AudioNode 2 |
-| SG VPS      |   | JP VPS      |
-| OpenVPN SG  |   | OpenVPN JP  |
-| Exit: SG IP |   | Exit: JP IP |
-+-------------+   +-------------+
+[ Distributed Multi-Node Topology (Scale-Out Cluster) ]
+                    +---------------------------+
+                    | Main Controller VPS       |
+                    | - Discord.js Gateway      |
+                    | - NodeRouter Balancer     |
+                    | - Tinyproxy (Port 11905)  |
+                    +-------------+-------------+
+                                  |
+              +-------------------+-------------------+
+              | (Streams audio)                       | (Streams audio)
+      +-------v-------+                       +-------v-------+
+      | Audio Node 1  |                       | Audio Node 2  |
+      | ARM TV Box /  |                       | Remote Cloud  |
+      | Home Server   |                       | Worker        |
+      | PROXY_URL ->  |                       | PROXY_URL ->  |
+      | Controller    |                       | Controller    |
+      +---------------+                       +---------------+
 ```
 
-- **LocalNode-0 (Controller Core):** In the default standalone mode, the bot acts as its own audio node. The Discord connection, web admin, and music decoding happen in the same process.
-- **Why VPN is per-Node:** YouTube applies rate limits (HTTP 429) based on the **egress IP of the audio-fetching engine (`yt-dlp`)**. In a cluster, each audio processing node must maintain its own independent VPN connection and Public Exit IP. This ensures that a rate limit on Node 1 never affects streams routed to Node 2.
+### Why Share VPN via Tinyproxy?
+YouTube strictly rate-limits datacenter IP ranges. By running **Tinyproxy** bound to `tun0` on the Controller VPS, any external worker node (such as free cloud containers or home devices) can route `yt-dlp` requests through `http://user:pass@controller_ip:11905`. The worker benefits from clean Singapore residential/VPN egress without needing to run OpenVPN or have root privileges.
 
 ---
 
-### 2. Step-by-Step: Setting Up an Audio Node & Configuring VPN
+## Installation & Quick Start
 
-To prepare an Audio Node (whether on the local host or an external VPS worker):
-
-#### Step A: System Prerequisites (Debian / Ubuntu VPS)
+### 1. Clone & Install Dependencies
 ```bash
-sudo apt update && sudo apt install -y openvpn curl git ffmpeg
+git clone https://github.com/Guslaier/DisLava-MusicBot.git
+cd DisLava-MusicBot
+npm install
 ```
 
-#### Step B: Install Isolated VPN Routing
-Run the automated policy-routing setup script:
+### 2. Environment Configuration
 ```bash
-sudo bash scripts/setup-vpn.sh
+cp .env.example .env
+nano .env
 ```
-This script:
-1. Installs OpenVPN.
-2. Configures `/root/vpn/vpn-up.sh` to route traffic via Linux Routing **Table 100** without replacing the default gateway.
-3. Sets up systemd service `protonvpn-isolated.service`.
-4. Installs `vpn-watchdog.timer` to monitor egress every 60 seconds and auto-heal if disconnected.
+Insert your `DISCORD_TOKEN`, adjust ports, and set credentials.
 
-#### Step C: Add VPN Profiles & Credentials
-1. Download OpenVPN configuration files (`.ovpn`) from ProtonVPN (or your VPN provider).
-2. Ensure the `.ovpn` file contains:
-   ```
-   route-nopull
-   auth-user-pass auth.txt
-   ```
-   > ⚠️ **CRITICAL:** `route-nopull` is mandatory! Without it, OpenVPN will overwrite the VPS default gateway and terminate your SSH session.
-3. Put the config and credentials into `/root/vpn/`:
-   ```bash
-   cp your-profile.ovpn /root/vpn/proton.ovpn
-   echo -e "YOUR_OPENVPN_USERNAME\nYOUR_OPENVPN_PASSWORD" > /root/vpn/auth.txt
-   chmod 600 /root/vpn/auth.txt
-   ```
-4. Start the isolated VPN service:
-   ```bash
-   systemctl restart protonvpn-isolated
-   ```
-
-#### Step D: Verify Node VPN Egress
-Confirm the VPN tunnel has an IP and is exiting through the VPN provider:
+### 3. Binary Permissions
+Ensure the bundled `yt-dlp` binary has execution permissions:
 ```bash
-# Check interface IP
-cat /root/vpn/vpn_ip.txt
-
-# Test egress IP through VPN interface
-curl -s --interface $(cat /root/vpn/vpn_ip.txt) https://api.ipify.org
+chmod +x bin/yt-dlp
 ```
-The output IP must be the VPN's public IP, NOT the VPS host IP!
+*(FFmpeg is automatically detected from system PATH or bundled binaries)*
 
-#### Step E: Configure Bot Node Egress (.env)
-In `.env`:
-```env
-ENABLE_VPN=true
-VPN_SOURCE_IP=              # Leave blank to auto-detect from /root/vpn/vpn_ip.txt
-MAX_TOTAL_STREAMS=12        # Maximum concurrent rooms allowed on this node
-MAX_FREE_STREAMS=6          # Allocation cap for non-VIP servers
-```
-
----
-
-### 3. Cluster Scaling with `REMOTE_NODES`
-
-#### A. Running the Worker on an Audio Node VPS
-On each external Audio Node machine, configure `.env`:
-```env
-NODE_PORT=2333                       # Listening port for AudioNodeServer (customizable)
-NODE_ID=sg-worker-1                 # Unique Node ID
-NODE_NAME="SG Worker (Proton SG)"   # Display name in Web Admin
-NODE_AUTH_SECRET=your_cluster_secret # Must match Controller NODE_AUTH_SECRET
-MAX_TOTAL_STREAMS=15                # Max concurrent playback slots on this node
-ENABLE_VPN=true                     # Egress via this node's OpenVPN tunnel
-```
-
-Start the Audio Node worker:
+### 4. Build Frontend Assets
+Build the React/Vite Admin Dashboard and Topup Portal:
 ```bash
-# Direct run
+npm --prefix frontend install
+npm --prefix frontend run build
+```
+
+### 5. Running the Bot
+```bash
+# Development
+node index.js
+
+# Production with PM2 (Recommended)
+pm2 start ecosystem.config.cjs
+pm2 logs goolix-bot
+```
+
+### 6. Running a Dedicated Audio Worker Node
+On a worker machine (e.g. ARM TV Box, Raspberry Pi, or second VPS):
+```bash
+# Configure .env with NODE_PORT, NODE_AUTH_SECRET, and PROXY_URL
 npm run node
-# or
-node src/cluster/AudioNodeServer.js
 
-# 24/7 background run with PM2
+# Or run with PM2
 pm2 start ecosystem.config.cjs --only goolix-node
 ```
 
-#### B. Registering Remote Nodes on Controller
-On the Main Controller VPS, register all worker nodes in `.env`:
-```env
-NODE_AUTH_SECRET=your_cluster_secret
-REMOTE_NODES='[{"id":"sg-worker-1","name":"SG Worker (Proton SG)","host":"103.20.10.15","port":2333,"maxRooms":15},{"id":"jp-worker-1","name":"JP Worker (Proton JP)","host":"133.15.20.30","port":2333,"maxRooms":15}]'
-```
+---
 
-- **NodeRouter (`src/cluster/NodeRouter.js`):** Pings each node every 10 seconds via `/api/node/stats`, reporting real-time CPU, RAM, active streams, and VPN exit IP directly to the Web Admin dashboard. Incoming playback requests are automatically dispatched to the least loaded online node.
-- **Drain Mode (`⏳ Drain`):** In the Web Admin Dashboard, clicking **Drain** on a node flags it as draining: existing songs finish playing, but new streams are routed to other nodes. This allows zero-downtime maintenance or VPN rotation.
+## Slash Commands Reference
+
+### 🎵 Playback & Control
+- `/gplay <query> [top] [playlist]` — Play a song, search query, or URL (supports YouTube, SoundCloud, Spotify).
+- `/gplaylist <query> [limit]` — Enqueue full playlists or albums (5–100 tracks).
+- `/gautoplay` — Toggle intelligent continuous playback (YouTube Radio Mix with Artist Diversity).
+- `/gpause` — Pause current playback.
+- `/gresume` — Resume paused playback.
+- `/gstop` — Stop playback, clear queue, and leave voice channel.
+- `/gskip` — Skip current track.
+- `/gskipplay <query>` — Skip current track and immediately play a new query.
+- `/gprevious` — Replay the previous song.
+- `/gshuffle` — Shuffle tracks currently in queue.
+- `/gloop <mode>` — Cycle loop mode (`Off`, `Track`, `Queue`).
+- `/gclear` — Clear all pending tracks from queue.
+- `/gjump <position>` — Jump directly to a specific queued track.
+- `/gmove <from> <to>` — Reorder tracks in queue.
+- `/gremove <position>` — Remove a specific song from queue.
+
+### 🎛️ Audio Quality & Seek
+- `/gvolume [amount]` — View or adjust volume 0–150% (saved per server).
+- `/gseek <time>` — Seek to specific timestamp (e.g. `01:30` or `90`).
+- `/gforward [seconds]` — Fast-forward playback (default: 10s).
+- `/gbackward [seconds]` — Rewind playback (default: 10s).
+
+### 💖 Favorites & Personal Library
+- `/gfav add` — Add currently playing track to your personal favorites.
+- `/gfav list` — View your saved favorite songs.
+- `/gfav play` — Enqueue and play all your favorite songs.
+- `/gfav remove <index>` — Remove a song from your favorites.
+
+### 🛡️ Info, Lyrics & Admin
+- `/gnowplaying` — Display the interactive 4-row player card.
+- `/glyrics [query]` — View synchronized or plain lyrics (LRCLIB with YouTube description fallback).
+- `/gdonate` — Display Supporter VIP donation information and TrueMoney topup link.
+- `/gcleancard` — Sweep and delete old player cards from the text channel.
+- `/gstats` — View real-time bot statistics (RAM RSS/Heap, Uptime, VPN Egress, Circuit Breaker).
+- `/gproxy <status|test|blacklist|clear>` — Manage proxy pool and benchmark egress IPs.
+- `/gping` — Check Discord API WebSocket latency.
+- `/gupdate` — Hot-reload application slash commands without rebooting.
+- `/ghelp` — Display comprehensive command list and user guide.
 
 ---
 
-## Running the Bot
+## Capacity & Hardware Guide
 
-### Normal Start
-```bash
-node index.js
-```
+Refer to [`AUDIO_NODE_CAPACITY_FORMULA.md`](AUDIO_NODE_CAPACITY_FORMULA.md) for the mathematical model and real-world benchmarks:
 
-### Running with PM2 (24/7 Background)
-```bash
-pm2 start ecosystem.config.cjs
-# or
-pm2 start index.js --name "goolix-bot"
-```
-Check logs and status:
-```bash
-pm2 logs
-pm2 status
-```
-
----
-
-## Slash Commands
-
-### 🎵 Playback & Autoplay
-- `/gplay <query> [top] [playlist]` - Play a song or search query (optional `top` to jump queue)
-- `/gplaylist <query> [limit]` - Enqueue full playlists or albums (5-100 tracks)
-- `/gautoplay` - Toggle intelligent continuous playback when queue is empty (saved per server)
-- `/gpause` - Pause the current playback
-- `/gresume` - Resume paused playback
-- `/gstop` - Stop playback, clear queue, and leave voice channel
-- `/gfav <add|list|play|remove>` - Manage and play your personal favorite songs
-
-### 📑 Queue Control
-- `/gqueue` - View current playback queue and pagination
-- `/gskip` - Skip current song (triggers instant Autoplay if queue empty)
-- `/gskipplay <query>` - Skip current song and immediately play the new query
-- `/gprevious` - Replay the previous song
-- `/gshuffle` - Shuffle tracks in queue
-- `/gloop <mode>` - Set loop mode (`Off`, `Track`, `Queue`)
-- `/gclear` - Clear all pending tracks from queue
-- `/gjump <position>` - Jump a specific queued song to play next
-- `/gmove <from> <to>` - Move a track position in queue
-- `/gremove <position>` - Remove a specific track from queue
-
-### 🎛️ Audio & Seek
-- `/gvolume [amount]` - View or adjust bot volume 0-150% (saved permanently per server)
-- `/gseek <time>` - Seek to timestamp (e.g. `01:30` or `90`)
-- `/gforward [seconds]` - Fast-forward playback (default: 10s)
-- `/gbackward [seconds]` - Rewind playback (default: 10s)
-
-### 🛡️ Info, Lyrics & Maintenance
-- `/gnowplaying` - View interactive player card with real-time progress bar
-- `/glyrics [query]` - View synchronized or plain lyrics (LRCLIB + YouTube fallback)
-- `/gcleancard` - Sweep and delete old/stale player cards from the current channel
-- `/gstats` - Real-time statistics: RAM RSS/Heap, Uptime, VPN Egress, Circuit Breaker state
-- `/gproxy <status|test|blacklist|clear>` - Manage smart proxy pool & benchmark egress
-- `/gping` - Check Discord API latency and WebSocket heartbeat
-- `/gupdate` - Hot-reload commands and register Slash Commands without rebooting
-- `/ghelp` - Show all commands and user guide
+| Hardware Spec | Effective Cores ($C_{\text{eff}}$) | RAM | Recommended Capacity | Notes |
+| :--- | :---: | :---: | :---: | :--- |
+| **Micro NAT VPS (22 THB/mo)** | $1.0$ | $345\text{ MB}$ | **3–4 Rooms** | Pure Passthrough mode, isolated OpenVPN egress |
+| **VPS LG1XS+ (150 THB/mo)** | $3.6$ | $3.0\text{ GB}$ | **33–45 Rooms** | Intel 2 vCPU, 400 Mbps shared egress |
+| **Amlogic S905X4 Box (700 THB once)**| $6.9$ | $2.0–4.0\text{ GB}$ | **55–100 Rooms** | 4x Cortex-A55, 5W power draw, Armbian Linux |
+| **Mini PC Intel N100 / i5-7400T** | $13.0–14.4$ | $8.0\text{ GB}$ | **120–150 Rooms** | x86_64 Ubuntu Server native, supports full cluster master |
 
 ---
 
 ## License
+
 This project is Open Source and licensed under the [MIT License](LICENSE).
