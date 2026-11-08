@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, CheckCircle2, AlertCircle, Gift, Server, ShieldCheck, 
   Clock, ArrowRight, Share2, Copy, Zap, Music2, Award,
-  FileText, X, ChevronRight, Check
+  FileText, X, ChevronRight, Check, Disc3, Radio, Terminal
 } from 'lucide-react';
 
 export default function TopupView({ lang, onToast }) {
@@ -21,17 +21,22 @@ export default function TopupView({ lang, onToast }) {
   const [submittingTopup, setSubmittingTopup] = useState(false);
   const [submittingPromo, setSubmittingPromo] = useState(false);
 
-  const formatCountdown = (targetMs, l) => {
-    if (!targetMs) return null;
+  // Live tabular clock for Neon Velocity Hero
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatCountdown = (targetMs) => {
+    if (!targetMs) return '00D : 00H : 00M : 00S';
     const diff = targetMs - Date.now();
-    if (diff <= 0) return l === 'th' ? 'หมดเวลาแล้ว' : 'Expired';
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    if (days > 0) {
-      return l === 'th' ? `เหลืออีก ${days} วัน ${hours} ชม.` : `${days}d ${hours}h left`;
-    }
-    return l === 'th' ? `เหลืออีก ${hours} ชม. ${minutes} นาที` : `${hours}h ${minutes}m left`;
+    if (diff <= 0) return '00D : 00H : 00M : 00S';
+    const days = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(2, '0');
+    const hours = String(Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+    const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+    const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
+    return `${days}D : ${hours}H : ${minutes}M : ${seconds}S`;
   };
 
   // Read URL query params on mount
@@ -57,6 +62,7 @@ export default function TopupView({ lang, onToast }) {
       const data = await res.json();
       if (data.success) {
         setGuildData(data);
+        onToast('success', lang === 'th' ? 'พบข้อมูลเซิร์ฟเวอร์' : 'Server Verified', data.guild?.name || targetGuildId);
       } else {
         setGuildData(null);
         onToast('error', lang === 'th' ? 'ไม่พบเซิร์ฟเวอร์' : 'Guild Not Found', data.error || (lang === 'th' ? 'กรุณาตรวจสอบว่าบอทอยู่ในเซิร์ฟเวอร์นี้' : 'Ensure bot is joined in server'));
@@ -89,11 +95,11 @@ export default function TopupView({ lang, onToast }) {
   const handleTopup = async (e) => {
     e.preventDefault();
     if (!guildId.trim()) {
-      onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID', lang === 'th' ? 'เลือกหรือกรอกไอดีเซิร์ฟเวอร์ก่อนครับ' : 'Provide Guild ID first');
+      onToast('warning', lang === 'th' ? 'กรุณาระบุ Server ID' : 'Missing Server ID', lang === 'th' ? 'เลือกหรือกรอกไอดีเซิร์ฟเวอร์ก่อน' : 'Provide Server ID first');
       return;
     }
     if (!voucher.trim()) {
-      onToast('warning', lang === 'th' ? 'กรุณาระบุลิงก์ซอง' : 'Missing Voucher', lang === 'th' ? 'วางลิงก์ซองของขวัญ TrueMoney ครับ' : 'Enter voucher link');
+      onToast('warning', lang === 'th' ? 'กรุณาระบุลิงก์ซอง' : 'Missing Voucher', lang === 'th' ? 'วางลิงก์ซองของขวัญ TrueMoney' : 'Enter voucher link');
       return;
     }
 
@@ -111,7 +117,7 @@ export default function TopupView({ lang, onToast }) {
       });
       const data = await res.json();
       if (data.success) {
-        onToast('success', lang === 'th' ? 'ร่วมสนับสนุนสำเร็จ!' : 'Support Successful!', lang === 'th' ? `ปลดล็อกวันผู้สนับสนุน +${data.addedDays} วัน (ยอด ${data.amount} บาท)` : `Added +${data.addedDays} Supporter days (${data.amount} THB)`);
+        onToast('success', lang === 'th' ? 'ร่วมสนับสนุนสำเร็จ' : 'Support Confirmed', lang === 'th' ? `ปลดล็อกวันผู้สนับสนุน +${data.addedDays} วัน (ยอด ${data.amount} บาท)` : `Added +${data.addedDays} Supporter days (${data.amount} THB)`);
         setVoucher('');
         verifyGuild(guildId, userId);
       } else {
@@ -127,11 +133,11 @@ export default function TopupView({ lang, onToast }) {
   const handleRedeemPromo = async (e) => {
     e.preventDefault();
     if (!guildId.trim()) {
-      onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID');
+      onToast('warning', lang === 'th' ? 'กรุณาระบุ Server ID' : 'Missing Server ID');
       return;
     }
     if (!promoCode.trim()) {
-      onToast('warning', lang === 'th' ? 'กรุณาระบุโค้ด' : 'Missing Code');
+      onToast('warning', lang === 'th' ? 'กรุณาระบุรหัสโค้ด' : 'Missing Code');
       return;
     }
 
@@ -148,7 +154,7 @@ export default function TopupView({ lang, onToast }) {
       });
       const data = await res.json();
       if (data.success) {
-        onToast('success', lang === 'th' ? 'เคลมสิทธิ์สำเร็จ!' : 'Code Redeemed!', lang === 'th' ? `ยินดีด้วยครับ! ได้รับสิทธิ์ ${data.campaignName} (+${data.addedDays} วัน)` : `Received +${data.addedDays} days`);
+        onToast('success', lang === 'th' ? 'เคลมสิทธิ์สำเร็จ' : 'Code Redeemed', lang === 'th' ? `ได้รับสิทธิ์ ${data.campaignName} (+${data.addedDays} วัน)` : `Received +${data.addedDays} days`);
         setPromoCode('');
         verifyGuild(guildId, userId);
       } else {
@@ -165,432 +171,401 @@ export default function TopupView({ lang, onToast }) {
     if (!guildData?.guild?.referralCode) return;
     const link = `${window.location.origin}/?ref=${guildData.guild.referralCode}`;
     navigator.clipboard.writeText(link);
-    onToast('success', lang === 'th' ? 'คัดลอกลิงก์แล้ว!' : 'Copied Link!', link);
+    onToast('success', lang === 'th' ? 'คัดลอกลิงก์แล้ว' : 'Copied Link', link);
   };
 
   const formatExpiry = (timestamp) => {
     if (!timestamp || timestamp <= Date.now()) {
-      return lang === 'th' ? 'ยังไม่มีแพ็กเกจ (ทั่วไป)' : 'No Active Supporter';
+      return lang === 'th' ? 'ไม่มีสิทธิ์คงเหลือ (ทั่วไป)' : 'NO ACTIVE PASS (STANDARD)';
     }
     const diff = timestamp - Date.now();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    return `${days} ${lang === 'th' ? 'วัน' : 'days'} ${hours} ${lang === 'th' ? 'ชม.' : 'hrs'} (${new Date(timestamp).toLocaleDateString('th-TH')})`;
+    return `${days} ${lang === 'th' ? 'วัน' : 'D'} ${hours} ${lang === 'th' ? 'ชม.' : 'H'} (${new Date(timestamp).toLocaleDateString('th-TH')})`;
   };
 
+  const priceRate = guildData?.config?.price30Days ?? 29;
+
   return (
-    <div style={{ maxWidth: 940, margin: '36px auto', padding: '0 20px' }} className="fade-in">
-      {/* Top Banner: Early Bird Drop (if active on server) */}
-      {guildData?.campaign && (
-        <div className="glass-panel" style={{
-          padding: '18px 24px',
-          marginBottom: 28,
-          border: '1px solid rgba(0, 255, 135, 0.35)',
-          background: 'linear-gradient(135deg, rgba(0, 255, 135, 0.08) 0%, rgba(14, 20, 34, 0.98) 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 16
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: 'rgba(0, 255, 135, 0.12)',
-              border: '1px solid rgba(0, 255, 135, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--slime-green)'
-            }}>
-              <Gift size={22} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontWeight: 800, fontSize: 15, color: '#FFF', letterSpacing: '-0.01em' }}>
-                  {guildData.campaign.name}
-                </span>
-                <span className="slime-badge" style={{ fontSize: 10, padding: '2px 8px' }}>
-                  FREE {guildData.campaign.days || 30} DAYS
-                </span>
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 3 }}>
-                {lang === 'th' ? 'แคมเปญสิทธิ์พิเศษเปิดตัวเซิร์ฟเวอร์ เหลือเพียง' : 'Limited Launch Drop remaining:'}{' '}
-                <strong style={{ color: 'var(--slime-green)' }}>{guildData.campaign.remaining}</strong> / {guildData.campaign.maxClaims} {lang === 'th' ? 'สิทธิ์' : 'claims'}
-                {guildData.campaign.expiresAt && (
-                  <span style={{ marginLeft: 8 }}>
-                    • {lang === 'th' ? 'หมดเขต:' : 'Ends:'} <strong style={{ color: 'var(--amber-warn)' }}>{new Date(guildData.campaign.expiresAt).toLocaleDateString('th-TH')}</strong>
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+    <div style={{
+      backgroundColor: 'var(--nv-black)',
+      color: '#FFFFFF',
+      minHeight: '100vh',
+      position: 'relative',
+      paddingBottom: 80
+    }}>
+      {/* Background Refraction Glows & Subtle Noise Overlay */}
+      <div className="nv-ambient-glow" />
+      <div className="nv-noise-overlay" />
 
-          <form onSubmit={handleRedeemPromo} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder={lang === 'th' ? 'กรอกรหัสแคมเปญ...' : 'Promo code...'}
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-              style={{ width: 150, padding: '8px 12px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}
-            />
-            <button type="submit" disabled={submittingPromo} className="btn btn-sm btn-primary">
-              {submittingPromo ? '...' : (lang === 'th' ? 'รับสิทธิ์' : 'Claim')}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Main Studio Grid: Left Server Info & Right Topup Console */}
+      {/* Main Single-Column Container (Max-Width 1600px) */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: 24,
-        marginBottom: 32
+        maxWidth: 1600,
+        margin: '0 auto',
+        padding: '0 32px',
+        position: 'relative',
+        zIndex: 2
       }}>
-        {/* Left Column: Server Status Console */}
-        <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
-              <Server size={17} style={{ color: 'var(--slime-green)' }} />
-              <span>{lang === 'th' ? 'ข้อมูลเซิร์ฟเวอร์เป้าหมาย' : 'Target Server Node'}</span>
-            </h2>
-            <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              {lang === 'th' ? 'สเตจเสียง' : 'Audio Node'}
-            </span>
-          </div>
 
-          {/* Search Box */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            <input
-              type="text"
-              placeholder={lang === 'th' ? 'ระบุ Discord Server ID (เช่น 123456...)' : 'Discord Server ID...'}
-              value={guildId}
-              onChange={(e) => setGuildId(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && verifyGuild()}
-              style={{ flex: 1 }}
-            />
-            <button
-              onClick={() => verifyGuild()}
-              disabled={loadingGuild}
-              className="btn btn-primary"
-              style={{ padding: '0 18px', whiteSpace: 'nowrap' }}
-            >
-              {loadingGuild ? '...' : (lang === 'th' ? 'ค้นหา' : 'Inspect')}
-            </button>
-          </div>
-
-          {guildData?.guild ? (
-            <div style={{
-              background: 'rgba(5, 7, 11, 0.65)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 14,
-              padding: 18,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14
+        {/* 1. HERO SECTION */}
+        <section style={{
+          paddingTop: '64px',
+          paddingBottom: '56px',
+          position: 'relative'
+        }}>
+          {/* 3D Glass Tilted Card Background */}
+          <div className="nv-hero-3d-card" style={{ position: 'relative', width: '100%' }}>
+            <div className="nv-hero-3d-inner" style={{
+              borderRadius: '2.5rem',
+              padding: '64px 48px',
+              position: 'relative'
             }}>
-              {/* Guild Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                {guildData.guild.icon ? (
-                  <img
-                    src={guildData.guild.icon}
-                    alt=""
-                    style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 12,
-                      objectFit: 'cover',
-                      border: '1px solid var(--border-light)'
-                    }}
-                  />
-                ) : (
-                  <div style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: 12,
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border-subtle)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: 19,
-                    color: 'var(--text-sub)'
-                  }}>
-                    {guildData.guild.name.charAt(0)}
-                  </div>
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontWeight: 800,
-                    fontSize: 16,
-                    color: '#FFF',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    letterSpacing: '-0.01em'
-                  }}>
-                    {guildData.guild.name}
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-dim)', marginTop: 2 }}>
-                    ID: <span style={{ fontFamily: 'var(--font-mono)' }}>{guildData.guild.id}</span> • {guildData.guild.memberCount} {lang === 'th' ? 'สมาชิก' : 'members'}
-                  </div>
+              {/* Massive Headline in Brutalist 12px White Border Box (Sharp 0px Corners) */}
+              <div style={{ marginBottom: 36 }}>
+                <div className="nv-tech-meta" style={{ marginBottom: 16, color: 'var(--nv-accent)' }}>
+                  [ ARCHITECTURE: DIRECT OGG-OPUS // AUDIO SPEC: 96K STUDIO ]
                 </div>
-              </div>
 
-              {/* Status Pill Plate */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '11px 14px',
-                borderRadius: 10,
-                background: guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
-              }}>
-                <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
-                  {lang === 'th' ? 'สถานะแพ็กเกจ:' : 'Current Tier:'}
-                </span>
-                <span style={{
-                  fontWeight: 800,
-                  fontSize: 12,
-                  letterSpacing: '0.04em',
-                  color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-dim)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}>
-                  {guildData.guild.isSupporter ? <ShieldCheck size={14} /> : null}
-                  {guildData.guild.isSupporter ? 'SUPPORTER (HQ PASS)' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
-                </span>
-              </div>
+                <div className="nv-brutalist-headline-box">
+                  <h1 className="nv-headline-text">
+                    NEON VELOCITY
+                  </h1>
+                </div>
 
-              {/* Expiry Details */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '11px 14px',
-                borderRadius: 10,
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid var(--border-subtle)'
-              }}>
-                <span style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Clock size={13} style={{ color: 'var(--cyan-freq)' }} />
-                  {lang === 'th' ? 'วันใช้งานคงเหลือ:' : 'Remaining Time:'}
-                </span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
-                  {formatExpiry(guildData.guild.expiresAt)}
-                </span>
-              </div>
-
-              {/* Referral Pass Widget */}
-              {guildData.guild.referralCode && (
                 <div style={{
-                  padding: '14px 16px',
-                  background: 'linear-gradient(145deg, rgba(255, 43, 133, 0.08) 0%, rgba(14, 20, 34, 0.7) 100%)',
-                  border: '1px solid rgba(255, 43, 133, 0.25)',
-                  borderRadius: 12
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 'clamp(1.4rem, 3.5vw, 2.8rem)',
+                  letterSpacing: '-0.04em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  marginTop: 18
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--cyber-pink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {lang === 'th' ? 'รหัสชวนเพื่อนรับวันฟรี' : 'Referral Invite Code'}
-                    </span>
-                    <button
-                      onClick={copyReferralLink}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--cyber-pink)',
-                        cursor: 'pointer',
-                        fontSize: 11,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        fontWeight: 700
-                      }}
-                    >
-                      <Copy size={12} /> {lang === 'th' ? 'คัดลอกลิงก์' : 'Copy Link'}
-                    </button>
+                  {lang === 'th'
+                    ? 'ปลดล็อกช่องสัญญาณเสียงระดับสตูดิโอ ทั้งเซิร์ฟเวอร์'
+                    : 'ELITE SOUNDSTAGE PASS // SERVER-WIDE OPUS HQ'}
+                </div>
+              </div>
+
+              {/* Split-Row Metadata Section */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 24,
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                paddingTop: 28
+              }}>
+                {/* Left: Location & System Status Tag */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div className="nv-tech-meta" style={{ color: 'var(--nv-accent)' }}>
+                    STATUS // CLUSTER ONLINE
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                    <div style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 800,
-                      fontSize: 15,
-                      color: '#FFF',
-                      letterSpacing: '0.06em'
-                    }}>
-                      {guildData.guild.referralCode}
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--slime-green)' }}>
-                      {lang === 'th'
-                        ? `ชวนสำเร็จ: ${guildData.guild.referralCount || 0} / ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6}`
-                        : `Invited: ${guildData.guild.referralCount || 0} / ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6}`}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 8, lineHeight: 1.5 }}>
-                    {guildData?.referralConfig?.enabled === false ? (
-                      <span style={{ color: 'var(--red-alert)', fontWeight: 600 }}>
-                        {lang === 'th' ? '[Paused] แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราว' : '[Paused] Referral program is currently paused'}
-                      </span>
-                    ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
-                      <span style={{ color: 'var(--red-alert)', fontWeight: 600 }}>
-                        {lang === 'th'
-                          ? `[Closed] หมดเขตโปรโมชั่น Season นี้แล้ว (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')})`
-                          : `[Closed] Season ended (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()})`}
-                      </span>
-                    ) : (
-                      <>
-                        <span>
-                          {lang === 'th'
-                            ? `เพื่อนเติมเงินด้วยโค้ดนี้ (ขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท): ผู้แนะนำได้รับวันฟรี +${guildData?.referralConfig?.rewardDays ?? 30} วัน`
-                            : `Friends top up with code (${guildData?.referralConfig?.minTopup ?? 29}+ THB): You get +${guildData?.referralConfig?.rewardDays ?? 30} free days`}
-                        </span>
-                        {guildData?.referralConfig?.expiresAt && (
-                          <div style={{ color: 'var(--amber-warn)', marginTop: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Clock size={12} />
-                            <span>
-                              {lang === 'th'
-                                ? `หมดเขต: ${new Date(guildData.referralConfig.expiresAt).toLocaleString('th-TH')} (${formatCountdown(guildData.referralConfig.expiresAt, 'th')})`
-                                : `Ends: ${new Date(guildData.referralConfig.expiresAt).toLocaleString()} (${formatCountdown(guildData.referralConfig.expiresAt, 'en')})`}
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    )}
+                  <div style={{
+                    fontFamily: "var(--font-mono-meta)",
+                    fontSize: 13,
+                    color: '#FFFFFF',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase'
+                  }}>
+                    LOC: AP-SOUTHEAST // PROTOCOL: DIRECT OPUS-96K // MERE CONDUIT
                   </div>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              padding: '36px 16px',
-              color: 'var(--text-dim)',
-              fontSize: 12.5,
-              border: '1px dashed var(--border-subtle)',
-              borderRadius: 14,
-              background: 'rgba(5, 7, 11, 0.3)'
-            }}>
-              <Server size={28} style={{ color: 'var(--text-dim)', marginBottom: 10, opacity: 0.6 }} />
-              <div>{lang === 'th' ? 'ระบุ Discord Server ID ด้านบนเพื่อเริ่มรายการ' : 'Enter Discord Server ID above to inspect status'}</div>
-            </div>
-          )}
-        </div>
 
-        {/* Right Column: Support & Voucher Console */}
-        <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
-              <Sparkles size={17} style={{ color: 'var(--cyber-pink)' }} />
-              <span>{lang === 'th' ? 'ร่วมสนับสนุน & ปลดล็อกสิทธิ์' : 'Server Contribution & Perks'}</span>
-            </h2>
-            <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              {lang === 'th' ? 'ช่องทางทำรายการ' : 'Channel'}
-            </span>
+                {/* Right: Large Countdown Timer in Tabular Nums */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <div className="nv-tech-meta">
+                    {guildData?.guild?.expiresAt
+                      ? (lang === 'th' ? 'วันใช้งานคงเหลือ [TABULAR]' : 'PASS REMAINING [TABULAR]')
+                      : (lang === 'th' ? 'เวลาคลัสเตอร์ [UTC+7]' : 'CLUSTER TICK [UTC+7]')}
+                  </div>
+                  <div className="nv-tabular-nums" style={{
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontWeight: 800,
+                    fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)',
+                    color: '#BFFF00',
+                    letterSpacing: '0.02em',
+                    textShadow: '0 0 20px rgba(191, 255, 0, 0.4)'
+                  }}>
+                    {guildData?.guild?.expiresAt
+                      ? formatCountdown(guildData.guild.expiresAt)
+                      : currentTime.toLocaleTimeString('en-GB')}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </section>
 
-          {/* Tab Switcher */}
+        {/* 2. SOCIAL PROOF & HORIZONTAL TOPUP FORM */}
+        <section id="support" style={{
+          paddingBottom: '64px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 28
+        }}>
+          {/* Social Proof Header Bar */}
           <div style={{
             display: 'flex',
-            gap: 6,
-            marginBottom: 20,
-            background: 'rgba(5, 7, 11, 0.65)',
-            padding: 4,
-            borderRadius: 12,
-            border: '1px solid var(--border-subtle)'
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 20
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+              {/* Avatar Stack with 5 overlapping images with 2px #BFFF00 border */}
+              <div className="nv-avatar-stack">
+                <img src="/goolix-avatar.jpg" alt="Avatar 1" />
+                <img src="/goolix-avatar.jpg" alt="Avatar 2" style={{ filter: 'hue-rotate(45deg)' }} />
+                <img src="/goolix-avatar.jpg" alt="Avatar 3" style={{ filter: 'hue-rotate(90deg)' }} />
+                <img src="/goolix-avatar.jpg" alt="Avatar 4" style={{ filter: 'hue-rotate(180deg)' }} />
+                <img src="/goolix-avatar.jpg" alt="Avatar 5" style={{ filter: 'hue-rotate(270deg)' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span className="nv-tech-meta" style={{ color: '#FFFFFF' }}>
+                  ACTIVE COMMUNITY NODES
+                </span>
+                <span className="nv-tech-meta" style={{ fontSize: 10 }}>
+                  OVER 1,240+ GUILDS POWERED BY GOOLIX OPUS-96K CORE
+                </span>
+              </div>
+            </div>
+
+            {/* Support Rate Tag */}
+            <div className="nv-tech-meta" style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              padding: '8px 16px',
+              borderRadius: 9999,
+              color: '#BFFF00'
+            }}>
+              STANDARD CONTRIBUTION: {priceRate} THB = 30 DAYS
+            </div>
+          </div>
+
+          {/* Target Server Inspection Pill */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: 24,
+            padding: '24px 28px',
+            backdropFilter: 'blur(16px)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 16,
+              flexWrap: 'wrap',
+              gap: 12
+            }}>
+              <span className="nv-tech-meta" style={{ color: '#BFFF00' }}>
+                [ STEP 01 // TARGET GUILD VERIFICATION ]
+              </span>
+              <span className="nv-tech-meta">
+                STATUS: {guildData?.guild ? 'VERIFIED' : 'AWAITING INPUT'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <div className="nv-pill-form" style={{ flex: '1 1 340px' }}>
+                <Terminal size={16} style={{ color: 'var(--nv-text-secondary)', marginRight: 10, flexShrink: 0 }} />
+                <input
+                  type="text"
+                  placeholder={lang === 'th' ? 'กรอก DISCORD SERVER ID (เช่น 123456789...)' : 'ENTER DISCORD SERVER ID...'}
+                  value={guildId}
+                  onChange={(e) => setGuildId(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && verifyGuild()}
+                  className="nv-pill-input"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => verifyGuild()}
+                disabled={loadingGuild}
+                className="btn-laser"
+                style={{ padding: '12px 32px' }}
+              >
+                {loadingGuild ? 'INSPECTING...' : (lang === 'th' ? 'ตรวจสอบ' : 'INSPECT')}
+              </button>
+            </div>
+
+            {/* Inspected Guild Status Badge */}
+            {guildData?.guild && (
+              <div style={{
+                marginTop: 20,
+                padding: '16px 20px',
+                background: 'rgba(5, 5, 5, 0.7)',
+                border: '1px solid rgba(191, 255, 0, 0.25)',
+                borderRadius: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 16
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  {guildData.guild.icon ? (
+                    <img
+                      src={guildData.guild.icon}
+                      alt=""
+                      style={{
+                        width: 46,
+                        height: 46,
+                        borderRadius: '50%',
+                        border: '2px solid #BFFF00',
+                        boxShadow: '0 0 14px rgba(191, 255, 0, 0.35)',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '2px solid #BFFF00',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontFamily: "var(--font-mono-meta)"
+                    }}>
+                      {guildData.guild.name.charAt(0)}
+                    </div>
+                  )}
+                  <div>
+                    <div style={{
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      fontWeight: 800,
+                      fontSize: 16,
+                      letterSpacing: '-0.02em',
+                      textTransform: 'uppercase'
+                    }}>
+                      {guildData.guild.name}
+                    </div>
+                    <div className="nv-tech-meta" style={{ fontSize: 10, marginTop: 2 }}>
+                      ID: {guildData.guild.id} // MEMBERS: {guildData.guild.memberCount}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+                  <div>
+                    <div className="nv-tech-meta" style={{ fontSize: 9 }}>CURRENT STATUS</div>
+                    <div style={{
+                      fontFamily: "var(--font-mono-meta)",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: guildData.guild.isSupporter ? '#BFFF00' : 'var(--nv-text-secondary)',
+                      letterSpacing: '0.1em'
+                    }}>
+                      {guildData.guild.isSupporter ? 'SUPPORTER [OPUS HQ]' : 'STANDARD [FREE]'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="nv-tech-meta" style={{ fontSize: 9 }}>TIME REMAINING</div>
+                    <div className="nv-tabular-nums" style={{
+                      fontFamily: "var(--font-mono-meta)",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: '#FFFFFF'
+                    }}>
+                      {formatExpiry(guildData.guild.expiresAt)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Form Tabs: TrueMoney Voucher vs Drop Code */}
+          <div style={{
+            display: 'flex',
+            gap: 12,
+            alignItems: 'center'
           }}>
             <button
               type="button"
               onClick={() => setFormTab('voucher')}
+              className="nv-tech-meta"
               style={{
-                flex: 1,
-                padding: '9px 12px',
-                borderRadius: 9,
-                border: 'none',
-                background: formTab === 'voucher' ? 'var(--cyber-pink)' : 'transparent',
-                color: formTab === 'voucher' ? '#FFF' : 'var(--text-sub)',
-                fontWeight: formTab === 'voucher' ? 700 : 500,
-                fontSize: 12,
+                background: formTab === 'voucher' ? '#BFFF00' : 'rgba(255, 255, 255, 0.04)',
+                color: formTab === 'voucher' ? '#050505' : 'var(--nv-text-secondary)',
+                border: '1px solid ' + (formTab === 'voucher' ? '#BFFF00' : 'rgba(255, 255, 255, 0.08)'),
+                borderRadius: 9999,
+                padding: '10px 22px',
                 cursor: 'pointer',
-                transition: 'all 0.18s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6
+                transition: 'all 0.2s ease',
+                fontWeight: 700
               }}
             >
-              <Sparkles size={14} />
-              <span>{lang === 'th' ? 'ซองของขวัญ TrueMoney' : 'TrueMoney Voucher'}</span>
+              [ 01 // TRUEMONEY VOUCHER ]
             </button>
             <button
               type="button"
               onClick={() => setFormTab('promo')}
+              className="nv-tech-meta"
               style={{
-                flex: 1,
-                padding: '9px 12px',
-                borderRadius: 9,
-                border: 'none',
-                background: formTab === 'promo' ? 'var(--slime-green)' : 'transparent',
-                color: formTab === 'promo' ? '#05070B' : 'var(--text-sub)',
-                fontWeight: formTab === 'promo' ? 700 : 500,
-                fontSize: 12,
+                background: formTab === 'promo' ? '#BFFF00' : 'rgba(255, 255, 255, 0.04)',
+                color: formTab === 'promo' ? '#050505' : 'var(--nv-text-secondary)',
+                border: '1px solid ' + (formTab === 'promo' ? '#BFFF00' : 'rgba(255, 255, 255, 0.08)'),
+                borderRadius: 9999,
+                padding: '10px 22px',
                 cursor: 'pointer',
-                transition: 'all 0.18s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6
+                transition: 'all 0.2s ease',
+                fontWeight: 700
               }}
             >
-              <Gift size={14} />
-              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Drop)' : 'Promo Code'}</span>
+              [ 02 // PROMO DROP CODE ]
             </button>
           </div>
 
+          {/* Horizontal Brutalist Form */}
           {formTab === 'voucher' ? (
-            <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Gift Voucher Link)' : 'Gift Voucher URL'}
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://gift.truemoney.com/campaign/?v=..."
-                  value={voucher}
-                  onChange={(e) => setVoucher(e.target.value)}
-                  required
-                />
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Set voucher to "1 recipient" in TrueMoney app'}
-                </div>
+            <form onSubmit={handleTopup} style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 24,
+              padding: '28px',
+              backdropFilter: 'blur(16px)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                <span className="nv-tech-meta" style={{ color: '#BFFF00' }}>
+                  EXECUTE TRANSACTION // TRUEMONEY GIFT URL
+                </span>
+                <span className="nv-tech-meta">
+                  1 RECIPIENT // VOLUNTARY CONTRIBUTION
+                </span>
               </div>
 
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
-                </label>
-                {guildData?.referralConfig?.enabled === false ? (
-                  <div style={{ padding: '10px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--red-alert)' }}>
-                    [Paused] {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral program is temporarily paused'}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+                <div>
+                  <label className="nv-tech-meta" style={{ display: 'block', marginBottom: 8, fontSize: 10 }}>
+                    VOUCHER URL (HTTPS://GIFT.TRUEMONEY.COM/...)
+                  </label>
+                  <div className="nv-pill-form">
+                    <input
+                      type="text"
+                      placeholder="https://gift.truemoney.com/campaign/?v=..."
+                      value={voucher}
+                      onChange={(e) => setVoucher(e.target.value)}
+                      required
+                      className="nv-pill-input"
+                    />
                   </div>
-                ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
-                  <div style={{ padding: '10px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--red-alert)' }}>
-                    [Closed] {lang === 'th'
-                      ? `โปรโมชั่นโค้ดชวนเพื่อนหมดเขตแล้ว (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')})`
-                      : `Referral promo has ended (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()})`}
-                  </div>
-                ) : (
-                  <>
+                </div>
+
+                <div>
+                  <label className="nv-tech-meta" style={{ display: 'block', marginBottom: 8, fontSize: 10 }}>
+                    REFERRAL CODE (OPTIONAL)
+                  </label>
+                  <div className="nv-pill-form">
                     <input
                       type="text"
                       placeholder="REF-XXXXXX"
@@ -600,321 +575,443 @@ export default function TopupView({ lang, onToast }) {
                         setReferralCode(val);
                         verifyReferral(val);
                       }}
-                      style={{ letterSpacing: '0.04em' }}
+                      className="nv-pill-input"
+                      style={{ letterSpacing: '0.15em' }}
                     />
-                    {referrerName && (
-                      <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-                        <CheckCircle2 size={13} />
-                        <span>
-                          {lang === 'th'
-                            ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (ผู้ชวนรับโบนัส +${guildData?.referralConfig?.rewardDays ?? 30} วัน เมื่อยอดเติมขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท)`
-                            : `Referrer: ${referrerName} (Gets +${guildData?.referralConfig?.rewardDays ?? 30} days on ${guildData?.referralConfig?.minTopup ?? 29}+ THB)`}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
+                  </div>
+                  {referrerName && (
+                    <div className="nv-tech-meta" style={{ color: '#BFFF00', marginTop: 6, fontSize: 9.5 }}>
+                      REFERRER: {referrerName} [BONUS ELIGIBLE]
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div style={{ marginTop: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
                 <button
                   type="submit"
                   disabled={submittingTopup}
-                  className="btn btn-pink"
-                  style={{ width: '100%', padding: '13px 18px', fontSize: 14 }}
+                  className="btn-laser"
+                  style={{ minWidth: 260, padding: '14px 32px' }}
                 >
-                  {submittingTopup ? (
-                    <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
-                  ) : (
-                    <>
-                      <Sparkles size={16} />
-                      <span>{lang === 'th' ? 'ยืนยันการร่วมสนับสนุน' : 'Confirm Server Contribution'}</span>
-                    </>
-                  )}
+                  <Sparkles size={16} />
+                  <span>
+                    {submittingTopup
+                      ? 'VERIFYING VOUCHER...'
+                      : (lang === 'th' ? 'ยืนยันการร่วมสนับสนุน' : 'SUBMIT CONTRIBUTION')}
+                  </span>
                 </button>
               </div>
             </form>
           ) : (
-            <form onSubmit={handleRedeemPromo} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'รหัสโค้ดกิจกรรม (Early-Bird Drop Code)' : 'Promo Code'}
+            <form onSubmit={handleRedeemPromo} style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 24,
+              padding: '28px',
+              backdropFilter: 'blur(16px)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                <span className="nv-tech-meta" style={{ color: '#BFFF00' }}>
+                  CLAIM LIMITED EARLY-BIRD DROP CODE
+                </span>
+                <span className="nv-tech-meta">
+                  SINGLE USE PER GUILD
+                </span>
+              </div>
+
+              <div>
+                <label className="nv-tech-meta" style={{ display: 'block', marginBottom: 8, fontSize: 10 }}>
+                  PROMO DROP CODE (E.G. EARLY30)
                 </label>
-                <input
-                  type="text"
-                  placeholder={lang === 'th' ? 'กรอกรหัสแคมเปญ เช่น EARLY30' : 'Enter promo code...'}
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  required
-                  style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}
-                />
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'รหัสโปรโมชันแจกสิทธิ์ผู้สนับสนุนเซิร์ฟเวอร์ฟรี 30 วัน' : 'Redeem limited campaign code for 30 free Supporter days'}
+                <div className="nv-pill-form">
+                  <input
+                    type="text"
+                    placeholder="ENTER CAMPAIGN CODE..."
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    required
+                    className="nv-pill-input"
+                    style={{ letterSpacing: '0.2em' }}
+                  />
                 </div>
               </div>
 
-              <div style={{ marginTop: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
                 <button
                   type="submit"
                   disabled={submittingPromo}
-                  className="btn btn-primary"
-                  style={{ width: '100%', padding: '13px 18px', fontSize: 14 }}
+                  className="btn-laser"
+                  style={{ minWidth: 260, padding: '14px 32px' }}
                 >
-                  {submittingPromo ? (
-                    <span>{lang === 'th' ? 'กำลังตรวจสอบสิทธิ์...' : 'Claiming...'}</span>
-                  ) : (
-                    <>
-                      <Gift size={16} />
-                      <span>{lang === 'th' ? 'ยืนยันรับสิทธิ์โปรโมชัน' : 'Claim Promo Perk'}</span>
-                    </>
-                  )}
+                  <Gift size={16} />
+                  <span>
+                    {submittingPromo
+                      ? 'CLAIMING DROP...'
+                      : (lang === 'th' ? 'เคลมสิทธิ์กิจกรรม' : 'REDEEM PROMO DROP')}
+                  </span>
                 </button>
               </div>
             </form>
           )}
 
-          {/* Pricing Standard Tag */}
-          <div style={{
-            marginTop: 20,
-            padding: '11px 14px',
-            borderRadius: 10,
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid var(--border-subtle)',
-            fontSize: 12,
-            color: 'var(--text-sub)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <span>{lang === 'th' ? 'เรตผู้สนับสนุนมาตรฐาน:' : 'Standard Supporter Rate:'}</span>
-            <strong style={{ color: '#FFF', letterSpacing: '-0.01em' }}>
-              {guildData?.config?.price30Days ?? 29} {lang === 'th' ? 'บาท = 30 วัน (Supporter)' : 'THB = 30 Days (Supporter)'}
-            </strong>
-          </div>
-        </div>
-      </div>
-
-      {/* Feature Comparison Matrix */}
-      <div className="glass-panel" style={{ padding: 28, marginBottom: 32 }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em', marginBottom: 4 }}>
-            {lang === 'th' ? 'เปรียบเทียบสิทธิประโยชน์แพ็กเกจ' : 'Tier Specifications & Audio Matrix'}
-          </h3>
-          <p style={{ fontSize: 12, color: 'var(--text-dim)' }}>
-            {lang === 'th' ? 'สิทธิ์ระดับเซิร์ฟเวอร์ ปลดล็อกพร้อมกันทุกคนในห้องเสียง' : 'Server-wide unlock • Shared equally across every voice listener'}
-          </p>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: 20
-        }}>
-          {/* General / Free Tier */}
-          <div style={{
-            background: 'rgba(5, 7, 11, 0.6)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 16,
-            padding: 24,
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid var(--border-subtle)' }}>
-              <div>
-                <span style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-sub)' }}>
-                  {lang === 'th' ? 'ทั่วไป' : 'STANDARD'}
-                </span>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                  {lang === 'th' ? 'สำหรับผู้เริ่มต้นใช้งาน' : 'Essential baseline tier'}
-                </div>
-              </div>
-              <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-dim)' }}>
-                {lang === 'th' ? 'ฟรีตลอดชีพ' : 'Free Forever'}
-              </span>
-            </div>
-
-            <ul style={{ listStyle: 'none', fontSize: 12.5, color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 12, margin: 0, padding: 0 }}>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <CheckCircle2 size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'คุณภาพเสียงระดับมาตรฐาน (64 kbps)' : 'Standard audio quality (64 kbps)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <CheckCircle2 size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'รองรับลิงก์สตรีมเสียงและวิดีโอชั้นนำ (นกแดง / เมฆส้ม)' : 'Supports leading streaming providers'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'คิวเพลงสูงสุด 10 เพลง (เพลย์ลิสต์ 5 เพลง)' : 'Queue limit 10 songs (5 per playlist)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ความยาวคลิปไม่เกิน 30 นาทีต่อเพลง' : 'Maximum track duration 30 minutes'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'แชร์ช่องสัญญาณทั่วไป (หากเต็มต้องรอคิว)' : 'Shared stream slots (subject to wait queue)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ไม่รองรับระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)' : 'No continuous Autoplay'}</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Supporter VIP Soundstage Tier */}
-          <div className="deck-panel-highlight" style={{
-            borderRadius: 16,
-            padding: 24,
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'relative'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid rgba(0, 255, 135, 0.2)' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--slime-green)', letterSpacing: '0.04em' }}>SUPPORTER</span>
-                  <span className="slime-badge" style={{ fontSize: 10, padding: '2px 8px' }}>RECOMMENDED</span>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>
-                  {lang === 'th' ? 'สิทธิ์ระดับเซิร์ฟเวอร์แบบ Full Access' : 'Server-Wide Soundstage HQ'}
-                </div>
-              </div>
-              <span style={{ fontWeight: 800, fontSize: 15, color: '#FFF', letterSpacing: '-0.01em' }}>
-                {guildData?.config?.price30Days ?? 29} {lang === 'th' ? 'บาท / 30 วัน' : 'THB / 30 Days'}
-              </span>
-            </div>
-
-            <ul style={{ listStyle: 'none', fontSize: 12.5, color: '#FFF', display: 'flex', flexDirection: 'column', gap: 12, margin: 0, padding: 0 }}>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, paddingBottom: 8, borderBottom: '1px solid rgba(0, 255, 135, 0.12)' }}>
-                <ShieldCheck size={16} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 1 }} />
-                <strong style={{ color: 'var(--slime-green)', fontSize: 13, lineHeight: 1.4 }}>
-                  {lang === 'th' ? 'ปลดล็อกสิทธิ์ใช้งานร่วมกันทั้งเซิร์ฟเวอร์ (ไม่ต้องจ่ายรายคน)' : 'Unlocks perks for the entire server (No per-user fees)'}
-                </strong>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Zap size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <strong>{lang === 'th' ? 'คุณภาพเสียงคมชัดสูงพิเศษ (96 kbps Studio HQ)' : 'Pristine Opus 96k Studio HQ audio streaming'}</strong>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Music2 size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ช่องสัญญาณด่วนพิเศษ (Priority Slot) เปิดเพลงได้ทันที ไม่ต้องรอคิว' : 'Dedicated Priority Slot — instant playback, bypass wait queue'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Clock size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ฟังเพลงและไลฟ์สดยาวได้ไม่จำกัดความยาว (เกิน 30 นาทีได้)' : 'Unlimited duration for full albums and live broadcasts'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Award size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ขยายคิวเพลงสูงสุด 50 เพลง (เพลย์ลิสต์ครั้งละ 25 เพลง)' : 'Expanded queue up to 50 songs (25 songs per playlist)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Sparkles size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
-                <span>{lang === 'th' ? 'ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) ปาร์ตี้ไม่มีสะดุด' : 'Intelligent continuous Autoplay stream continuation'}</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Short Terms of Service & Legal Disclaimer */}
-      <div style={{
-        padding: '20px 24px',
-        borderRadius: 16,
-        background: 'rgba(255, 255, 255, 0.02)',
-        border: '1px solid var(--border-subtle)',
-        color: 'var(--text-sub)',
-        fontSize: 12,
-        lineHeight: 1.65,
-        marginBottom: 20
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
-          paddingBottom: 12,
-          borderBottom: '1px solid var(--border-subtle)',
-          flexWrap: 'wrap',
-          gap: 12
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 13, color: '#FFF' }}>
-            <FileText size={16} style={{ color: 'var(--slime-green)' }} />
-            <span>{lang === 'th' ? 'ข้อกำหนดและเงื่อนไขการสนับสนุน (Disclaimer & Terms of Use)' : 'Terms of Service & Disclaimer'}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowTosModal(true)}
-            style={{
-              background: 'rgba(0, 255, 135, 0.08)',
-              border: '1px solid rgba(0, 255, 135, 0.28)',
-              color: 'var(--slime-green)',
-              borderRadius: 8,
-              padding: '5px 12px',
-              fontSize: 11.5,
-              fontWeight: 700,
-              cursor: 'pointer',
+          {/* Referral Link Sharing Console (If Guild loaded) */}
+          {guildData?.guild?.referralCode && (
+            <div style={{
+              background: 'rgba(191, 255, 0, 0.03)',
+              border: '1px solid rgba(191, 255, 0, 0.2)',
+              borderRadius: 20,
+              padding: '20px 24px',
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              transition: 'all 0.18s ease'
-            }}
-          >
-            <span>{lang === 'th' ? 'อ่านข้อตกลงฉบับเต็ม' : 'Read Full Terms'}</span>
-            <ArrowRight size={13} />
-          </button>
-        </div>
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 16
+            }}>
+              <div>
+                <div className="nv-tech-meta" style={{ color: '#BFFF00', marginBottom: 4 }}>
+                  GUILD REFERRAL ACCELERATOR
+                </div>
+                <div style={{
+                  fontFamily: "var(--font-mono-meta)",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: '0.1em'
+                }}>
+                  {guildData.guild.referralCode}
+                </div>
+                <div className="nv-tech-meta" style={{ fontSize: 10, marginTop: 4 }}>
+                  INVITES: {guildData.guild.referralCount || 0} / {guildData?.referralConfig?.maxInvites ?? 6} GUILDS // REWARD: +{guildData?.referralConfig?.rewardDays ?? 30} DAYS EACH
+                </div>
+              </div>
 
-        <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 9, color: 'var(--text-dim)', fontSize: 11.5 }}>
-          <li>
-            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'สถานะผู้ส่งผ่านข้อมูล:' : 'Data Forwarder Status:'}</strong>{' '}
-            {lang === 'th'
-              ? 'GOOLIX ทำหน้าที่เป็นเพียงตัวกลางส่งผ่านสัญญาณเสียงแบบชั่วคราว (Data Forwarder) ไปยัง Discord โดยไม่มีการเก็บรวบรวมหรือบันทึกไฟล์สื่อถาวรไว้บนเซิร์ฟเวอร์'
-              : 'GOOLIX operates strictly as a transient data forwarder (Mere Conduit) to Discord without retaining or hosting permanent media files.'}
-          </li>
-          <li>
-            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'การร่วมสนับสนุนค่าเซิร์ฟเวอร์:' : 'Server Contribution:'}</strong>{' '}
-            {lang === 'th'
-              ? 'การทำรายการผ่านซองของขวัญ TrueMoney เป็นการร่วมสนับสนุนค่าบำรุงรักษาเซิร์ฟเวอร์โดยสมัครใจ (ผูกสิทธิ์ตาม Guild ID ให้ใช้งานได้ทั้งเซิร์ฟเวอร์) เมื่อระบบเพิ่มวันใช้งานแล้ว ไม่สามารถขอคืนเงินหรือโอนย้ายสิทธิ์ข้ามเซิร์ฟเวอร์ได้ในทุกกรณี'
-              : 'TrueMoney voucher redemptions are voluntary server contributions bound to the target Guild ID. Once processed, contributions are strictly non-refundable and non-transferable.'}
-          </li>
-          <li>
-            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'ความเสถียรของระบบ:' : 'System Reliability:'}</strong>{' '}
-            {lang === 'th'
-              ? 'ระบบให้บริการตามสภาพจริง (As-Is) ไม่รับประกันการออนไลน์ 100% ตลอด 24 ชั่วโมง และขอสงวนสิทธิ์ในการตัดสายอัตโนมัติเมื่อไม่มีผู้ฟังในห้องเสียง ปิดปรับปรุงชั่วคราว หรือระงับสิทธิ์เซิร์ฟเวอร์ที่ใช้งานผิดปกติโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
-              : 'Service is provided on an "As-Is" basis with no guarantee of uninterrupted 24/7 uptime. We reserve the right to auto-disconnect empty channels, perform maintenance, or suspend abusive guilds without prior notice.'}
-          </li>
-          <li>
-            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'การปรับเปลี่ยนและบำรุงรักษาฟังก์ชัน:' : 'Feature Maintenance & Availability:'}</strong>{' '}
-            {lang === 'th'
-              ? 'ฟังก์ชันและตัวเลือกการประมวลผลเสียงเสริมต่าง ๆ (เช่น ระบบเล่นต่อเนื่อง หรือฟิลเตอร์เสียง) อาจถูกเปิด-ปิด ปรับปรุง หรือระงับชั่วคราวตามสถานะภาระเครื่องเซิร์ฟเวอร์และการเปลี่ยนแปลงของแพลตฟอร์มต้นทาง เพื่อรักษาเสถียรภาพการสตรีมเสียงของส่วนรวมเป็นหลัก'
-              : 'Add-on audio features and processing options may undergo temporary maintenance, throttling, or toggling based on cluster hardware load and upstream platform changes to ensure overall streaming stability.'}
-          </li>
-        </ol>
+              <button
+                type="button"
+                onClick={copyReferralLink}
+                className="btn-laser"
+                style={{ padding: '10px 24px', fontSize: 11 }}
+              >
+                <Copy size={13} />
+                <span>{lang === 'th' ? 'คัดลอกลิงก์' : 'COPY INVITE LINK'}</span>
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* 3. FEATURE BENTO GRID (3-COLUMN GRID, MIN-HEIGHT 450PX, LUMINOSITY CARDS) */}
+        <section id="specs" style={{ paddingBottom: '72px' }}>
+          <div style={{ marginBottom: 32 }}>
+            <div className="nv-tech-meta" style={{ color: '#BFFF00', marginBottom: 8 }}>
+              [ SECTION 02 // HARDWARE & STREAMING SPECIFICATIONS ]
+            </div>
+            <h2 style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: 'clamp(2rem, 4vw, 3.2rem)',
+              fontWeight: 800,
+              letterSpacing: '-0.04em',
+              textTransform: 'uppercase',
+              margin: 0
+            }}>
+              FEATURE BENTO GRID
+            </h2>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: 24
+          }}>
+            {/* Card 1: 01/SPEC - Audio Pipeline */}
+            <div className="nv-luminosity-card">
+              <div>
+                <div className="nv-tech-meta" style={{ color: '#BFFF00', marginBottom: 16 }}>
+                  01 / SPEC
+                </div>
+                <h3 style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontSize: 28,
+                  fontWeight: 800,
+                  letterSpacing: '-0.03em',
+                  textTransform: 'uppercase',
+                  lineHeight: 1.15,
+                  margin: 0,
+                  color: '#FFFFFF'
+                }}>
+                  OPUS 96K STUDIO HQ
+                </h3>
+              </div>
+
+              <div style={{ margin: '32px 0' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  padding: '8px 14px',
+                  borderRadius: 9999,
+                  marginBottom: 16
+                }}>
+                  <Zap size={14} style={{ color: '#BFFF00' }} />
+                  <span className="nv-tech-meta" style={{ fontSize: 10, color: '#FFFFFF' }}>
+                    DIRECT NATIVE DEMUXING
+                  </span>
+                </div>
+                <p style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  color: 'var(--nv-text-secondary)',
+                  margin: 0
+                }}>
+                  {lang === 'th'
+                    ? 'ยกระดับการเข้ารหัสเสียงด้วย Opus 96k Studio HQ ถ่ายทอดมิติเสียง คอร์ด และย่านความถี่ต่ำคมชัดเต็มพิกัด ไม่ถูกบีบอัดแบบทั่วไป'
+                    : 'Pristine 96 kbps Opus studio encoding bypasses default Discord compression ceilings for pristine dynamic acoustic range.'}
+                </p>
+              </div>
+
+              <div className="nv-tech-meta" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: 16 }}>
+                LATENCY: SUB-5MS // BITRATE: 96 KBPS FIXED
+              </div>
+            </div>
+
+            {/* Card 2: 02/PIPELINE - Priority Lane */}
+            <div className="nv-luminosity-card">
+              <div>
+                <div className="nv-tech-meta" style={{ color: '#BFFF00', marginBottom: 16 }}>
+                  02 / PIPELINE
+                </div>
+                <h3 style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontSize: 28,
+                  fontWeight: 800,
+                  letterSpacing: '-0.03em',
+                  textTransform: 'uppercase',
+                  lineHeight: 1.15,
+                  margin: 0,
+                  color: '#FFFFFF'
+                }}>
+                  PRIORITY LANE ZERO-WAIT
+                </h3>
+              </div>
+
+              <div style={{ margin: '32px 0' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  padding: '8px 14px',
+                  borderRadius: 9999,
+                  marginBottom: 16
+                }}>
+                  <Radio size={14} style={{ color: '#BFFF00' }} />
+                  <span className="nv-tech-meta" style={{ fontSize: 10, color: '#FFFFFF' }}>
+                    DEDICATED VIP SLOTS
+                  </span>
+                </div>
+                <p style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  color: 'var(--nv-text-secondary)',
+                  margin: 0
+                }}>
+                  {lang === 'th'
+                    ? 'การันตีช่องสัญญาณเสียงพิเศษ สตรีมได้ทันทีแม้คลัสเตอร์มีผู้ใช้งานหนาแน่น พร้อมระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)'
+                    : 'Dedicated priority stream allocation bypasses shared wait queues instantly, complete with intelligent autonomous queue continuation.'}
+                </p>
+              </div>
+
+              <div className="nv-tech-meta" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: 16 }}>
+                CAPACITY: RESERVED // AUTOPLAY: ACTIVE
+              </div>
+            </div>
+
+            {/* Card 3: 03/ACCESS - Server-Wide Pass */}
+            <div className="nv-luminosity-card">
+              <div>
+                <div className="nv-tech-meta" style={{ color: '#BFFF00', marginBottom: 16 }}>
+                  03 / ACCESS
+                </div>
+                <h3 style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontSize: 28,
+                  fontWeight: 800,
+                  letterSpacing: '-0.03em',
+                  textTransform: 'uppercase',
+                  lineHeight: 1.15,
+                  margin: 0,
+                  color: '#FFFFFF'
+                }}>
+                  SERVER-WIDE PASS
+                </h3>
+              </div>
+
+              <div style={{ margin: '32px 0' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  padding: '8px 14px',
+                  borderRadius: 9999,
+                  marginBottom: 16
+                }}>
+                  <ShieldCheck size={14} style={{ color: '#BFFF00' }} />
+                  <span className="nv-tech-meta" style={{ fontSize: 10, color: '#FFFFFF' }}>
+                    NO INDIVIDUAL FEES
+                  </span>
+                </div>
+                <p style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  color: 'var(--nv-text-secondary)',
+                  margin: 0
+                }}>
+                  {lang === 'th'
+                    ? 'สิทธิ์ผูกกับเซิร์ฟเวอร์ สมาชิกทุกคนในห้องเสียงใช้งานร่วมกันได้ทันที ขยายคิว 50 เพลง และฟังเพลงความยาวเกิน 30 นาทีได้ไม่จำกัด'
+                    : 'One contribution covers every member in the server. Expanded 50-track queue and unlimited playback duration for long mixes.'}
+                </p>
+              </div>
+
+              <div className="nv-tech-meta" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: 16 }}>
+                RATE: {priceRate} THB / 30 DAYS // QUEUE: 50 TRACKS
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. LEGAL DISCLAIMER & TERMS OF SERVICE */}
+        <section style={{
+          background: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 24,
+          padding: '32px',
+          backdropFilter: 'blur(16px)',
+          marginBottom: 40
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 20,
+            flexWrap: 'wrap',
+            gap: 16,
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            paddingBottom: 16
+          }}>
+            <div>
+              <div className="nv-tech-meta" style={{ color: '#BFFF00', marginBottom: 4 }}>
+                04 / LEGAL FRAMEWORK
+              </div>
+              <h3 style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 18,
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                textTransform: 'uppercase',
+                margin: 0
+              }}>
+                {lang === 'th' ? 'ข้อกำหนดและเงื่อนไขการสนับสนุน' : 'TERMS OF SERVICE & MERE CONDUIT NOTICE'}
+              </h3>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowTosModal(true)}
+              className="btn-laser"
+              style={{ padding: '8px 22px', fontSize: 11 }}
+            >
+              <span>{lang === 'th' ? 'อ่านข้อตกลงฉบับเต็ม' : 'READ FULL TERMS'}</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 20,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 12.5,
+            lineHeight: 1.65,
+            color: 'var(--nv-text-secondary)'
+          }}>
+            <div>
+              <strong style={{ color: '#FFFFFF', display: 'block', marginBottom: 4 }}>
+                {lang === 'th' ? 'สถานะผู้ส่งผ่านข้อมูล (Mere Conduit):' : 'Data Forwarder Status:'}
+              </strong>
+              {lang === 'th'
+                ? 'GOOLIX ทำหน้าที่เป็นเพียงท่อส่งผ่านข้อมูลเสียงชั่วคราว (Data Forwarder) ไปยัง Discord โดยไม่มีการจัดเก็บหรือเผยแพร่ไฟล์สื่อถาวรบนเซิร์ฟเวอร์'
+                : 'Operates solely as a transient data forwarder (Mere Conduit) routing stream data to Discord without persistent media storage.'}
+            </div>
+
+            <div>
+              <strong style={{ color: '#FFFFFF', display: 'block', marginBottom: 4 }}>
+                {lang === 'th' ? 'การร่วมสนับสนุนโดยสมัครใจ:' : 'Voluntary Server Support:'}
+              </strong>
+              {lang === 'th'
+                ? 'ยอดสนับสนุนผ่านซอง TrueMoney เป็นการร่วมบริจาคค่าบำรุงรักษาโหนดโดยสมัครใจ ไม่สามารถขอคืนเงินหรือโอนย้ายสิทธิ์ข้ามเซิร์ฟเวอร์ได้'
+                : 'Voucher redemptions represent voluntary server hosting contributions. All contributions are final and non-refundable.'}
+            </div>
+
+            <div>
+              <strong style={{ color: '#FFFFFF', display: 'block', marginBottom: 4 }}>
+                {lang === 'th' ? 'ความพร้อมใช้งานและระบบ:' : 'System Reliability & As-Is:'}
+              </strong>
+              {lang === 'th'
+                ? 'ระบบให้บริการตามสภาพจริง (As-Is) ขอสงวนสิทธิ์ตัดสายอัตโนมัติเมื่อห้องเสียงว่าง หรือปิดปรับปรุงโหนดตามความจำเป็นเพื่อรักษาเสถียรภาพส่วนรวม'
+                : 'Services provided "As-Is" with automated idle disconnects and necessary maintenance windows to ensure overall cluster stability.'}
+            </div>
+          </div>
+        </section>
+
       </div>
 
-      {/* Full Terms of Service Modal Dialog */}
+      {/* 5. MOBILE FIXED BOTTOM NAVIGATION PILL */}
+      <aside className="nv-mobile-bottom-nav">
+        <a href="#support" className="nv-mobile-nav-btn active" title="Topup / Support">
+          <Sparkles size={20} />
+        </a>
+        <a href="#specs" className="nv-mobile-nav-btn" title="Specs Bento">
+          <Disc3 size={20} />
+        </a>
+        <button
+          type="button"
+          onClick={() => setShowTosModal(true)}
+          className="nv-mobile-nav-btn"
+          title="Terms & Legal"
+        >
+          <FileText size={20} />
+        </button>
+      </aside>
+
+      {/* 6. FULL TERMS OF SERVICE MODAL DIALOG */}
       {showTosModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
           zIndex: 1000,
-          background: 'rgba(5, 7, 11, 0.85)',
-          backdropFilter: 'blur(12px)',
+          background: 'rgba(5, 5, 5, 0.9)',
+          backdropFilter: 'blur(16px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: 20
+          padding: 24
         }} onClick={() => setShowTosModal(false)}>
           <div style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border-light)',
-            borderRadius: 18,
+            background: 'var(--nv-black)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: 24,
             width: '100%',
-            maxWidth: 720,
+            maxWidth: 780,
             maxHeight: '85vh',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 255, 135, 0.08)',
+            boxShadow: '0 30px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(191, 255, 0, 0.1)',
             overflow: 'hidden'
           }} onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
@@ -922,16 +1019,22 @@ export default function TopupView({ lang, onToast }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '20px 26px',
-              borderBottom: '1px solid var(--border-subtle)',
-              background: 'rgba(255, 255, 255, 0.02)'
+              padding: '24px 32px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
             }}>
               <div>
-                <div style={{ fontWeight: 800, fontSize: 16, color: '#FFF', letterSpacing: '-0.01em' }}>
-                  {lang === 'th' ? 'ข้อตกลงและเงื่อนไขการใช้งาน (Terms of Service)' : 'Terms of Service (Full Agreement)'}
+                <div className="nv-tech-meta" style={{ color: '#BFFF00', marginBottom: 4 }}>
+                  LEGAL FRAMEWORK // FULL AGREEMENT
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>
-                  {lang === 'th' ? 'GOOLIX Audio Engine • อัปเดตล่าสุด: พฤศจิกายน 2026' : 'GOOLIX Audio Engine • Last Updated: November 2026'}
+                <div style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 18,
+                  letterSpacing: '-0.02em',
+                  textTransform: 'uppercase',
+                  color: '#FFFFFF'
+                }}>
+                  {lang === 'th' ? 'ข้อตกลงและเงื่อนไขการใช้งาน (TERMS OF SERVICE)' : 'TERMS OF SERVICE (FULL AGREEMENT)'}
                 </div>
               </div>
               <button
@@ -939,177 +1042,81 @@ export default function TopupView({ lang, onToast }) {
                 onClick={() => setShowTosModal(false)}
                 style={{
                   background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-sub)',
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 9999,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
+                  cursor: 'pointer'
                 }}
               >
                 <X size={16} />
               </button>
             </div>
 
-            {/* Modal Content */}
+            {/* Modal Body */}
             <div style={{
-              padding: '26px',
+              padding: '32px',
               overflowY: 'auto',
-              fontSize: 12.5,
-              lineHeight: 1.7,
-              color: 'var(--text-sub)',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              lineHeight: 1.75,
+              color: 'var(--nv-text-secondary)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 22
+              gap: 24
             }}>
-              <p style={{ margin: 0, color: 'var(--text-dim)', fontStyle: 'italic', paddingBottom: 12, borderBottom: '1px solid var(--border-subtle)' }}>
-                {lang === 'th'
-                  ? 'การใช้งานบอทและการทำรายการบนหน้าเว็บไซต์ของ GOOLIX ถือว่าผู้ใช้งานได้อ่าน เข้าใจ และยอมรับข้อตกลงดังต่อไปนี้ทุกประการ:'
-                  : 'By using the GOOLIX bot and web portal, you acknowledge that you have read, understood, and agreed to all terms below:'}
-              </p>
-
-              {/* Section 1 */}
               <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
-                  {lang === 'th'
-                    ? '1. สถานะตัวกลางส่งผ่านข้อมูลและเนื้อหา (Mere Conduit & Content Disclaimer)'
-                    : '1. Mere Conduit & Content Disclaimer'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
-                  <div>
-                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ไม่มีการจัดเก็บไฟล์ถาวร:' : '• No Permanent Storage:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ระบบทำงานในฐานะท่อส่งผ่านข้อมูลชั่วคราว (Transmission Buffer) จากแหล่งต้นทางที่ผู้ใช้งานเป็นผู้ระบุคำสั่งไปยังห้องเสียงของ Discord เท่านั้น ไม่มีการจัดเก็บ ดัดแปลง หรือเผยแพร่ไฟล์เสียงและวิดีโอไว้ในฐานข้อมูลถาวร (ระบบแคชทำงานแบบชั่วคราวเพื่อลดความหน่วงของเครือข่ายและถูกลบออกอัตโนมัติ)'
-                      : 'The system functions solely as a transient transmission buffer routing stream data requested by users directly to Discord voice channels. No media files are permanently hosted, altered, or distributed.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ความรับผิดชอบต่อเนื้อหา:' : '• Content Responsibility:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ผู้ใช้งานเป็นผู้รับผิดชอบต่อลิงก์และคำค้นหาที่สั่งให้บอทประมวลผลแต่เพียงผู้เดียว ทางผู้พัฒนาไม่สามารถตรวจสอบหรือควบคุมเนื้อหาต้นทางจากผู้ให้บริการภายนอกได้ และไม่มีส่วนรับผิดชอบต่อเนื้อหาที่ถูกส่งต่อไปยังเซิร์ฟเวอร์ของผู้ใช้งาน'
-                      : 'Users bear sole legal responsibility for all media queries dispatched to the bot. Developers do not curate external content and assume no liability for relayed streams.'}
-                  </div>
+                <div className="nv-tech-meta" style={{ color: '#FFFFFF', marginBottom: 6 }}>
+                  01 // MERE CONDUIT & CONTENT RESPONSIBILITY
                 </div>
+                <p style={{ margin: 0 }}>
+                  {lang === 'th'
+                    ? 'GOOLIX ทำหน้าที่เป็นเพียงท่อส่งผ่านข้อมูลชั่วคราว (Transmission Buffer) จากแหล่งต้นทางที่ผู้ใช้งานระบุไปยังห้องเสียงของ Discord เท่านั้น ไม่มีการจัดเก็บ ดัดแปลง หรือเผยแพร่ไฟล์สื่อในฐานข้อมูลถาวร ผู้ใช้งานเป็นผู้รับผิดชอบต่อคำสั่งค้นหาและลิงก์ที่สั่งเล่นแต่เพียงผู้เดียว'
+                    : 'GOOLIX acts exclusively as a transient transmission buffer routing stream data requested by users directly to Discord voice channels. No media files are permanently hosted or retained.'}
+                </p>
               </div>
 
-              {/* Section 2 */}
               <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
-                  {lang === 'th'
-                    ? '2. เงื่อนไขการร่วมสนับสนุนและสิทธิประโยชน์ (Supporter & Billing Terms)'
-                    : '2. Supporter & Billing Terms'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• ลักษณะการสนับสนุน:' : '• Voluntary Nature:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ยอดเงินที่ทำรายการผ่านลิงก์ซองของขวัญ TrueMoney เป็นการร่วมบริจาคสนับสนุนค่าเช่าเซิร์ฟเวอร์และแบนด์วิธเพื่อขับเคลื่อนคอมมูนิตี้ ไม่ใช่การซื้อขายสินค้าหรือบริการเชิงพาณิชย์'
-                      : 'Redemptions via TrueMoney vouchers represent voluntary community contributions toward server hosting and bandwidth infrastructure, not commercial retail transactions.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• สิทธิ์ระดับเซิร์ฟเวอร์ (Server-Wide Access):' : '• Server-Wide Access:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'สิทธิพิเศษของผู้สนับสนุน (Supporter) จะผูกกับรหัสเซิร์ฟเวอร์ (Guild ID) ที่ระบุเท่านั้น สมาชิกทุกคนในเซิร์ฟเวอร์ดังกล่าวสามารถรับสิทธิ์ร่วมกันได้ทันที โดยไม่สามารถขอเปลี่ยนหรือโอนย้ายวันใช้งานไปยังเซิร์ฟเวอร์อื่นได้ในทุกกรณี'
-                      : 'Supporter privileges bind exclusively to the specified Guild ID and extend to all members in that guild. Perks cannot be transferred to alternative servers.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• การคำนวณและการทบวันใช้งาน:' : '• Duration Stacking:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ระบบคำนวณวันใช้งานตามสัดส่วนยอดเงินสนับสนุนจริง ตามอัตรามาตรฐานที่ระบุไว้บนหน้าเว็บไซต์ ณ ขณะทำรายการ หากทำรายการซ้ำก่อนวันหมดอายุ ระบบจะบวกทบเวลาต่อท้ายจากวันหมดอายุเดิมให้ตามจริงโดยไม่ตัดวันคงเหลือทิ้ง (จำกัดการสะสมวันใช้งานสูงสุดไม่เกิน 365 วันต่อเซิร์ฟเวอร์)'
-                      : 'Durations calculate pro-rata based on actual contributions at the standard rate displayed on the web portal at the time of redemption. Consecutive contributions stack cumulatively from the current expiration date up to a 365-day safety ceiling.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• เงื่อนไขรหัสชวนเพื่อนและโค้ดกิจกรรม:' : '• Referral & Drop Codes:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'โบนัสวันใช้งานพิเศษสำหรับผู้ชวน จะทำงานเมื่อเซิร์ฟเวอร์ผู้ถูกชวนทำรายการสนับสนุนด้วยยอดเงินตามเกณฑ์ขั้นต่ำที่กำหนดในรอบซีซั่นนั้น ๆ และต้องอยู่ภายในระยะเวลาของแคมเปญ ส่วนโค้ดกิจกรรม (Early-Bird Drop) จำกัดสิทธิ์การใช้งาน 1 โค้ดต่อ 1 เซิร์ฟเวอร์และมีจำนวนจำกัดตามโควตาที่กำหนด'
-                      : 'Referral bonus days trigger only when the referred server contributes the qualifying minimum amount set for that campaign season. Early-Bird Drop codes are single-use per server and strictly quota-governed.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• นโยบายไม่คืนเงิน (No Refund Policy):' : '• No Refund Policy:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'เมื่อระบบทำการรับซองของขวัญและอนุมัติวันใช้งานเข้าสู่ระบบสำเร็จแล้ว ไม่สามารถขอคืนเงิน ยกเลิก หรือแลกเปลี่ยนเป็นสิ่งอื่นได้ในทุกกรณี'
-                      : 'Once a voucher is successfully redeemed and days are credited, all contributions are strictly non-refundable and irrevocable.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• ความพร้อมใช้งานและการปรับปรุงฟังก์ชัน (Feature Availability & Maintenance):' : '• Feature Availability & Maintenance:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'สิทธิประโยชน์ของผู้สนับสนุนเน้นการขยายขีดความสามารถหลัก ได้แก่ โควตาสตรีม คิวเพลง และสิทธิ์เข้าใช้งานช่องสัญญาณด่วน (Priority Slot) โดยฟังก์ชันเสริมเฉพาะทาง (เช่น Autoplay หรือตัวปรับแต่งเสียงขั้นสูง) อาจมีการปิดปรับปรุงชั่วคราว ปรับเปลี่ยน หรือจำกัดสิทธิ์ตามสถานการณ์ภาระเซิร์ฟเวอร์และการอัปเดตของ API ต้นทาง เพื่อรักษาความต่อเนื่องของสัญญาณเสียงส่วนรวมเป็นสำคัญ โดยไม่ถือเป็นการผิดข้อตกลงหรือเงื่อนไขการสนับสนุน'
-                      : 'Supporter privileges primarily ensure elevated stream capacity, extended queues, and Priority Slot access. Add-on features (such as Autoplay or advanced audio filters) may be temporarily suspended or adjusted based on server load and upstream changes to guarantee collective audio stability, without constituting a breach of service terms.'}
-                  </div>
+                <div className="nv-tech-meta" style={{ color: '#BFFF00', marginBottom: 6 }}>
+                  02 // VOLUNTARY CONTRIBUTION & PASS TERMS
                 </div>
+                <p style={{ margin: 0 }}>
+                  {lang === 'th'
+                    ? 'ยอดเงินสนับสนุนผ่านซอง TrueMoney เป็นการร่วมบริจาคสนับสนุนค่าเช่าเซิร์ฟเวอร์และแบนด์วิธตามความสมัครใจ สิทธิ์ Supporter จะผูกกับ Server ID ที่ระบุเพื่อให้สมาชิกทุกคนใช้งานร่วมกันได้ทันที โดยคำนวณวันใช้งานตามอัตรามาตรฐานที่แสดงบนหน้าเว็บ ณ ขณะทำรายการ และไม่สามารถขอคืนเงินหรือโอนย้ายสิทธิ์ข้ามเซิร์ฟเวอร์ได้ในทุกกรณี'
+                    : 'Contributions represent voluntary infrastructure donations. Supporter privileges bind to the specified Server ID for collective member access. All contributions are final and strictly non-refundable.'}
+                </p>
               </div>
 
-              {/* Section 3 */}
               <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
-                  {lang === 'th'
-                    ? '3. การจำกัดความรับผิดชอบและความพร้อมใช้งาน (Availability & Liability)'
-                    : '3. Availability & Liability'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
-                  <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การรับประกันสถานะออนไลน์:' : '• Uptime Warranty:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ทางทีมพัฒนาพยายามดูแลให้ระบบทำงานได้อย่างราบรื่นที่สุด แต่ไม่รับประกันว่าบอทจะออนไลน์ตลอด 24 ชั่วโมงโดยไม่มีอาการกระตุกหรือดีเลย์ เนื่องจากคุณภาพสัญญาณขึ้นอยู่กับเซิร์ฟเวอร์ต้นทาง ระบบ Discord Gateway และโควตาเครือข่ายในแต่ละช่วงเวลา'
-                      : 'While the team strives for maximum stability, continuous 24/7 uninterrupted uptime cannot be guaranteed due to dependencies on Discord gateways and upstream providers.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การปรับปรุงและยุติบริการ:' : '• Maintenance & Suspension:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ทีมพัฒนาขอสงวนสิทธิ์ในการรีสตาร์ทโหนด ปิดปรับปรุงระบบชั่วคราว ปรับเปลี่ยนโควตาช่องสัญญาณ หรือยุติการให้บริการเมื่อใดก็ได้โดยไม่จำเป็นต้องแจ้งให้ทราบล่วงหน้า'
-                      : 'We reserve the right to deploy maintenance updates, adjust audio buffer parameters, or modify service endpoints without prior notification.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• ความปลอดภัยของเซิร์ฟเวอร์:' : '• Indemnification:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ทีมพัฒนาไม่รับผิดชอบต่อความเสียหายใดๆ ที่อาจเกิดขึ้นกับเซิร์ฟเวอร์ Discord หรือบัญชีของผู้ใช้งานจากการนำบอทไปติดตั้งใช้งาน'
-                      : 'The development team shall not be held liable for any damages, strikes, or penalties incurred on Discord guilds or accounts.'}
-                  </div>
+                <div className="nv-tech-meta" style={{ color: '#FFFFFF', marginBottom: 6 }}>
+                  03 // AVAILABILITY & SYSTEM GOVERNANCE
                 </div>
-              </div>
-
-              {/* Section 4 */}
-              <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                <p style={{ margin: 0 }}>
                   {lang === 'th'
-                    ? '4. นโยบายการใช้งานที่เหมาะสม (Fair Use & Anti-Abuse Policy)'
-                    : '4. Fair Use & Anti-Abuse Policy'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
-                  <div>
-                    <strong style={{ color: 'var(--red-alert)' }}>{lang === 'th' ? '• การจัดการทรัพยากรอัตโนมัติ:' : '• Automated Resource Governance:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'เพื่อรักษาคุณภาพเสียงของส่วนรวม ระบบจะตัดการเชื่อมต่อจากห้องเสียงอัตโนมัติหากไม่มีผู้ฟังอยู่ในห้อง หรือมีการเปิดสตรีมต่อเนื่องยาวนานเกินเกณฑ์ที่กำหนดโดยไม่มีการโต้ตอบ'
-                      : 'To conserve cluster resources, the bot will auto-disconnect from empty voice channels or prolonged unmonitored streams.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--red-alert)' }}>{lang === 'th' ? '• การระงับสิทธิ์ (Ban Policy):' : '• Abuse & Ban Policy:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ห้ามใช้บอทหรือสคริปต์อัตโนมัติเฝ้าห้องเพื่อดึงแบนด์วิธตลอด 24 ชั่วโมง ห้ามยิงคำสั่งรัวเพื่อก่อกวนระบบ (Spam/Flood) และห้ามอาศัยช่องโหว่ในการปั๊มวันใช้งานฟรี หากระบบตรวจพบการกระทำดังกล่าว ทีมพัฒนาขอสงวนสิทธิ์ในการระงับการใช้งานเซิร์ฟเวอร์นั้นถาวร (Ban Guild) และยกเลิกวันใช้งานคงเหลือทั้งหมดทันทีโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
-                      : 'Automated 24/7 socket idling, command flooding, and exploitation of promotional codes are strictly prohibited. Violating guilds are subject to immediate permanent guild bans and forfeiture of remaining days.'}
-                  </div>
-                </div>
+                    ? 'ระบบให้บริการตามสภาพจริง (As-Is) ทีมพัฒนาขอสงวนสิทธิ์ในการตัดสายอัตโนมัติเมื่อห้องเสียงว่าง รีสตาร์ทปรับปรุงโหนด หรือจำกัดสิทธิ์เซิร์ฟเวอร์ที่ใช้งานผิดปกติ (Spam/Flood) เพื่อรักษาความต่อเนื่องของสัญญาณเสียงส่วนรวม'
+                    : 'Services provided As-Is. The system reserves the right to disconnect idle channels, conduct node updates, or throttle abusive guilds to ensure global streaming stability.'}
+                </p>
               </div>
             </div>
 
             {/* Modal Footer */}
             <div style={{
-              padding: '16px 26px',
-              borderTop: '1px solid var(--border-subtle)',
-              background: 'rgba(255, 255, 255, 0.02)',
+              padding: '20px 32px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
               display: 'flex',
               justifyContent: 'flex-end'
             }}>
               <button
                 type="button"
                 onClick={() => setShowTosModal(false)}
-                className="btn btn-primary"
-                style={{ padding: '9px 24px', fontSize: 13 }}
+                className="btn-laser"
+                style={{ padding: '10px 28px', fontSize: 12 }}
               >
-                {lang === 'th' ? 'เข้าใจและยอมรับข้อตกลง' : 'I Understand & Agree'}
+                {lang === 'th' ? 'เข้าใจและยอมรับข้อตกลง' : 'I UNDERSTAND & AGREE'}
               </button>
             </div>
           </div>

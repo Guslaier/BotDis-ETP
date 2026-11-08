@@ -37,7 +37,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#050505' }}>
       <Navbar
         mode={isAdmin ? 'admin' : 'public'}
         lang={lang}
@@ -48,9 +48,9 @@ export default function App() {
 
       <Toast toasts={toasts} onDismiss={dismissToast} />
 
-      <main style={{ flex: 1, paddingBottom: 32 }}>
+      <main style={{ flex: 1 }}>
         {!isAdmin ? (
-          /* Public Portal: Supporter & VIP Soundstage Pass */
+          /* Public Portal: Neon Velocity Supporter Pass */
           <TopupView lang={lang} onToast={addToast} />
         ) : token ? (
           /* Admin Dedicated Portal: Master Cluster Console */
@@ -71,18 +71,21 @@ export default function App() {
 
       <footer style={{
         textAlign: 'center',
-        padding: '28px 16px',
-        borderTop: '1px solid var(--border-subtle)',
-        fontSize: 12,
-        color: 'var(--text-dim)',
+        padding: '32px 16px',
+        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        fontSize: 11,
+        fontFamily: "var(--font-mono-meta)",
+        letterSpacing: '0.2em',
+        textTransform: 'uppercase',
+        color: 'var(--nv-text-secondary)',
         marginTop: 'auto',
-        background: 'rgba(5, 7, 11, 0.4)',
-        backdropFilter: 'blur(10px)'
+        background: 'rgba(5, 5, 5, 0.95)',
+        backdropFilter: 'blur(16px)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span>{isAdmin ? 'GOOLIX Master Console' : 'GOOLIX Audio Engine'}</span>
-          <span style={{ color: 'var(--border-light)' }}>•</span>
-          <span>{isAdmin ? 'Internal Cluster Administration & Governance' : 'Cosmic Slime Music Network & Community Support'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span>{isAdmin ? 'GOOLIX MASTER CONSOLE' : 'GOOLIX // NEON VELOCITY AUDIO CORE'}</span>
+          <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>//</span>
+          <span>{isAdmin ? 'INTERNAL CLUSTER ADMINISTRATION' : 'DIRECT OPUS-96K COMMUNITY NETWORK'}</span>
         </div>
       </footer>
     </div>
