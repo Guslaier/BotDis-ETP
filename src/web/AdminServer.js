@@ -1070,6 +1070,13 @@ class AdminServer {
                     maxTotalStreams: maxTotal
                 };
 
+                if (body.publicWebUrl !== undefined) {
+                    configPayload.publicWebUrl = (body.publicWebUrl || '').trim().replace(/\/+$/, '');
+                }
+                if (body.phoneNumber !== undefined) {
+                    configPayload.phoneNumber = (body.phoneNumber || '').trim();
+                }
+
                 // Configurable Referral Season Parameters
                 if (body.referralEnabled !== undefined) configPayload.referralEnabled = Boolean(body.referralEnabled);
                 if (body.referralMinTopup !== undefined) {

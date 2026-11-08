@@ -79,7 +79,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
     maxFreeStreams: 2,
     maxTotalStreams: 4,
     maxReferralMonths: 6,
-    phoneNumber: ''
+    phoneNumber: '',
+    publicWebUrl: ''
   });
   const hasInitializedSettingsRef = useRef(false);
   const isSettingsDirtyRef = useRef(false);
@@ -119,7 +120,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             maxFreeStreams: json.config.maxFreeStreams ?? 2,
             maxTotalStreams: json.config.maxTotalStreams ?? 4,
             maxReferralMonths: json.config.maxReferralMonths ?? 6,
-            phoneNumber: json.config.phoneNumber || ''
+            phoneNumber: json.config.phoneNumber || '',
+            publicWebUrl: json.config.publicWebUrl || ''
           });
         }
         if (json.config && !hasInitializedReferralRef.current && !isReferralDirtyRef.current) {
@@ -2111,6 +2113,26 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
 
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'โดเมนสาธารณะ (Public Web URL)' : 'Public Web URL'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://goolix.nattawooth.space"
+                  value={settingsForm.publicWebUrl || ''}
+                  onChange={(e) => {
+                    isSettingsDirtyRef.current = true;
+                    setSettingsForm(prev => ({ ...prev, publicWebUrl: e.target.value }));
+                  }}
+                />
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                  {lang === 'th'
+                    ? '* โดเมนหลักสำหรับลิงก์บริจาคและปุ่มของบอท Discord (เช่น https://goolix.nattawooth.space) หากเว้นว่างจะใช้ IP และพอร์ตตามค่าตั้งต้น'
+                    : '* Primary public URL for Discord bot donate buttons and links. Leave empty to use default IP and port.'}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
                   {lang === 'th' ? 'ราคาผู้สนับสนุน (บาท / 30 วัน)' : 'Supporter Price (THB / 30 Days)'}
                 </label>
                 <input
@@ -2184,7 +2206,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                         maxFreeStreams: data.config.maxFreeStreams ?? 2,
                         maxTotalStreams: data.config.maxTotalStreams ?? 4,
                         maxReferralMonths: data.config.maxReferralMonths ?? 6,
-                        phoneNumber: data.config.phoneNumber || ''
+                        phoneNumber: data.config.phoneNumber || '',
+                        publicWebUrl: data.config.publicWebUrl || ''
                       });
                       onToast('info', lang === 'th' ? 'คืนค่าล่าสุดจากเซิร์ฟเวอร์แล้ว' : 'Reset to server config');
                     }

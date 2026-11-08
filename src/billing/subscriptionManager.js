@@ -22,6 +22,7 @@ class SubscriptionManager extends EventEmitter {
             maxTotalStreams: parseInt(process.env.MAX_TOTAL_STREAMS || '12', 10),
             maxReferralMonths: parseInt(process.env.MAX_REFERRAL_MONTHS || '6', 10),
             phoneNumber: process.env.TMW_PHONE_NUMBER || '',
+            publicWebUrl: process.env.PUBLIC_WEB_URL || '',
             referralEnabled: true,
             referralMinTopup: 29,
             referralRewardDays: 7,
@@ -44,6 +45,18 @@ class SubscriptionManager extends EventEmitter {
         const merged = { ...current, ...newConfig };
         dbManager.set('billingConfig', 'config', merged);
         return merged;
+    }
+
+    getPublicWebUrl() {
+        const config = this.getConfig();
+        if (config.publicWebUrl && typeof config.publicWebUrl === 'string' && config.publicWebUrl.trim()) {
+            return config.publicWebUrl.trim().replace(/\/+$/, '');
+        }
+        if (process.env.PUBLIC_WEB_URL) {
+            return process.env.PUBLIC_WEB_URL.trim().replace(/\/+$/, '');
+        }
+        const publicPort = process.env.PUBLIC_WEB_PORT || '11901';
+        return `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${publicPort}`;
     }
 
     _generateReferralCode(guildId) {
