@@ -49,7 +49,9 @@ export default function TopupView({ lang, onToast }) {
   const [voucher, setVoucher] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [referrerName, setReferrerName] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [submittingTopup, setSubmittingTopup] = useState(false);
+  const [submittingPromo, setSubmittingPromo] = useState(false);
 
   const formatCountdown = (targetMs, l) => {
     if (!targetMs) return null;
@@ -165,6 +167,43 @@ export default function TopupView({ lang, onToast }) {
     }
   };
 
+  const handleRedeemPromo = async (e) => {
+    if (e) e.preventDefault();
+    if (!guildId.trim()) {
+      onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID');
+      return;
+    }
+    if (!promoCode.trim()) {
+      onToast('warning', lang === 'th' ? 'กรุณาระบุโค้ด' : 'Missing Code');
+      return;
+    }
+
+    setSubmittingPromo(true);
+    try {
+      const res = await fetch('/api/public/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guildId: guildId.trim(),
+          userId: userId.trim(),
+          code: promoCode.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onToast('success', lang === 'th' ? 'เคลมสิทธิ์สำเร็จ!' : 'Code Redeemed!', lang === 'th' ? `ได้รับสิทธิ์ ${data.campaignName} (+${data.addedDays} วัน)` : `Received +${data.addedDays} days`);
+        setPromoCode('');
+        verifyGuild(guildId, userId);
+      } else {
+        onToast('error', lang === 'th' ? 'เคลมไม่สำเร็จ' : 'Redeem Failed', data.error || 'Code invalid');
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    } finally {
+      setSubmittingPromo(false);
+    }
+  };
+
   const copyReferralLink = () => {
     if (!guildData?.guild?.referralCode) return;
     const link = `${window.location.origin}/?ref=${guildData.guild.referralCode}`;
@@ -186,8 +225,196 @@ export default function TopupView({ lang, onToast }) {
 
   return (
     <div style={{ maxWidth: 1080, margin: '24px auto', padding: '0 18px' }} className="fade-in">
-      {/* MAIN WORKFLOW: 2-COLUMN COMMAND LAYOUT */}
-      <div className="donate-grid-layout" style={{ marginBottom: 28 }}>
+      
+      {/* 1. HERO SOUNDSTAGE HEADER */}
+      <section style={{
+        textAlign: 'center',
+        padding: '36px 20px 28px',
+        position: 'relative',
+        overflow: 'hidden',
+        marginBottom: 8
+      }}>
+        {/* Ambient Studio Audio Frequency Waveform Background */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(760px, 96vw)',
+          height: 150,
+          pointerEvents: 'none',
+          opacity: 0.12,
+          zIndex: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 5
+        }}>
+          {[22, 38, 28, 54, 42, 70, 48, 34, 65, 84, 58, 92, 68, 80, 46, 62, 38, 74, 44, 58, 30, 46, 24].map((h, i) => (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                height: `${h}%`,
+                borderRadius: 2,
+                background: 'linear-gradient(180deg, var(--slime-green) 0%, rgba(0, 229, 255, 0.4) 60%, transparent 100%)'
+              }}
+            />
+          ))}
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '4px 14px',
+            borderRadius: 999,
+            background: 'rgba(0, 255, 135, 0.08)',
+            border: '1px solid rgba(0, 255, 135, 0.25)',
+            color: 'var(--slime-green)',
+            fontSize: 11.5,
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            marginBottom: 16
+          }}>
+            <IconBolt size={14} stroke={1.8} />
+            <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับสตูดิโอ' : 'GOOLIX High-Fidelity Audio Core'}</span>
+          </div>
+
+          <h1 style={{
+            fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.15,
+            color: '#FFFFFF',
+            margin: '0 0 12px 0'
+          }}>
+            {lang === 'th' ? (
+              <>
+                ปลดล็อกเสียงคมชัดระดับ <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span><br />
+                ให้ทุกคนในเซิร์ฟเวอร์ของคุณ
+              </>
+            ) : (
+              <>
+                Upgrade to <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span> Sound<br />
+                For Your Entire Community
+              </>
+            )}
+          </h1>
+
+          <p style={{
+            maxWidth: 620,
+            margin: '0 auto 20px',
+            color: 'var(--text-sub)',
+            fontSize: 14,
+            lineHeight: 1.6
+          }}>
+            {lang === 'th'
+              ? `สิทธิ์ Supporter ผูกระดับเซิร์ฟเวอร์ สมาชิกทุกคนในห้องเสียงฟังเพลงคุณภาพ 96 kbps และเข้าใช้งาน Priority Slot พร้อมกันโดยไม่ต้องจ่ายรายคน เพียง ${priceRate} บาท / 30 วัน`
+              : `One single guild unlock covers everyone in the voice channel with Opus 96k Studio HQ streaming and instant Priority Lane access for ${priceRate} THB / 30 Days.`}
+          </p>
+
+          {/* Feature Pills Strip */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 10,
+            flexWrap: 'wrap',
+            fontSize: 12,
+            color: 'var(--text-sub)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconHeadphones size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>96 kbps Studio HQ</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconBolt size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>Priority Fast Slot</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconClock size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>Unlimited Duration</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconMusic size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>50-Track Queue</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconSparkles size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>Smart Autoplay</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. EARLY-BIRD DROP BANNER (When Active) */}
+      {guildData?.campaign && (
+        <div className="glass-panel" style={{
+          padding: '16px 22px',
+          marginBottom: 24,
+          border: '1px solid rgba(0, 255, 135, 0.35)',
+          background: 'linear-gradient(135deg, rgba(0, 255, 135, 0.08) 0%, rgba(14, 20, 34, 0.98) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 16
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 42,
+              height: 42,
+              borderRadius: 12,
+              background: 'rgba(0, 255, 135, 0.12)',
+              border: '1px solid rgba(0, 255, 135, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--slime-green)'
+            }}>
+              <IconGift size={20} stroke={1.8} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontWeight: 800, fontSize: 14.5, color: '#FFF' }}>
+                  {guildData.campaign.name}
+                </span>
+                <span className="slime-badge" style={{ fontSize: 10, padding: '2px 8px' }}>
+                  FREE {guildData.campaign.days || 30} DAYS
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                {lang === 'th' ? 'สิทธิ์เปิดตัวเซิร์ฟเวอร์ เหลือเพียง' : 'Launch Drop remaining:'}{' '}
+                <strong style={{ color: 'var(--slime-green)' }}>{guildData.campaign.remaining}</strong> / {guildData.campaign.maxClaims} {lang === 'th' ? 'สิทธิ์' : 'claims'}
+                {guildData.campaign.expiresAt && (
+                  <span style={{ marginLeft: 8 }}>
+                    • {lang === 'th' ? 'หมดเขต:' : 'Ends:'} <strong style={{ color: 'var(--amber-warn)' }}>{new Date(guildData.campaign.expiresAt).toLocaleDateString('th-TH')}</strong>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleRedeemPromo} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder={lang === 'th' ? 'กรอกรหัสแคมเปญ...' : 'Promo code...'}
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              style={{ width: 140, padding: '8px 12px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            />
+            <button type="submit" disabled={submittingPromo} className="btn btn-sm btn-primary">
+              {submittingPromo ? '...' : (lang === 'th' ? 'รับสิทธิ์' : 'Claim')}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* 3. MAIN WORKFLOW: 2-COLUMN COMMAND LAYOUT */}
+      <div className="donate-grid-layout" style={{ marginBottom: 26 }}>
         
         {/* LEFT COLUMN: TARGET GUILD (STEP 1) + BENEFIT COMPARISON */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -883,43 +1110,81 @@ export default function TopupView({ lang, onToast }) {
 
       </div>
 
-      {/* FOOTER: TERMS OF SERVICE SUMMARY STRIP */}
-      <div style={{
-        padding: '16px 20px',
-        borderRadius: 14,
+      {/* 4. TERMS OF SERVICE & LEGAL DISCLAIMER SUMMARY (FULL SECTION) */}
+      <section style={{
+        padding: '22px 26px',
+        borderRadius: 16,
         background: 'rgba(255, 255, 255, 0.02)',
         border: '1px solid var(--border-subtle)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 12,
-        fontSize: 11.5,
-        color: 'var(--text-dim)'
+        color: 'var(--text-sub)',
+        fontSize: 12,
+        lineHeight: 1.65,
+        marginBottom: 24
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <IconFileText size={15} style={{ color: 'var(--slime-green)' }} />
-          <span>{lang === 'th' ? 'การสนับสนุนเซิร์ฟเวอร์ผูกตาม Guild ID • บอททำหน้าที่เป็นตัวกลางส่งผ่านเสียงชั่วคราว (Data Forwarder)' : 'Server contribution bound to Guild ID • Transient audio forwarder'}</span>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 14,
+          paddingBottom: 12,
+          borderBottom: '1px solid var(--border-subtle)',
+          flexWrap: 'wrap',
+          gap: 12
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 13, color: '#FFF' }}>
+            <IconFileText size={16} style={{ color: 'var(--slime-green)' }} />
+            <span>{lang === 'th' ? 'ข้อกำหนดและเงื่อนไขการสนับสนุน (Disclaimer & Terms of Use)' : 'Terms of Service & Disclaimer'}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowTosModal(true)}
+            style={{
+              background: 'rgba(0, 255, 135, 0.08)',
+              border: '1px solid rgba(0, 255, 135, 0.28)',
+              color: 'var(--slime-green)',
+              borderRadius: 8,
+              padding: '5px 12px',
+              fontSize: 11.5,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <span>{lang === 'th' ? 'อ่านข้อตกลงฉบับเต็ม' : 'Read Full Terms'}</span>
+            <IconArrowRight size={13} />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowTosModal(true)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--slime-green)',
-            fontSize: 11.5,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4
-          }}
-        >
-          <span>{lang === 'th' ? 'ข้อกำหนดการใช้งานฉบับเต็ม' : 'Read Full Terms'}</span>
-          <IconArrowRight size={13} />
-        </button>
-      </div>
+
+        <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 9, color: 'var(--text-dim)', fontSize: 11.5 }}>
+          <li>
+            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'สถานะผู้ส่งผ่านข้อมูล:' : 'Data Forwarder Status:'}</strong>{' '}
+            {lang === 'th'
+              ? 'GOOLIX ทำหน้าที่เป็นเพียงตัวกลางส่งผ่านสัญญาณเสียงแบบชั่วคราว (Data Forwarder) ไปยัง Discord โดยไม่มีการเก็บรวบรวมหรือบันทึกไฟล์สื่อถาวรไว้บนเซิร์ฟเวอร์'
+              : 'GOOLIX operates strictly as a transient data forwarder (Mere Conduit) to Discord without retaining or hosting permanent media files.'}
+          </li>
+          <li>
+            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'การร่วมสนับสนุนค่าเซิร์ฟเวอร์:' : 'Server Contribution:'}</strong>{' '}
+            {lang === 'th'
+              ? 'การทำรายการผ่านซองของขวัญ TrueMoney เป็นการร่วมสนับสนุนค่าบำรุงรักษาเซิร์ฟเวอร์โดยสมัครใจ (ผูกสิทธิ์ตาม Guild ID ให้ใช้งานได้ทั้งเซิร์ฟเวอร์) เมื่อระบบเพิ่มวันใช้งานแล้ว ไม่สามารถขอคืนเงินหรือโอนย้ายสิทธิ์ข้ามเซิร์ฟเวอร์ได้ในทุกกรณี'
+              : 'TrueMoney voucher redemptions are voluntary server contributions bound to the target Guild ID. Once processed, contributions are strictly non-refundable and non-transferable.'}
+          </li>
+          <li>
+            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'ความเสถียรของระบบ:' : 'System Reliability:'}</strong>{' '}
+            {lang === 'th'
+              ? 'ระบบให้บริการตามสภาพจริง (As-Is) ไม่รับประกันการออนไลน์ 100% ตลอด 24 ชั่วโมง และขอสงวนสิทธิ์ในการตัดสายอัตโนมัติเมื่อไม่มีผู้ฟังในห้องเสียง ปิดปรับปรุงชั่วคราว หรือระงับสิทธิ์เซิร์ฟเวอร์ที่ใช้งานผิดปกติโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
+              : 'Service is provided on an "As-Is" basis with no guarantee of uninterrupted 24/7 uptime. We reserve the right to auto-disconnect empty channels, perform maintenance, or suspend abusive guilds without prior notice.'}
+          </li>
+          <li>
+            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'การปรับเปลี่ยนและบำรุงรักษาฟังก์ชัน:' : 'Feature Maintenance & Availability:'}</strong>{' '}
+            {lang === 'th'
+              ? 'ฟังก์ชันและตัวเลือกการประมวลผลเสียงเสริมต่าง ๆ (เช่น ระบบเล่นต่อเนื่อง หรือฟิลเตอร์เสียง) อาจถูกเปิด-ปิด ปรับปรุง หรือระงับชั่วคราวตามสถานะภาระเครื่องเซิร์ฟเวอร์และการเปลี่ยนแปลงของแพลตฟอร์มต้นทาง เพื่อรักษาเสถียรภาพการสตรีมเสียงของส่วนรวมเป็นหลัก'
+              : 'Add-on audio features and processing options may undergo temporary maintenance, throttling, or toggling based on cluster hardware load and upstream platform changes to ensure overall streaming stability.'}
+          </li>
+        </ol>
+      </section>
 
       {/* MODAL 1: HOW TO CREATE TRUEMONEY VOUCHER GUIDE */}
       {showVoucherGuideModal && (
@@ -1020,13 +1285,13 @@ export default function TopupView({ lang, onToast }) {
         </div>
       )}
 
-      {/* MODAL 2: FULL TERMS OF SERVICE */}
+      {/* MODAL 2: FULL TERMS OF SERVICE DIALOG */}
       {showTosModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
           zIndex: 1000,
-          background: 'rgba(5, 7, 12, 0.85)',
+          background: 'rgba(5, 7, 11, 0.85)',
           backdropFilter: 'blur(12px)',
           display: 'flex',
           alignItems: 'center',
@@ -1042,18 +1307,20 @@ export default function TopupView({ lang, onToast }) {
             maxHeight: '85vh',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.85)',
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 255, 135, 0.08)',
             overflow: 'hidden'
           }} onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '20px 26px',
-              borderBottom: '1px solid var(--border-subtle)'
+              borderBottom: '1px solid var(--border-subtle)',
+              background: 'rgba(255, 255, 255, 0.02)'
             }}>
               <div>
-                <div style={{ fontWeight: 800, fontSize: 16, color: '#FFFFFF' }}>
+                <div style={{ fontWeight: 800, fontSize: 16, color: '#FFF', letterSpacing: '-0.01em' }}>
                   {lang === 'th' ? 'ข้อตกลงและเงื่อนไขการใช้งาน (Terms of Service)' : 'Terms of Service (Full Agreement)'}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>
@@ -1073,41 +1340,146 @@ export default function TopupView({ lang, onToast }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease'
                 }}
               >
                 <IconX size={16} />
               </button>
             </div>
 
+            {/* Modal Content */}
             <div style={{
-              padding: '24px 26px',
+              padding: '26px',
               overflowY: 'auto',
               fontSize: 12.5,
               lineHeight: 1.7,
               color: 'var(--text-sub)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 18
+              gap: 22
             }}>
-              <div>
-                <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '1. การส่งผ่านข้อมูลชั่วคราว:' : '1. Transient Forwarding:'}</strong>{' '}
+              <p style={{ margin: 0, color: 'var(--text-dim)', fontStyle: 'italic', paddingBottom: 12, borderBottom: '1px solid var(--border-subtle)' }}>
                 {lang === 'th'
-                  ? 'ระบบทำงานเป็นตัวกลางส่งผ่านสัญญาณเสียงชั่วคราว (Data Forwarder) ไปยัง Discord โดยตรง ไม่มีการเก็บบันทึกไฟล์สื่อถาวรไว้บนเซิร์ฟเวอร์'
-                  : 'The system functions solely as a transient audio forwarder without hosting or saving media files.'}
-              </div>
+                  ? 'การใช้งานบอทและการทำรายการบนหน้าเว็บไซต์ของ GOOLIX ถือว่าผู้ใช้งานได้อ่าน เข้าใจ และยอมรับข้อตกลงดังต่อไปนี้ทุกประการ:'
+                  : 'By using the GOOLIX bot and web portal, you acknowledge that you have read, understood, and agreed to all terms below:'}
+              </p>
+
+              {/* Section 1 */}
               <div>
-                <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '2. สิทธิ์ผู้สนับสนุน:' : '2. Supporter Tier:'}</strong>{' '}
-                {lang === 'th'
-                  ? 'การร่วมสนับสนุนผ่านซอง TrueMoney เป็นการสนับสนุนค่าบำรุงรักษาระบบเซิร์ฟเวอร์โดยสมัครใจ ผูกสิทธิ์ตาม Guild ID ไม่สามารถขอคืนเงินหรือโอนสิทธิ์ข้ามเซิร์ฟเวอร์ได้'
-                  : 'TrueMoney contributions support server maintenance and bind to target Guild ID. Strictly non-refundable.'}
+                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                  {lang === 'th'
+                    ? '1. สถานะตัวกลางส่งผ่านข้อมูลและเนื้อหา (Mere Conduit & Content Disclaimer)'
+                    : '1. Mere Conduit & Content Disclaimer'}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                  <div>
+                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ไม่มีการจัดเก็บไฟล์ถาวร:' : '• No Permanent Storage:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ระบบทำงานในฐานะท่อส่งผ่านข้อมูลชั่วคราว (Transmission Buffer) จากแหล่งต้นทางที่ผู้ใช้งานเป็นผู้ระบุคำสั่งไปยังห้องเสียงของ Discord เท่านั้น ไม่มีการจัดเก็บ ดัดแปลง หรือเผยแพร่ไฟล์เสียงและวิดีโอไว้ในฐานข้อมูลถาวร (ระบบแคชทำงานแบบชั่วคราวเพื่อลดความหน่วงของเครือข่ายและถูกลบออกอัตโนมัติ)'
+                      : 'The system functions solely as a transient transmission buffer routing stream data requested by users directly to Discord voice channels. No media files are permanently hosted, altered, or distributed.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ความรับผิดชอบต่อเนื้อหา:' : '• Content Responsibility:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ผู้ใช้งานเป็นผู้รับผิดชอบต่อลิงก์และคำค้นหาที่สั่งให้บอทประมวลผลแต่เพียงผู้เดียว ทางผู้พัฒนาไม่สามารถตรวจสอบหรือควบคุมเนื้อหาต้นทางจากผู้ให้บริการภายนอกได้ และไม่มีส่วนรับผิดชอบต่อเนื้อหาที่ถูกส่งต่อไปยังเซิร์ฟเวอร์ของผู้ใช้งาน'
+                      : 'Users bear sole legal responsibility for all media queries dispatched to the bot. Developers do not curate external content and assume no liability for relayed streams.'}
+                  </div>
+                </div>
               </div>
+
+              {/* Section 2 */}
               <div>
-                <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '3. ความเสถียรของระบบ:' : '3. Service Reliability:'}</strong>{' '}
-                {lang === 'th'
-                  ? 'ให้บริการตามสภาพจริง (As-Is) เพื่อเสถียรภาพของส่วนรวม ระบบอาจมีการตัดสายเมื่อไม่มีผู้ฟังในห้องเสียง หรือปิดบำรุงรักษาชั่วคราวตามความจำเป็น'
-                  : 'Provided on an As-Is basis. Empty channels may auto-disconnect to optimize resource allocation.'}
+                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                  {lang === 'th'
+                    ? '2. เงื่อนไขการร่วมสนับสนุนและสิทธิประโยชน์ (Supporter & Billing Terms)'
+                    : '2. Supporter & Billing Terms'}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                  <div>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• ลักษณะการสนับสนุน:' : '• Voluntary Contribution:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ยอดเงินที่ทำรายการผ่านลิงก์ซองของขวัญ TrueMoney เป็นการร่วมบริจาคสนับสนุนค่าเช่าเซิร์ฟเวอร์และแบนด์วิธเพื่อขับเคลื่อนคอมมูนิตี้ ไม่ใช่การซื้อขายสินค้าหรือบริการเชิงพาณิชย์ เมื่อทำรายการสำเร็จแล้วไม่สามารถขอคืนเงินหรือยกเลิกได้ทุกกรณี'
+                      : 'Contributions via TrueMoney gift vouchers represent voluntary server hardware donations, not commercial purchases. All contributions are final and strictly non-refundable.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• สิทธิ์ระดับเซิร์ฟเวอร์ (Server-Wide Access):' : '• Server-Wide Access:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'สิทธิพิเศษของผู้สนับสนุน (Supporter) จะผูกกับรหัสเซิร์ฟเวอร์ (Guild ID) ที่ระบุขณะทำรายการ โดยสมาชิกทุกคนที่เข้าฟังเพลงในเซิร์ฟเวอร์นั้นจะได้รับสิทธิพิเศษพร้อมกันทั้งหมด สิทธิ์นี้ไม่สามารถโอนย้ายไปยังเซิร์ฟเวอร์อื่นได้'
+                      : 'Supporter perks bind strictly to the designated Guild ID, benefiting all active listeners within that server. Perks cannot be transferred between guilds.'}
+                  </div>
+                </div>
               </div>
+
+              {/* Section 3 */}
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                  {lang === 'th'
+                    ? '3. การจำกัดความรับผิดชอบและความพร้อมใช้งาน (Availability & Liability)'
+                    : '3. Availability & Liability'}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                  <div>
+                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การรับประกันสถานะออนไลน์:' : '• Uptime Warranty:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ทางทีมพัฒนาพยายามดูแลให้ระบบทำงานได้อย่างราบรื่นที่สุด แต่ไม่รับประกันว่าบอทจะออนไลน์ตลอด 24 ชั่วโมงโดยไม่มีอาการกระตุกหรือดีเลย์ เนื่องจากคุณภาพสัญญาณขึ้นอยู่กับเซิร์ฟเวอร์ต้นทาง ระบบ Discord Gateway และโควตาเครือข่ายในแต่ละช่วงเวลา'
+                      : 'While the team strives for maximum stability, continuous 24/7 uninterrupted uptime cannot be guaranteed due to dependencies on Discord gateways and upstream providers.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การปรับปรุงและยุติบริการ:' : '• Maintenance & Suspension:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ทีมพัฒนาขอสงวนสิทธิ์ในการรีสตาร์ทโหนด ปิดปรับปรุงระบบชั่วคราว ปรับเปลี่ยนโควตาช่องสัญญาณ หรือยุติการให้บริการเมื่อใดก็ได้โดยไม่จำเป็นต้องแจ้งให้ทราบล่วงหน้า'
+                      : 'We reserve the right to deploy maintenance updates, adjust audio buffer parameters, or modify service endpoints without prior notification.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• ความปลอดภัยของเซิร์ฟเวอร์:' : '• Indemnification:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ทีมพัฒนาไม่รับผิดชอบต่อความเสียหายใดๆ ที่อาจเกิดขึ้นกับเซิร์ฟเวอร์ Discord หรือบัญชีของผู้ใช้งานจากการนำบอทไปติดตั้งใช้งาน'
+                      : 'The development team shall not be held liable for any damages, strikes, or penalties incurred on Discord guilds or accounts.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4 */}
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                  {lang === 'th'
+                    ? '4. นโยบายการใช้งานที่เหมาะสม (Fair Use & Anti-Abuse Policy)'
+                    : '4. Fair Use & Anti-Abuse Policy'}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                  <div>
+                    <strong style={{ color: 'var(--red-alert)' }}>{lang === 'th' ? '• การจัดการทรัพยากรอัตโนมัติ:' : '• Automated Resource Governance:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'เพื่อรักษาคุณภาพเสียงของส่วนรวม ระบบจะตัดการเชื่อมต่อจากห้องเสียงอัตโนมัติหากไม่มีผู้ฟังอยู่ในห้อง หรือมีการเปิดสตรีมต่อเนื่องยาวนานเกินเกณฑ์ที่กำหนดโดยไม่มีการโต้ตอบ'
+                      : 'To conserve cluster resources, the bot will auto-disconnect from empty voice channels or prolonged unmonitored streams.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--red-alert)' }}>{lang === 'th' ? '• การระงับสิทธิ์ (Ban Policy):' : '• Abuse & Ban Policy:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'ห้ามใช้บอทหรือสคริปต์อัตโนมัติเฝ้าห้องเพื่อดึงแบนด์วิธตลอด 24 ชั่วโมง ห้ามยิงคำสั่งรัวเพื่อก่อกวนระบบ (Spam/Flood) และห้ามอาศัยช่องโหว่ในการปั๊มวันใช้งานฟรี หากระบบตรวจพบการกระทำดังกล่าว ทีมพัฒนาขอสงวนสิทธิ์ในการระงับการใช้งานเซิร์ฟเวอร์นั้นถาวร (Ban Guild) และยกเลิกวันใช้งานคงเหลือทั้งหมดทันทีโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
+                      : 'Automated 24/7 socket idling, command flooding, and exploitation of promotional codes are strictly prohibited. Violating guilds are subject to immediate permanent guild bans and forfeiture of remaining days.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '16px 26px',
+              borderTop: '1px solid var(--border-subtle)',
+              background: 'rgba(255, 255, 255, 0.02)',
+              display: 'flex',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowTosModal(false)}
+                className="btn btn-primary"
+                style={{ padding: '9px 24px', fontSize: 13 }}
+              >
+                {lang === 'th' ? 'เข้าใจและยอมรับข้อตกลง' : 'I Understand & Agree'}
+              </button>
             </div>
           </div>
         </div>
