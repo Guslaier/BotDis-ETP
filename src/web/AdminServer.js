@@ -367,7 +367,9 @@ class AdminServer {
                     minTopup: config.referralMinTopup || 29,
                     rewardDays: config.referralRewardDays || 30,
                     maxInvites: config.maxReferralMonths || 6,
-                    expiresAt: config.referralExpiresAt || null
+                    expiresAt: config.referralExpiresAt || null,
+                    isExpired: !!(config.referralExpiresAt && Date.now() > config.referralExpiresAt),
+                    isClosed: (config.referralEnabled === false) || !!(config.referralExpiresAt && Date.now() > config.referralExpiresAt)
                 },
                 campaign: activeEarlyBird ? {
                     name: activeEarlyBird.name,

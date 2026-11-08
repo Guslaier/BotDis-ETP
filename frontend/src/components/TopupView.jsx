@@ -21,6 +21,19 @@ export default function TopupView({ lang, onToast }) {
   const [submittingTopup, setSubmittingTopup] = useState(false);
   const [submittingPromo, setSubmittingPromo] = useState(false);
 
+  const formatCountdown = (targetMs, l) => {
+    if (!targetMs) return null;
+    const diff = targetMs - Date.now();
+    if (diff <= 0) return l === 'th' ? 'หมดเวลาแล้ว' : 'Expired';
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (days > 0) {
+      return l === 'th' ? `เหลืออีก ${days} วัน ${hours} ชม.` : `${days}d ${hours}h left`;
+    }
+    return l === 'th' ? `เหลืออีก ${hours} ชม. ${minutes} นาที` : `${hours}h ${minutes}m left`;
+  };
+
   // Read URL query params on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -388,8 +401,14 @@ export default function TopupView({ lang, onToast }) {
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 5, lineHeight: 1.4 }}>
                     {guildData?.referralConfig?.enabled === false ? (
-                      <span style={{ color: 'var(--accent-yellow)', fontWeight: 600 }}>
+                      <span style={{ color: 'var(--danger)', fontWeight: 600 }}>
                         {lang === 'th' ? '● แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราว' : '● Referral campaign is currently paused'}
+                      </span>
+                    ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
+                      <span style={{ color: 'var(--danger)', fontWeight: 600 }}>
+                        {lang === 'th'
+                          ? `⛔ หมดเขตโปรโมชั่น Season นี้แล้ว (ปิดเมื่อ: ${new Date(guildData.referralConfig.expiresAt).toLocaleString('th-TH')})`
+                          : `⛔ Season promo ended (${new Date(guildData.referralConfig.expiresAt).toLocaleString()})`}
                       </span>
                     ) : (
                       <>
@@ -398,11 +417,18 @@ export default function TopupView({ lang, onToast }) {
                             ? `เพื่อนเติมเงินด้วยโค้ดนี้ (ขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท): คุณได้รับวันฟรี +${guildData?.referralConfig?.rewardDays ?? 30} วัน (สูงสุด ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6} เซิร์ฟเวอร์)`
                             : `Friends top up with code (${guildData?.referralConfig?.minTopup ?? 29}+ THB): Referrer gets +${guildData?.referralConfig?.rewardDays ?? 30} days (Max ${guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6} servers)`}
                         </span>
-                        {guildData?.referralConfig?.expiresAt && (
-                          <div style={{ color: 'var(--accent-yellow)', marginTop: 2, fontWeight: 600 }}>
-                            {lang === 'th'
-                              ? `• หมดเขต Season นี้: ${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')}`
-                              : `• Season ends: ${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()}`}
+                        {guildData?.referralConfig?.expiresAt ? (
+                          <div style={{ color: 'var(--accent-yellow)', marginTop: 3, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span>⏳</span>
+                            <span>
+                              {lang === 'th'
+                                ? `หมดเขตโปรโมชั่น: ${new Date(guildData.referralConfig.expiresAt).toLocaleString('th-TH')} (${formatCountdown(guildData.referralConfig.expiresAt, 'th')})`
+                                : `Promo ends: ${new Date(guildData.referralConfig.expiresAt).toLocaleString()} (${formatCountdown(guildData.referralConfig.expiresAt, 'en')})`}
+                            </span>
+                          </div>
+                        ) : (
+                          <div style={{ color: 'var(--slime-green)', marginTop: 3, fontWeight: 500 }}>
+                            {lang === 'th' ? '• โปรโมชั่นเปิดรับสิทธิ์ตลอดแคมเปญ (ยังไม่มีกำหนดเวลาปิด)' : '• Active season (No closing date set)'}
                           </div>
                         )}
                       </>
@@ -513,8 +539,14 @@ export default function TopupView({ lang, onToast }) {
                   {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
                 </label>
                 {guildData?.referralConfig?.enabled === false ? (
-                  <div style={{ padding: '9px 12px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--card-border)', borderRadius: 8, fontSize: 12, color: 'var(--text-dim)' }}>
-                    {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral campaign is temporarily paused'}
+                  <div style={{ padding: '9px 12px', background: 'rgba(255, 75, 75, 0.08)', border: '1px solid rgba(255, 75, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--danger)' }}>
+                    ⛔ {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral campaign is temporarily paused'}
+                  </div>
+                ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
+                  <div style={{ padding: '9px 12px', background: 'rgba(255, 75, 75, 0.08)', border: '1px solid rgba(255, 75, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--danger)' }}>
+                    ⛔ {lang === 'th'
+                      ? `โปรโมชั่นโค้ดชวนเพื่อนหมดเขตแล้ว (ปิดรับสิทธิ์เมื่อ ${new Date(guildData.referralConfig.expiresAt).toLocaleString('th-TH')})`
+                      : `Referral promo has ended (${new Date(guildData.referralConfig.expiresAt).toLocaleString()})`}
                   </div>
                 ) : (
                   <>
@@ -528,6 +560,16 @@ export default function TopupView({ lang, onToast }) {
                         verifyReferral(val);
                       }}
                     />
+                    {guildData?.referralConfig?.expiresAt && (
+                      <div style={{ fontSize: 11, color: 'var(--accent-yellow)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span>⏳</span>
+                        <span>
+                          {lang === 'th'
+                            ? `เวลาปิดรับสิทธิ์: ${new Date(guildData.referralConfig.expiresAt).toLocaleString('th-TH')} (${formatCountdown(guildData.referralConfig.expiresAt, 'th')})`
+                            : `Closes: ${new Date(guildData.referralConfig.expiresAt).toLocaleString()} (${formatCountdown(guildData.referralConfig.expiresAt, 'en')})`}
+                        </span>
+                      </div>
+                    )}
                     {referrerName && (
                       <div style={{ fontSize: 11, color: 'var(--slime-green)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
                         <CheckCircle2 size={12} />

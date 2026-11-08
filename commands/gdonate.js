@@ -83,7 +83,20 @@ module.exports = {
                     },
                     {
                         name: '🎁 รหัสชวนเพื่อนประจำเซิร์ฟเวอร์',
-                        value: `\`${sub.referralCode}\` (ชวนสำเร็จ: **${sub.referralCount || 0} / ${config.maxReferralMonths || 6}** เซิร์ฟเวอร์ • สูงสุด ${config.maxReferralMonths || 6} เซิร์ฟเวอร์)`,
+                        value: (() => {
+                            const refCodeStr = `\`${sub.referralCode}\` (ชวนสำเร็จ: **${sub.referralCount || 0} / ${config.maxReferralMonths || 6}** เซิร์ฟเวอร์)`;
+                            const now = Date.now();
+                            if (config.referralEnabled === false) {
+                                return `${refCodeStr}\n⛔ **สถานะโปรโมชั่น:** ปิดรับสิทธิ์ชั่วคราว`;
+                            }
+                            if (config.referralExpiresAt && now > config.referralExpiresAt) {
+                                return `${refCodeStr}\n⛔ **สถานะโปรโมชั่น:** หมดเขตแล้ว (ปิดรับสิทธิ์เมื่อ <t:${Math.floor(config.referralExpiresAt / 1000)}:f>)`;
+                            }
+                            if (config.referralExpiresAt) {
+                                return `${refCodeStr}\n⏳ **เวลาปิดโปรโมชั่น:** <t:${Math.floor(config.referralExpiresAt / 1000)}:f> (<t:${Math.floor(config.referralExpiresAt / 1000)}:R>)`;
+                            }
+                            return `${refCodeStr}\n🟢 **สถานะโปรโมชั่น:** เปิดรับสิทธิ์ตลอดแคมเปญ`;
+                        })(),
                         inline: false
                     },
                     {
@@ -178,6 +191,8 @@ module.exports = {
             let bonusText = '';
             if (proc.referralBonusAwarded) {
                 bonusText = `\n🎁 **โบนัสพิเศษ:** เซิร์ฟเวอร์เพื่อนของคุณ (**${proc.referrerGuildName}**) และเซิร์ฟเวอร์นี้ ได้รับวันสนับสนุนฟรีเพิ่ม **+${proc.addedBonusDays || 7} วัน** เช่นกันครับ!`;
+            } else if (referral && !proc.isSeasonActive) {
+                bonusText = '\n⚠️ **หมายเหตุ:** รหัสชวนเพื่อนไม่ถูกคิดโบนัสเนื่องจากโปรโมชั่นหมดเขตหรือปิดรับสิทธิ์แล้วครับ';
             }
 
             embed.setColor('#00E676')

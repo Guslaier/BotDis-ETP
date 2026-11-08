@@ -369,6 +369,7 @@ class SubscriptionManager extends EventEmitter {
             sub,
             transaction,
             addedDays,
+            isSeasonActive: Boolean(isSeasonActive),
             referralBonusAwarded,
             addedBonusDays: referralBonusAwarded ? (referralRewardDays || 7) : 0,
             referrerGuildName
@@ -379,6 +380,7 @@ class SubscriptionManager extends EventEmitter {
             sub,
             transaction,
             addedDays,
+            isSeasonActive: Boolean(isSeasonActive),
             referralBonusAwarded,
             addedBonusDays: referralBonusAwarded ? (referralRewardDays || 7) : 0,
             referrerGuildName
