@@ -64,7 +64,7 @@ export default function Navbar({ mode, lang, setLang, isAdminLoggedIn, onLogout 
               borderRadius: 20,
               fontWeight: 700
             }}>
-              {isAdmin ? 'INTERNAL CONSOLE' : 'STUDIO STAGE'}
+              {isAdmin ? 'INTERNAL CONSOLE' : 'SUPPORTER PORTAL'}
             </span>
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-sub)', fontWeight: 500, letterSpacing: '-0.01em', marginTop: 1 }}>

@@ -281,7 +281,7 @@ export default function TopupView({ lang, onToast }) {
             marginBottom: 16
           }}>
             <IconBolt size={14} stroke={1.8} />
-            <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับสตูดิโอ' : 'GOOLIX High-Fidelity Audio Core'}</span>
+            <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับ Ultra HQ' : 'GOOLIX High-Fidelity Audio Core'}</span>
           </div>
 
           <h1 style={{
@@ -294,12 +294,12 @@ export default function TopupView({ lang, onToast }) {
           }}>
             {lang === 'th' ? (
               <>
-                ปลดล็อกเสียงคมชัดระดับ <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span><br />
+                ปลดล็อกเสียงคมชัดระดับ <span style={{ color: 'var(--slime-green)' }}>Ultra HQ</span><br />
                 ให้ทุกคนในเซิร์ฟเวอร์ของคุณ
               </>
             ) : (
               <>
-                Upgrade to <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span> Sound<br />
+                Upgrade to <span style={{ color: 'var(--slime-green)' }}>Ultra HQ</span> Sound<br />
                 For Your Entire Community
               </>
             )}
@@ -316,7 +316,7 @@ export default function TopupView({ lang, onToast }) {
           }}>
             {lang === 'th'
               ? `สมาชิกทุกคนในห้องเสียงฟังคุณภาพ 96 kbps ทันที ไม่ต้องจ่ายแยกรายคน เพียง ${priceRate} บาท / 30 วัน`
-              : `Instant 96 kbps Studio HQ audio for everyone in your voice channel without per-user fees. Only ${priceRate} THB / 30 Days.`}
+              : `Instant 96 kbps Ultra HQ audio for everyone in your voice channel without per-user fees. Only ${priceRate} THB / 30 Days.`}
           </p>
 
           {/* Understated Feature Strip */}
@@ -335,7 +335,7 @@ export default function TopupView({ lang, onToast }) {
           }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <IconHeadphones size={13} stroke={2} style={{ color: 'var(--slime-green)' }} />
-              <span style={{ fontWeight: 600, color: '#E2E8F0' }}>96 kbps Studio HQ</span>
+              <span style={{ fontWeight: 600, color: '#E2E8F0' }}>96 kbps Ultra HQ</span>
             </div>
             <span style={{ color: 'rgba(255, 255, 255, 0.15)' }}>•</span>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -812,7 +812,7 @@ export default function TopupView({ lang, onToast }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'คุณภาพเสียงสูงสุด 96 kbps Studio HQ' : '96 kbps Studio HQ sound'}</span>
+                    <span>{lang === 'th' ? 'คุณภาพเสียงสูงสุด 96 kbps Ultra HQ' : '96 kbps Ultra HQ sound'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />

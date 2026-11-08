@@ -105,7 +105,7 @@ module.exports = {
  ' **Extended Queue** — คิวสูงสุด 50 เพลง & เพลย์ลิสต์ครั้งละ 25 เพลง',
  ' **Unlimited Length** — สตรีมเพลงและคลิปยาวได้ไม่จำกัดความยาว',
  ' **Autoplay Engine** — ระบบเล่นเพลงอัตโนมัติเมื่อคิวหมด',
- ' **Studio Quality** — ถ่ายทอดเสียงคมชัดระดับ Opus 96k Studio HQ'
+ ' **Ultra HQ Audio** — ถ่ายทอดเสียงคมชัดระดับ Opus 96k Ultra HQ'
  ].join('\n'),
  inline: false
  }

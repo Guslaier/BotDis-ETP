@@ -52,7 +52,7 @@ module.exports = {
                 { name: 'Node.js / D.js', value: `\`${process.version} / v${djsVersion}\``, inline: true },
                 { name: 'Audio Engine', value: '`Ultra-Light Direct OggOpus`', inline: true }
             )
-            .setFooter({ text: 'GOOLIX High-Performance Audio Engine | Studio Grade Telemetry' });
+            .setFooter({ text: 'GOOLIX High-Performance Audio Engine | Cluster Telemetry' });
 
         return interaction.reply({ embeds: [embed] });
     }

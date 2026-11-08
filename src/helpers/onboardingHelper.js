@@ -47,7 +47,7 @@ class OnboardingHelper {
         const embed = new EmbedBuilder()
             .setColor('#00FF88')
             .setTitle(`Welcome to ${botName}! • ยินดีต้อนรับสู่ ${botName}!`)
-            .setDescription(`Hello **${guild.name}**! Thank you for inviting **${botName}** — your high-performance, studio-grade (Opus 96k) music companion.\n\nสวัสดีทุกคนใน **${guild.name}**! ขอบคุณที่เลือกใช้บริการบอทเพลงคุณภาพระดับสตูดิโอ (Opus 96k) เบสแน่น เสียงคมชัด พร้อมระบบคิวเพลงและออโต้เพลย์อัจฉริยะ\n\n**Select your preferred server language below / เลือกภาษาที่ต้องการใช้งานด้านล่าง:**`)
+            .setDescription(`Hello **${guild.name}**! Thank you for inviting **${botName}** — your high-performance, Ultra HQ (Opus 96k) music companion.\n\nสวัสดีทุกคนใน **${guild.name}**! ขอบคุณที่เลือกใช้บริการบอทเพลงคุณภาพระดับ Ultra HQ (Opus 96k) เบสแน่น เสียงคมชัด พร้อมระบบคิวเพลงและออโต้เพลย์อัจฉริยะ\n\n**Select your preferred server language below / เลือกภาษาที่ต้องการใช้งานด้านล่าง:**`)
             .setThumbnail(client.user?.displayAvatarURL() || null)
             .addFields(
                 {
@@ -76,7 +76,7 @@ class OnboardingHelper {
                         '• **Extended Queue** — Up to 50 songs & 25 playlist items',
                         '• **Unlimited Stream** — Stream tracks and live broadcasts without length limits',
                         '• **Autoplay Engine** — Automatic continuous music streaming',
-                        '• **Studio Quality** — Pristine Opus 96k Studio HQ audio'
+                        '• **Ultra HQ Audio** — Pristine Opus 96k Ultra HQ audio'
                     ].join('\n'),
                     inline: false
                 }
