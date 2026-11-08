@@ -732,13 +732,14 @@ class CacheManager {
                 });
             }
 
-            // 12s primary timeout (fast failover instead of 30s)
+            // Configurable primary stream timeout (default 20s for proxy / international latency)
+            const primaryTimeoutMs = parseInt(process.env.PRIMARY_STREAM_TIMEOUT_MS || '20000', 10);
             streamTimeout = setTimeout(async () => {
                 if (!hasOutput && !isFallback) {
-                    console.warn(`[CacheManager] Primary stream timed out (12s limit) for "${track.title}"`);
+                    console.warn(`[CacheManager] Primary stream timed out (${Math.round(primaryTimeoutMs / 1000)}s limit) for "${track.title}"`);
                     await triggerFallbackOrReject('Primary stream timed out');
                 }
-            }, 12000);
+            }, primaryTimeoutMs);
             streamTimeout.unref();
         });
     }
