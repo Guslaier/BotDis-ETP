@@ -1139,7 +1139,7 @@ export default function TopupView({ lang, onToast }) {
                   ) : (
                     <>
                       <IconSparkles size={16} />
-                      <span>{lang === 'th' ? `ยืนยันการร่วมสนับสนุน ฿${priceRate} (เปิดใช้งานทันที)` : `Confirm Contribution ฿${priceRate} (Instant Activation)`}</span>
+                      <span>{lang === 'th' ? `ยืนยันการร่วมสนับสนุน ฿${priceRate}` : `Confirm Contribution ฿${priceRate}`}</span>
                     </>
                   )}
                 </button>
