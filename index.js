@@ -215,12 +215,12 @@ client.on('interactionCreate', async interaction => {
                     await interaction.message.edit({ components: [] }).catch(() => {});
                 }
                 return interaction.reply({
-                    content: '🗑️ ตรวจพบการ์ดเพลงที่หมดอายุ/หยุดเล่นแล้ว ระบบลบการ์ดทิ้งให้เรียบร้อยครับ!',
+                    content: i18n.t(interaction.guildId, 'STALE_CARD_REMOVED'),
                     flags: MessageFlags.Ephemeral
                 }).catch(() => {});
             }
             return interaction.reply({
-                content: '❌ ไม่มีเพลงที่กำลังเล่นอยู่ตอนนี้ครับ',
+                content: i18n.t(interaction.guildId, 'NO_PLAYING_TRACK'),
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -254,7 +254,7 @@ client.on('interactionCreate', async interaction => {
                 }
                 player.playPrevious();
                 if (player.queue.current) {
-                    const prepCard = createNowPlayingCard(player, player.queue.current, { isPreparing: true, statusText: 'กำลังย้อนกลับไปเพลงก่อนหน้า...' });
+                    const prepCard = createNowPlayingCard(player, player.queue.current, { isPreparing: true, statusText: i18n.t(interaction.guildId, 'STATUS_REPLAY_PREV') });
                     try {
                         return await interaction.update(prepCard);
                     } catch {}
@@ -316,7 +316,7 @@ client.on('interactionCreate', async interaction => {
                 player._lastSkipAction = now;
                 player.skip();
                 if (player.queue.current) {
-                    const prepCard = createNowPlayingCard(player, player.queue.current, { isPreparing: true, statusText: 'กำลังข้ามเพลง...' });
+                    const prepCard = createNowPlayingCard(player, player.queue.current, { isPreparing: true, statusText: i18n.t(interaction.guildId, 'STATUS_SKIPPING') });
                     try {
                         return await interaction.update(prepCard);
                     } catch {}
@@ -360,26 +360,29 @@ client.on('interactionCreate', async interaction => {
                 }
             }
             case 'music_queue': {
+                const guildId = interaction.guildId;
+                const isEn = i18n.isEn(guildId);
                 const queue = player.queue;
                 const embed = new EmbedBuilder().setColor('#FF69B4');
                 const currentTitle = queue.current?.title || 'Unknown';
-                let desc = `**🎧 กำลังเล่น:** [${currentTitle}](${queue.current?.uri})\n\n`;
+                let desc = `**🎧 ${isEn ? 'Now Playing:' : 'กำลังเล่น:'}** [${currentTitle}](${queue.current?.uri})\n\n`;
                 if (queue.length === 0) {
-                    desc += 'ไม่มีเพลงรอในคิวแล้วครับ สั่งเพลงเพิ่มได้เลย!';
+                    desc += isEn ? 'No upcoming tracks in queue! Feel free to request more songs 🎶' : 'ไม่มีเพลงรอในคิวแล้วครับ สั่งเพลงเพิ่มได้เลย! 🎶';
                 } else {
-                    desc += `**คิวรอเล่น (${queue.length} เพลง):**\n`;
+                    desc += `**${isEn ? `Upcoming Queue (${queue.length} songs):` : `คิวรอเล่น (${queue.length} เพลง):`}**\n`;
                     const preview = queue.slice(0, 10);
                     preview.forEach((t, i) => {
                         desc += `**${i + 1}.** [${t.title}](${t.uri}) - <@${t.requester.id}>\n`;
                     });
                     if (queue.length > 10) {
-                        desc += `*...และอีก ${queue.length - 10} เพลง*`;
+                        desc += `*...${isEn ? `and ${queue.length - 10} more songs` : `และอีก ${queue.length - 10} เพลง`}*`;
                     }
                 }
-                embed.setTitle('📋 คิวเพลงปัจจุบัน').setDescription(desc);
+                embed.setTitle(isEn ? '📋 Current Music Queue' : '📋 คิวเพลงปัจจุบัน').setDescription(desc);
                 return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
             case 'music_lyrics': {
+                const guildId = interaction.guildId;
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
                 const track = player.queue.current;
                 const lyricsHelper = require('./src/helpers/lyricsHelper');
@@ -387,7 +390,7 @@ client.on('interactionCreate', async interaction => {
 
                 if (!data || !data.lyrics) {
                     return interaction.followUp({
-                        content: `❌ หาเนื้อเพลงสำหรับ **${track.title}** ไม่เจอครับ`,
+                        content: i18n.t(guildId, 'LYRICS_NOT_FOUND', { title: track.title }),
                         flags: MessageFlags.Ephemeral
                     });
                 }
@@ -397,28 +400,30 @@ client.on('interactionCreate', async interaction => {
 
                 const embed = new EmbedBuilder()
                     .setColor('#FF69B4')
-                    .setTitle(`🎤 เนื้อเพลง: ${data.title || track.title}`)
+                    .setTitle(i18n.t(guildId, 'LYRICS_TITLE', { title: data.title || track.title }))
                     .setDescription(text)
-                    .setFooter({ text: `แหล่งที่มา: ${data.source}` });
+                    .setFooter({ text: i18n.t(guildId, 'LYRICS_SOURCE', { source: data.source }) });
 
                 return interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
             case 'music_favorite': {
+                const guildId = interaction.guildId;
                 const track = player.queue.current;
                 const added = favoriteManager.addFavorite(interaction.user.id, track);
                 if (added) {
                     return interaction.reply({
-                        content: `💖 บันทึกเพลง **${track.title}** ลงในรายการเพลงโปรดของคุณแล้วครับ! เรียกฟังได้ด้วย \`/gfav play\``,
+                        content: i18n.t(guildId, 'FAV_ADDED', { title: track.title }),
                         flags: MessageFlags.Ephemeral
                     });
                 } else {
                     return interaction.reply({
-                        content: `ℹ️ เพลง **${track.title}** อยู่ในรายการเพลงโปรดของคุณอยู่แล้วครับ!`,
+                        content: i18n.t(guildId, 'FAV_ALREADY_EXISTS', { title: track.title }),
                         flags: MessageFlags.Ephemeral
                     });
                 }
             }
             case 'music_volume': {
+                const guildId = interaction.guildId;
                 const row = new ActionRowBuilder().addComponents(
                     new ButtonBuilder().setCustomId('vol_30').setLabel('30%').setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder().setCustomId('vol_60').setLabel('60%').setStyle(ButtonStyle.Secondary),
@@ -426,14 +431,15 @@ client.on('interactionCreate', async interaction => {
                     new ButtonBuilder().setCustomId('vol_130').setLabel('130%').setStyle(ButtonStyle.Danger)
                 );
                 return interaction.reply({
-                    content: `🔊 เลือกระดับเสียงด่วนที่ต้องการปรับ (ปัจจุบัน: **${player.volume}%**):`,
+                    content: i18n.t(guildId, 'VOLUME_SELECT_TITLE', { volume: player.volume || 100 }),
                     components: [row],
                     flags: MessageFlags.Ephemeral
                 });
             }
             case 'music_stop': {
+                const guildId = interaction.guildId;
                 await interaction.reply({
-                    content: '🛑 ปิดระบบและออกจากห้องเสียงเรียบร้อยแล้วครับ! ไว้มาฟังเพลงด้วยกันใหม่นะครับ 👋',
+                    content: i18n.t(guildId, 'STOPPED'),
                     flags: MessageFlags.Ephemeral
                 }).catch(() => {});
                 try {
@@ -443,15 +449,16 @@ client.on('interactionCreate', async interaction => {
                 return;
             }
             case 'music_add_song': {
+                const guildId = interaction.guildId;
                 try {
                     const modal = new ModalBuilder()
                         .setCustomId('modal_add_song')
-                        .setTitle('➕ ขอเพลง / ค้นหาเพลง');
+                        .setTitle(i18n.t(guildId, 'MODAL_SONG_TITLE'));
 
                     const songInput = new TextInputBuilder()
                         .setCustomId('song_query')
-                        .setLabel('ชื่อเพลง หรือ ลิงก์เพลง')
-                        .setPlaceholder('เช่น Sailor Song หรือ https://youtube.com/watch?v=...')
+                        .setLabel(i18n.t(guildId, 'MODAL_SONG_LABEL'))
+                        .setPlaceholder(i18n.t(guildId, 'MODAL_SONG_PLACEHOLDER'))
                         .setStyle(TextInputStyle.Short)
                         .setRequired(true);
 
@@ -460,21 +467,22 @@ client.on('interactionCreate', async interaction => {
                 } catch (err) {
                     console.error('[music_add_song] Modal error:', err);
                     if (!interaction.replied && !interaction.deferred) {
-                        return interaction.reply({ content: '❌ ไม่สามารถเปิดหน้าต่างขอเพลงได้ครับ กรุณาลองใหม่อีกครั้ง', flags: MessageFlags.Ephemeral }).catch(() => {});
+                        return interaction.reply({ content: i18n.t(guildId, 'GENERIC_ERROR'), flags: MessageFlags.Ephemeral }).catch(() => {});
                     }
                 }
                 return;
             }
             case 'music_add_playlist': {
+                const guildId = interaction.guildId;
                 try {
                     const modal = new ModalBuilder()
                         .setCustomId('modal_add_playlist')
-                        .setTitle('📑 เพิ่มเพลย์ลิสต์เพลง');
+                        .setTitle(i18n.t(guildId, 'MODAL_PLAYLIST_TITLE'));
 
                     const plInput = new TextInputBuilder()
                         .setCustomId('playlist_query')
-                        .setLabel('ลิงก์เพลย์ลิสต์เพลง')
-                        .setPlaceholder('https://www.youtube.com/playlist?list=...')
+                        .setLabel(i18n.t(guildId, 'MODAL_PLAYLIST_LABEL'))
+                        .setPlaceholder(i18n.t(guildId, 'MODAL_PLAYLIST_PLACEHOLDER'))
                         .setStyle(TextInputStyle.Short)
                         .setRequired(true);
 
@@ -483,7 +491,7 @@ client.on('interactionCreate', async interaction => {
                 } catch (err) {
                     console.error('[music_add_playlist] Modal error:', err);
                     if (!interaction.replied && !interaction.deferred) {
-                        return interaction.reply({ content: '❌ ไม่สามารถเปิดหน้าต่างเพลย์ลิสต์ได้ครับ กรุณาลองใหม่อีกครั้ง', flags: MessageFlags.Ephemeral }).catch(() => {});
+                        return interaction.reply({ content: i18n.t(guildId, 'GENERIC_ERROR'), flags: MessageFlags.Ephemeral }).catch(() => {});
                     }
                 }
                 return;
@@ -527,7 +535,7 @@ client.on('interactionCreate', async interaction => {
             const donateUrl = `${host}/donate?guild=${guildId}&guildId=${guildId}&userId=${interaction.user.id}`;
             const donateRow = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (Supporter Stream Lanes)')
+                    .setLabel(i18n.t(guildId, 'DONATE_BTN_LABEL'))
                     .setStyle(ButtonStyle.Link)
                     .setURL(donateUrl)
             );
@@ -537,7 +545,7 @@ client.on('interactionCreate', async interaction => {
             if (!slotCheck.allowed) {
                 const embed = new EmbedBuilder()
                     .setColor('#FFD600')
-                    .setTitle('⚠️ ช่องสัญญาณเซิร์ฟเวอร์เต็ม')
+                    .setTitle(i18n.t(guildId, 'SLOTS_FULL_TITLE'))
                     .setDescription(slotCheck.message);
                 return interaction.reply({ embeds: [embed], components: [donateRow], flags: MessageFlags.Ephemeral });
             }
@@ -549,7 +557,7 @@ client.on('interactionCreate', async interaction => {
                 : interaction.fields.getTextInputValue('playlist_query');
 
             if (!query || !query.trim()) {
-                return interaction.followUp({ content: '❌ กรุณาระบุชื่อเพลงหรือลิงก์ครับ', flags: MessageFlags.Ephemeral });
+                return interaction.followUp({ content: i18n.t(guildId, 'SPECIFY_QUERY'), flags: MessageFlags.Ephemeral });
             }
 
             const settingsManager = require('./src/helpers/settingsManager');
@@ -568,7 +576,7 @@ client.on('interactionCreate', async interaction => {
             if (player.queue.length >= tierConfig.maxQueue) {
                 const embed = new EmbedBuilder()
                     .setColor('#EF4444')
-                    .setTitle('📋 Queue Limit Reached')
+                    .setTitle(i18n.t(guildId, 'QUEUE_LIMIT_TITLE'))
                     .setDescription(i18n.t(guildId, 'QUEUE_LIMIT_FREE'));
                 return interaction.followUp({ embeds: [embed], components: [donateRow], flags: MessageFlags.Ephemeral });
             }
@@ -580,7 +588,7 @@ client.on('interactionCreate', async interaction => {
             });
 
             if (!result || !result.tracks || !result.tracks.length) {
-                return interaction.followUp({ content: '❌ หาเพลงไม่เจอครับ (ลองพิมพ์ชื่อเพลงสั้นๆ หรือตรวจสอบลิงก์ใหม่อีกครั้ง)', flags: MessageFlags.Ephemeral });
+                return interaction.followUp({ content: i18n.t(guildId, 'TRACK_NOT_FOUND'), flags: MessageFlags.Ephemeral });
             }
 
             const embed = new EmbedBuilder().setColor('#00FF88');
@@ -610,7 +618,7 @@ client.on('interactionCreate', async interaction => {
                 if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
                     const durationMin = Math.floor((track.duration || 0) / 60);
                     embed.setColor('#FFD600')
-                        .setTitle('⏱️ Track Exceeds 30 Minutes')
+                        .setTitle(i18n.t(guildId, 'SONG_TOO_LONG_TITLE'))
                         .setDescription(i18n.t(guildId, 'SONG_TOO_LONG', { duration: `${durationMin} min` }));
                     return interaction.followUp({ embeds: [embed], components: [donateRow], flags: MessageFlags.Ephemeral });
                 }
@@ -637,14 +645,14 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
     if (!interaction.inGuild()) {
         return interaction.reply({
-            embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription('❌ คำสั่งนี้ใช้ได้เฉพาะในเซิร์ฟเวอร์เท่านั้นครับ')],
+            embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription(i18n.t(null, 'GUILD_ONLY'))],
             flags: MessageFlags.Ephemeral
         });
     }
     if (!interaction.guild) {
         console.error(`[GuildCache] Bot is not in guild ${interaction.guildId} — interaction received from guild the bot has left or cannot access.`);
         return interaction.reply({
-            embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription('❌ บอทไม่อยู่ในเซิร์ฟเวอร์นี้แล้วครับ กรุณาเชิญบอทเข้าเซิร์ฟเวอร์ใหม่อีกครั้ง')],
+            embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription(i18n.t(interaction.guildId, 'BOT_NOT_IN_GUILD'))],
             flags: MessageFlags.Ephemeral
         });
     }

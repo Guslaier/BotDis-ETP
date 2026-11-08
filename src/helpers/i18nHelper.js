@@ -118,6 +118,46 @@ const dictionary = {
         FEATURE_MAINTENANCE_DESC: 'ฟังก์ชัน **{name}** ({command}) ปิดปรับปรุงชั่วคราวเพื่อรักษาเสถียรภาพระบบครับ',
         FEATURE_SUPPORTER_DESC: 'ฟังก์ชัน **{name}** ({command}) เปิดให้ใช้งานเฉพาะเซิร์ฟเวอร์ผู้สนับสนุน (Supporter VIP) เท่านั้นครับ\n\nพิมพ์ `/gdonate` เพื่อดูรายละเอียดการร่วมสนับสนุน',
 
+        // Card Buttons & Labels
+        BTN_SHUFFLE: 'สลับเพลง',
+        BTN_LOOP: 'วนซ้ำ',
+        BTN_QUEUE: 'คิวเพลง',
+        BTN_LYRICS: 'เนื้อเพลง',
+        BTN_FAVORITES: 'เพลงโปรด',
+        BTN_REQUEST_SONG: 'ขอเพลง',
+        BTN_PLAYLIST: 'เพลย์ลิสต์',
+        BTN_VOLUME: 'ระดับเสียง',
+        BTN_AUTOPLAY_ON: 'ออโต้เพลย์: เปิด',
+        BTN_AUTOPLAY_OFF: 'ออโต้เพลย์: ปิด',
+        BTN_STOP: 'หยุดเล่น',
+
+        // Card Badges & Indicators
+        CARD_STAGE_TITLE: 'Cosmic Stage 🟢',
+        CARD_SWITCHING_STAGE: 'กำลังเปลี่ยนเพลง ⏳',
+        CARD_PREPARING_STREAM: 'กำลังเตรียมสตรีมเสียง...',
+        CARD_BUFFERING: 'กำลังโหลด...',
+        CARD_LISTENING: '{count} คนกำลังฟัง',
+        CARD_LOOP_OFF: 'ปิดลูป',
+        CARD_LOOP_TRACK: 'วนเพลงนี้',
+        CARD_LOOP_QUEUE: 'วนทั้งคิว',
+        CARD_STANDARD_TIER: '64k ทั่วไป',
+        CARD_SUPPORTER_TIER: '96k ผู้สนับสนุน',
+
+        // Quick Controls & Modals
+        SPECIFY_QUERY: '❌ กรุณาระบุชื่อเพลงหรือลิงก์ครับ',
+        MODAL_SONG_TITLE: '➕ ขอเพลง / ค้นหาเพลง',
+        MODAL_SONG_LABEL: 'ชื่อเพลง หรือ ลิงก์เพลง',
+        MODAL_SONG_PLACEHOLDER: 'เช่น ทรงอย่างแบด หรือ https://youtube.com/watch?v=...',
+        MODAL_PLAYLIST_TITLE: '📑 เพิ่มเพลย์ลิสต์เพลง',
+        MODAL_PLAYLIST_LABEL: 'ลิงก์เพลย์ลิสต์เพลง',
+        MODAL_PLAYLIST_PLACEHOLDER: 'https://www.youtube.com/playlist?list=...',
+        VOLUME_SELECT_TITLE: '🔊 เลือกระดับเสียงด่วนที่ต้องการปรับ (ปัจจุบัน: **{volume}%**):',
+        STATUS_REPLAY_PREV: 'กำลังย้อนกลับไปเพลงก่อนหน้า...',
+        STATUS_SKIPPING: 'กำลังข้ามเพลง...',
+        STATUS_PREPARING_NEXT: 'กำลังเตรียมเพลงถัดไป...',
+        GUILD_ONLY: '❌ คำสั่งนี้ใช้ได้เฉพาะในเซิร์ฟเวอร์เท่านั้นครับ',
+        BOT_NOT_IN_GUILD: '❌ บอทไม่อยู่ในเซิร์ฟเวอร์นี้แล้วครับ กรุณาเชิญบอทเข้าเซิร์ฟเวอร์ใหม่อีกครั้ง',
+
         // Language
         LANG_TITLE: '🌐 ตั้งค่าภาษาของเซิร์ฟเวอร์',
         LANG_CHANGED: '🌐 เปลี่ยนภาษาของบอทในเซิร์ฟเวอร์เป็น: **ภาษาไทย (TH)** เรียบร้อยแล้ว!'
@@ -238,6 +278,46 @@ const dictionary = {
         FEATURE_SUPPORTER_TITLE: '💎 Supporter Exclusive Feature',
         FEATURE_MAINTENANCE_DESC: 'Feature **{name}** ({command}) is temporarily under maintenance for system stability.',
         FEATURE_SUPPORTER_DESC: 'Feature **{name}** ({command}) is reserved for Server Supporters (VIP)!\n\nType `/gdonate` to view supporter perks.',
+
+        // Card Buttons & Labels
+        BTN_SHUFFLE: 'Shuffle',
+        BTN_LOOP: 'Loop',
+        BTN_QUEUE: 'Queue',
+        BTN_LYRICS: 'Lyrics',
+        BTN_FAVORITES: 'Favorites',
+        BTN_REQUEST_SONG: 'Add Song',
+        BTN_PLAYLIST: 'Playlist',
+        BTN_VOLUME: 'Volume',
+        BTN_AUTOPLAY_ON: 'Autoplay On',
+        BTN_AUTOPLAY_OFF: 'Autoplay Off',
+        BTN_STOP: 'Stop',
+
+        // Card Badges & Indicators
+        CARD_STAGE_TITLE: 'Cosmic Stage 🟢',
+        CARD_SWITCHING_STAGE: 'Switching Track ⏳',
+        CARD_PREPARING_STREAM: 'Preparing audio stream...',
+        CARD_BUFFERING: 'Buffering...',
+        CARD_LISTENING: '{count} listening',
+        CARD_LOOP_OFF: 'Off',
+        CARD_LOOP_TRACK: 'Track',
+        CARD_LOOP_QUEUE: 'Queue',
+        CARD_STANDARD_TIER: '64k Standard',
+        CARD_SUPPORTER_TIER: '96k Supporter',
+
+        // Quick Controls & Modals
+        SPECIFY_QUERY: '❌ Please enter a song title or URL.',
+        MODAL_SONG_TITLE: '➕ Request / Search Song',
+        MODAL_SONG_LABEL: 'Song title or URL',
+        MODAL_SONG_PLACEHOLDER: 'e.g. Sailor Song or https://youtube.com/watch?v=...',
+        MODAL_PLAYLIST_TITLE: '📑 Add Playlist',
+        MODAL_PLAYLIST_LABEL: 'Playlist URL',
+        MODAL_PLAYLIST_PLACEHOLDER: 'https://www.youtube.com/playlist?list=...',
+        VOLUME_SELECT_TITLE: '🔊 Select quick playback volume (Current: **{volume}%**):',
+        STATUS_REPLAY_PREV: 'Replaying previous track...',
+        STATUS_SKIPPING: 'Skipping track...',
+        STATUS_PREPARING_NEXT: 'Preparing next track...',
+        GUILD_ONLY: '❌ This command can only be used within a server.',
+        BOT_NOT_IN_GUILD: '❌ Bot is no longer in this server. Please re-invite the bot.',
 
         // Language
         LANG_TITLE: '🌐 Language Configuration',

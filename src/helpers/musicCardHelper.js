@@ -46,10 +46,12 @@ function createProgressBar(currentMs, totalMs, barLength = 15) {
 }
 
 const subscriptionManager = require('../billing/subscriptionManager');
+const i18n = require('./i18nHelper');
 
 function createNowPlayingCard(player, track, options = {}) {
+    const guildId = player.guildId;
     const isPreparing = !!options.isPreparing;
-    const statusText = options.statusText || 'กำลังเตรียมสตรีมเสียง...';
+    const statusText = options.statusText || i18n.t(guildId, 'CARD_PREPARING_STREAM');
     const isPaused = isPreparing ? false : !!player.paused;
     const currentPosition = isPreparing ? 0 : (player.position || 0);
     const totalDuration = track?.length || 0;
@@ -64,6 +66,7 @@ function createNowPlayingCard(player, track, options = {}) {
     const voiceChannel = player.manager.client.channels.cache.get(player.voiceId);
     const channelName = voiceChannel ? voiceChannel.name : 'Voice Channel';
     const membersCount = voiceChannel ? voiceChannel.members.filter(m => !m.user.bot).size : 1;
+    const listeningText = i18n.t(guildId, 'CARD_LISTENING', { count: membersCount });
 
     let sourceBadge = '🔴 YouTube';
     if (track?.realSource) {
@@ -82,12 +85,15 @@ function createNowPlayingCard(player, track, options = {}) {
         sourceBadge = '🟢 Spotify';
     }
 
-    const isSupporter = subscriptionManager.isSupporter(player.guildId);
-    const bitrateBadge = isPreparing ? '⚡ Buffering' : (isSupporter ? '⚡ 96k Supporter' : '📻 64k Standard');
+    const isSupporter = subscriptionManager.isSupporter(guildId);
+    const bufferText = `⚡ ${i18n.t(guildId, 'CARD_BUFFERING')}`;
+    const bitrateBadge = isPreparing 
+        ? bufferText 
+        : (isSupporter ? `⚡ ${i18n.t(guildId, 'CARD_SUPPORTER_TIER')}` : `📻 ${i18n.t(guildId, 'CARD_STANDARD_TIER')}`);
 
-    let loopBadge = '🔁 Off';
-    if (player.loop === 'track') loopBadge = '🔂 Track';
-    else if (player.loop === 'queue') loopBadge = '🔁 Queue';
+    let loopBadge = `🔁 ${i18n.t(guildId, 'CARD_LOOP_OFF')}`;
+    if (player.loop === 'track') loopBadge = `🔂 ${i18n.t(guildId, 'CARD_LOOP_TRACK')}`;
+    else if (player.loop === 'queue') loopBadge = `🔁 ${i18n.t(guildId, 'CARD_LOOP_QUEUE')}`;
 
     const volBadge = `🔊 ${player.volume || 100}%`;
     const filterBadge = (!isPreparing && player.audioFilter && player.audioFilter !== 'off') ? `  \`🎛️ ${player.audioFilter}\`` : '';
@@ -96,7 +102,7 @@ function createNowPlayingCard(player, track, options = {}) {
     const safeAuthor = track?.author || 'Unknown Artist';
 
     const embedColor = isPreparing ? '#FFA500' : (isSupporter ? '#00FF88' : '#00B0FF');
-    const stageTitle = isPreparing ? 'Switching Track ⏳' : 'Cosmic Stage 🟢';
+    const stageTitle = isPreparing ? i18n.t(guildId, 'CARD_SWITCHING_STAGE') : i18n.t(guildId, 'CARD_STAGE_TITLE');
 
     const embed = new EmbedBuilder()
         .setColor(embedColor)
@@ -108,11 +114,11 @@ function createNowPlayingCard(player, track, options = {}) {
         .setURL((track?.realSource?.includes('Bypass') && track?.fallbackUri) ? track.fallbackUri : (track?.uri || 'https://discord.com'))
         .setDescription(
             `**${safeAuthor}**${requesterTag}\n\n` +
-            (isPreparing ? `\`⏳ ${statusText}\`  \`⚡ Buffering...\`\n\n` : `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n`) +
+            (isPreparing ? `\`⏳ ${statusText}\`  \`${bufferText}\`\n\n` : `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n`) +
             `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\``
         )
         .setFooter({
-            text: `🔊 #${channelName}  •  👥 ${membersCount} listening`
+            text: `🔊 #${channelName}  •  👥 ${listeningText}`
         });
 
     if (track?.thumbnail) {
@@ -154,29 +160,29 @@ function createNowPlayingCard(player, track, options = {}) {
         new ButtonBuilder()
             .setCustomId('music_shuffle')
             .setEmoji('🔀')
-            .setLabel('Shuffle')
+            .setLabel(i18n.t(guildId, 'BTN_SHUFFLE'))
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(isPreparing),
         new ButtonBuilder()
             .setCustomId('music_loop')
             .setEmoji(player.loop === 'track' ? '🔂' : '🔁')
-            .setLabel('Loop')
+            .setLabel(i18n.t(guildId, 'BTN_LOOP'))
             .setStyle(player.loop !== 'none' ? ButtonStyle.Primary : ButtonStyle.Secondary)
             .setDisabled(isPreparing),
         new ButtonBuilder()
             .setCustomId('music_queue')
             .setEmoji('📋')
-            .setLabel('Queue')
+            .setLabel(i18n.t(guildId, 'BTN_QUEUE'))
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('music_lyrics')
             .setEmoji('📄')
-            .setLabel('Lyrics')
+            .setLabel(i18n.t(guildId, 'BTN_LYRICS'))
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('music_favorite')
             .setEmoji('💖')
-            .setLabel('Favorites')
+            .setLabel(i18n.t(guildId, 'BTN_FAVORITES'))
             .setStyle(ButtonStyle.Secondary)
     );
 
@@ -185,23 +191,23 @@ function createNowPlayingCard(player, track, options = {}) {
         new ButtonBuilder()
             .setCustomId('music_add_song')
             .setEmoji('➕')
-            .setLabel('ขอเพลง')
+            .setLabel(i18n.t(guildId, 'BTN_REQUEST_SONG'))
             .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
             .setCustomId('music_add_playlist')
             .setEmoji('📑')
-            .setLabel('เพลย์ลิสต์')
+            .setLabel(i18n.t(guildId, 'BTN_PLAYLIST'))
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('music_volume')
             .setEmoji('🔊')
-            .setLabel('Volume')
+            .setLabel(i18n.t(guildId, 'BTN_VOLUME'))
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(isPreparing),
         new ButtonBuilder()
             .setCustomId('music_autoplay')
             .setEmoji('📻')
-            .setLabel(player.autoplay ? 'Autoplay On' : 'Autoplay Off')
+            .setLabel(player.autoplay ? i18n.t(guildId, 'BTN_AUTOPLAY_ON') : i18n.t(guildId, 'BTN_AUTOPLAY_OFF'))
             .setStyle(player.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary)
     );
 
@@ -210,7 +216,7 @@ function createNowPlayingCard(player, track, options = {}) {
         new ButtonBuilder()
             .setCustomId('music_stop')
             .setEmoji('🛑')
-            .setLabel('ปิดแอป')
+            .setLabel(i18n.t(guildId, 'BTN_STOP'))
             .setStyle(ButtonStyle.Danger)
     );
 
@@ -225,16 +231,16 @@ function createNowPlayingCard(player, track, options = {}) {
     // Modern Discord Components V2: Container layout (Accent colored bar enclosing all text & buttons)
     const accentColorInt = isPreparing ? 0xFFA500 : (isSupporter ? 0x00FF88 : 0x00B0FF);
     const contentMarkdown = isPreparing
-        ? `### ⏳ ${player.manager.client.user.username} • Switching Track\n` +
+        ? `### ⏳ ${player.manager.client.user.username} • ${stageTitle}\n` +
           `**${safeTitle}**\n\n` +
-          `\`⏳ ${statusText}\`  \`⚡ Buffering...\`\n\n` +
+          `\`⏳ ${statusText}\`  \`${bufferText}\`\n\n` +
           `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\`\n\n` +
-          `*🔊 #${channelName}  •  👥 ${membersCount} listening*`
+          `*🔊 #${channelName}  •  👥 ${listeningText}*`
         : `### [${safeTitle}](${track?.uri || 'https://discord.com'})\n` +
           `**${safeAuthor}**${requesterTag}\n\n` +
           `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n` +
           `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\`\n\n` +
-          `*🔊 #${channelName}  •  👥 ${membersCount} listening*`;
+          `*🔊 #${channelName}  •  👥 ${listeningText}*`;
 
     const section = new SectionBuilder().addTextDisplayComponents(
         new TextDisplayBuilder().setContent(contentMarkdown)
@@ -259,8 +265,9 @@ function createNowPlayingCard(player, track, options = {}) {
     };
 }
 
-function createPreparingCard(player, track, customStatus = 'กำลังเตรียมเพลงถัดไป...') {
-    return createNowPlayingCard(player, track, { isPreparing: true, statusText: customStatus });
+function createPreparingCard(player, track, customStatus = null) {
+    const statusText = customStatus || i18n.t(player?.guildId, 'STATUS_PREPARING_NEXT');
+    return createNowPlayingCard(player, track, { isPreparing: true, statusText });
 }
 
 module.exports = {
