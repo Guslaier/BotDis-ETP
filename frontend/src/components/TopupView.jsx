@@ -316,7 +316,7 @@ export default function TopupView({ lang, onToast }) {
           </h1>
 
           <p style={{
-            maxWidth: 640,
+            maxWidth: 680,
             margin: '0 auto 18px',
             color: '#E2E8F0',
             fontSize: 'clamp(14px, 2vw, 15.5px)',
@@ -325,8 +325,8 @@ export default function TopupView({ lang, onToast }) {
             letterSpacing: '-0.01em'
           }}>
             {lang === 'th'
-              ? `สมาชิกทุกคนในห้องเสียงฟังคุณภาพ 96 kbps ทันที และฟังเพลงอย่างต่อเนื่องไม่จำกัด เพียง ${priceRate} บาท / 30 วัน`
-              : `Instant 96 kbps HQ audio for everyone in your voice channel with uninterrupted continuous listening. Only ${priceRate} THB / 30 Days.`}
+              ? 'สมาชิกทุกคนในห้องเสียงฟังคุณภาพ 96 kbps ทันที และฟังเพลงอย่างต่อเนื่องไม่จำกัด เพียงสนับสนุนเรา'
+              : 'Instant 96 kbps HQ audio for everyone in your voice channel with uninterrupted continuous listening, simply by supporting us.'}
           </p>
 
           {/* Understated Feature Strip */}
