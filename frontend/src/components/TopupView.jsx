@@ -5,6 +5,25 @@ import {
   IconFileText, IconX, IconCheck, IconRadio, IconHeadphones
 } from '@tabler/icons-react';
 
+function TrueMoneyVoucherIcon({ size = 18, style = {} }) {
+  return (
+    <img
+      src="/truemoney-voucher.png"
+      alt="TrueMoney Voucher"
+      width={size}
+      height={Math.round(size * 0.81)}
+      style={{
+        display: 'inline-block',
+        verticalAlign: 'middle',
+        objectFit: 'contain',
+        flexShrink: 0,
+        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
+        ...style
+      }}
+    />
+  );
+}
+
 export default function TopupView({ lang, onToast }) {
   const [guildId, setGuildId] = useState('');
   const [userId, setUserId] = useState('');
@@ -584,7 +603,7 @@ export default function TopupView({ lang, onToast }) {
         <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
-              <IconSparkles size={17} style={{ color: 'var(--cyber-pink)' }} />
+              <TrueMoneyVoucherIcon size={20} />
               <span>{lang === 'th' ? '2. ทำรายการสนับสนุน (Checkout Terminal)' : '2. Checkout Terminal'}</span>
             </h2>
             <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
@@ -619,10 +638,10 @@ export default function TopupView({ lang, onToast }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6
+                gap: 7
               }}
             >
-              <IconSparkles size={14} />
+              <TrueMoneyVoucherIcon size={17} />
               <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney Voucher'}</span>
             </button>
             <button
@@ -714,13 +733,13 @@ export default function TopupView({ lang, onToast }) {
                   type="submit"
                   disabled={submittingTopup}
                   className="btn btn-pink"
-                  style={{ width: '100%', padding: '13px 18px', fontSize: 14 }}
+                  style={{ width: '100%', padding: '13px 18px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   {submittingTopup ? (
                     <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
                   ) : (
                     <>
-                      <IconSparkles size={16} />
+                      <TrueMoneyVoucherIcon size={20} />
                       <span>{lang === 'th' ? 'ยืนยันการร่วมสนับสนุน' : 'Confirm Server Contribution'}</span>
                     </>
                   )}

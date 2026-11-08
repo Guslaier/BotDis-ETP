@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 96" width="120" height="96" fill="none">
+  <!-- Outer Body with Dark Rounded Border -->
+  <rect x="4" y="4" width="112" height="88" rx="14" fill="#FFC299" stroke="#111111" stroke-width="7" stroke-linejoin="round"/>
+  <!-- Top Flap Dark Curve -->
+  <path d="M 5 32 Q 60 52 115 32" stroke="#111111" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <!-- Center Seal Badge -->
+  <circle cx="60" cy="46" r="19" fill="#FFFFFF" stroke="#FFA366" stroke-width="3"/>
+  <!-- TrueMoney Logo Ribbon Wings -->
+  <!-- Left Wing (Red) -->
+  <polygon points="48,38 52,38 57,53 53,53" fill="#E61C38"/>
+  <!-- Center Trapezoid (Yellow/Gold) -->
+  <polygon points="56,43 64,43 61,53 59,53" fill="#FFC000"/>
+  <!-- Right Wing (Orange) -->
+  <polygon points="68,38 72,38 67,53 63,53" fill="#F96300"/>
+</svg>
