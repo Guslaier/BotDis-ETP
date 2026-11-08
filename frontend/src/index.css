@@ -220,35 +220,35 @@ body {
   transform: none !important;
 }
 
-/* Primary Lime Button */
+/* Primary Button (Refined Solid Emerald, Non-Neon) */
 .btn-primary {
-  background: linear-gradient(180deg, #15FF92 0%, #00DF73 100%);
-  color: #04080F;
-  border: 1px solid #00FF87;
-  font-weight: 700;
-  box-shadow: 0 4px 16px var(--slime-glow), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #33FF9F 0%, #00F580 100%);
-  border-color: #33FF9F;
-  box-shadow: 0 6px 24px rgba(0, 255, 135, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  color: #04080F;
+  background: linear-gradient(180deg, #34D399 0%, #10B981 100%);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  color: #FFFFFF;
 }
 
-/* Pink VIP Button */
+/* Crimson / Voucher Button (Authentic TrueMoney Solid Red, Non-Neon) */
 .btn-pink {
-  background: linear-gradient(180deg, #FF3D92 0%, #E61E74 100%);
+  background: linear-gradient(180deg, #E22038 0%, #C8152A 100%);
   color: #FFFFFF;
-  border: 1px solid #FF2B85;
-  font-weight: 700;
-  box-shadow: 0 4px 16px var(--cyber-glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn-pink:hover:not(:disabled) {
-  background: linear-gradient(180deg, #FF559F 0%, #F5247B 100%);
-  border-color: #FF559F;
-  box-shadow: 0 6px 24px rgba(255, 43, 133, 0.45);
+  background: linear-gradient(180deg, #EE2B43 0%, #D41A30 100%);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
 }
 
 /* Danger Button */

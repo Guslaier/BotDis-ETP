@@ -614,11 +614,11 @@ export default function TopupView({ lang, onToast }) {
           {/* Segmented Mode Selector */}
           <div style={{
             display: 'flex',
-            gap: 6,
+            gap: 4,
             marginBottom: 20,
-            background: 'rgba(5, 7, 11, 0.65)',
-            padding: 4,
-            borderRadius: 12,
+            background: 'rgba(255, 255, 255, 0.04)',
+            padding: 3,
+            borderRadius: 10,
             border: '1px solid var(--border-subtle)'
           }}>
             <button
@@ -627,18 +627,19 @@ export default function TopupView({ lang, onToast }) {
               style={{
                 flex: 1,
                 padding: '9px 12px',
-                borderRadius: 9,
-                border: 'none',
-                background: formTab === 'voucher' ? 'var(--cyber-pink)' : 'transparent',
+                borderRadius: 8,
+                border: formTab === 'voucher' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
+                background: formTab === 'voucher' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
                 color: formTab === 'voucher' ? '#FFF' : 'var(--text-sub)',
-                fontWeight: formTab === 'voucher' ? 700 : 500,
+                fontWeight: formTab === 'voucher' ? 600 : 500,
                 fontSize: 12,
                 cursor: 'pointer',
-                transition: 'all 0.18s ease',
+                transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 7
+                gap: 7,
+                boxShadow: formTab === 'voucher' ? '0 2px 6px rgba(0, 0, 0, 0.35)' : 'none'
               }}
             >
               <TrueMoneyVoucherIcon size={17} />
@@ -650,18 +651,19 @@ export default function TopupView({ lang, onToast }) {
               style={{
                 flex: 1,
                 padding: '9px 12px',
-                borderRadius: 9,
-                border: 'none',
-                background: formTab === 'promo' ? 'var(--slime-green)' : 'transparent',
-                color: formTab === 'promo' ? '#05070B' : 'var(--text-sub)',
-                fontWeight: formTab === 'promo' ? 700 : 500,
+                borderRadius: 8,
+                border: formTab === 'promo' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
+                background: formTab === 'promo' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: formTab === 'promo' ? '#FFF' : 'var(--text-sub)',
+                fontWeight: formTab === 'promo' ? 600 : 500,
                 fontSize: 12,
                 cursor: 'pointer',
-                transition: 'all 0.18s ease',
+                transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6
+                gap: 6,
+                boxShadow: formTab === 'promo' ? '0 2px 6px rgba(0, 0, 0, 0.35)' : 'none'
               }}
             >
               <IconGift size={14} />
