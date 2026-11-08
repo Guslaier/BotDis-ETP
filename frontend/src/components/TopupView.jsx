@@ -216,89 +216,121 @@ export default function TopupView({ lang, onToast }) {
       <section style={{
         textAlign: 'center',
         padding: '36px 20px 28px',
-        position: 'relative'
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Ambient Studio Audio Frequency Waveform Background */}
         <div style={{
-          display: 'inline-flex',
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(760px, 96vw)',
+          height: 150,
+          pointerEvents: 'none',
+          opacity: 0.12,
+          zIndex: 0,
+          display: 'flex',
           alignItems: 'center',
-          gap: 8,
-          padding: '4px 14px',
-          borderRadius: 999,
-          background: 'rgba(0, 255, 135, 0.08)',
-          border: '1px solid rgba(0, 255, 135, 0.25)',
-          color: 'var(--slime-green)',
-          fontSize: 11.5,
-          fontWeight: 700,
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
-          marginBottom: 16
+          justifyContent: 'center',
+          gap: 5
         }}>
-          <IconBolt size={14} stroke={1.8} />
-          <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับสตูดิโอ' : 'GOOLIX High-Fidelity Audio Core'}</span>
+          {[22, 38, 28, 54, 42, 70, 48, 34, 65, 84, 58, 92, 68, 80, 46, 62, 38, 74, 44, 58, 30, 46, 24].map((h, i) => (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                height: `${h}%`,
+                borderRadius: 2,
+                background: 'linear-gradient(180deg, var(--slime-green) 0%, rgba(0, 229, 255, 0.4) 60%, transparent 100%)'
+              }}
+            />
+          ))}
         </div>
 
-        <h1 style={{
-          fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
-          fontWeight: 800,
-          letterSpacing: '-0.03em',
-          lineHeight: 1.15,
-          color: '#FFFFFF',
-          margin: '0 0 12px 0'
-        }}>
-          {lang === 'th' ? (
-            <>
-              ปลดล็อกเสียงคมชัดระดับ <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span><br />
-              ให้ทุกคนในเซิร์ฟเวอร์ของคุณ
-            </>
-          ) : (
-            <>
-              Upgrade to <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span> Sound<br />
-              For Your Entire Community
-            </>
-          )}
-        </h1>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '4px 14px',
+            borderRadius: 999,
+            background: 'rgba(0, 255, 135, 0.08)',
+            border: '1px solid rgba(0, 255, 135, 0.25)',
+            color: 'var(--slime-green)',
+            fontSize: 11.5,
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            marginBottom: 16
+          }}>
+            <IconBolt size={14} stroke={1.8} />
+            <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับสตูดิโอ' : 'GOOLIX High-Fidelity Audio Core'}</span>
+          </div>
 
-        <p style={{
-          maxWidth: 620,
-          margin: '0 auto 20px',
-          color: 'var(--text-sub)',
-          fontSize: 14,
-          lineHeight: 1.6
-        }}>
-          {lang === 'th'
-            ? `สิทธิ์ Supporter ผูกระดับเซิร์ฟเวอร์ สมาชิกทุกคนในห้องเสียงฟังเพลงคุณภาพ 96 kbps และเข้าใช้งาน Priority Slot พร้อมกันโดยไม่ต้องจ่ายรายคน เพียง ${priceRate} บาท / 30 วัน`
-            : `One single guild unlock covers everyone in the voice channel with Opus 96k Studio HQ streaming and instant Priority Lane access for ${priceRate} THB / 30 Days.`}
-        </p>
+          <h1 style={{
+            fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.15,
+            color: '#FFFFFF',
+            margin: '0 0 12px 0'
+          }}>
+            {lang === 'th' ? (
+              <>
+                ปลดล็อกเสียงคมชัดระดับ <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span><br />
+                ให้ทุกคนในเซิร์ฟเวอร์ของคุณ
+              </>
+            ) : (
+              <>
+                Upgrade to <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span> Sound<br />
+                For Your Entire Community
+              </>
+            )}
+          </h1>
 
-        {/* Feature Pills Strip */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: 10,
-          flexWrap: 'wrap',
-          fontSize: 12,
-          color: 'var(--text-sub)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <IconHeadphones size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-            <span>96 kbps Studio HQ</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <IconBolt size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-            <span>Priority Fast Slot</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <IconClock size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-            <span>Unlimited Duration</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <IconMusic size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-            <span>50-Track Queue</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <IconSparkles size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
-            <span>Smart Autoplay</span>
+          <p style={{
+            maxWidth: 620,
+            margin: '0 auto 20px',
+            color: 'var(--text-sub)',
+            fontSize: 14,
+            lineHeight: 1.6
+          }}>
+            {lang === 'th'
+              ? `สิทธิ์ Supporter ผูกระดับเซิร์ฟเวอร์ สมาชิกทุกคนในห้องเสียงฟังเพลงคุณภาพ 96 kbps และเข้าใช้งาน Priority Slot พร้อมกันโดยไม่ต้องจ่ายรายคน เพียง ${priceRate} บาท / 30 วัน`
+              : `One single guild unlock covers everyone in the voice channel with Opus 96k Studio HQ streaming and instant Priority Lane access for ${priceRate} THB / 30 Days.`}
+          </p>
+
+          {/* Feature Pills Strip */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 10,
+            flexWrap: 'wrap',
+            fontSize: 12,
+            color: 'var(--text-sub)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconHeadphones size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>96 kbps Studio HQ</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconBolt size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>Priority Fast Slot</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconClock size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>Unlimited Duration</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconMusic size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>50-Track Queue</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <IconSparkles size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
+              <span>Smart Autoplay</span>
+            </div>
           </div>
         </div>
       </section>
