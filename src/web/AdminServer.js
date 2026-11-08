@@ -358,6 +358,8 @@ class AdminServer {
                     memberCount: guild.memberCount,
                     isSupporter: subscriptionManager.isSupporter(guildId),
                     expiresAt: sub.expiresAt,
+                    isMaxStacked: Boolean(sub.plan === 'SUPPORTER' && sub.expiresAt > Date.now() && Math.ceil((sub.expiresAt - Date.now()) / (24 * 3600 * 1000)) >= 90),
+                    maxAccumulatedDays: 90,
                     referralCode: sub.referralCode,
                     referralCount: sub.referralCount || 0,
                     maxReferralMonths: config?.maxReferralMonths || 6,
@@ -453,6 +455,11 @@ class AdminServer {
                     remainingClaims: redeemResult.remainingClaims,
                     sub: updatedSub
                 });
+            }
+
+            const topupCheck = subscriptionManager.canAcceptTopup(guildId);
+            if (!topupCheck.allowed) {
+                return this._sendJson(res, 400, { success: false, error: topupCheck.error });
             }
 
             const config = subscriptionManager.getConfig();

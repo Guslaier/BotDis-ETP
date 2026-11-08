@@ -54,6 +54,12 @@ export default function TopupView({ lang, onToast }) {
   const [submittingTopup, setSubmittingTopup] = useState(false);
   const [submittingPromo, setSubmittingPromo] = useState(false);
 
+  const isMaxStacked = Boolean(
+    guildData?.guild?.isSupporter && 
+    guildData?.guild?.expiresAt && 
+    ((guildData.guild.expiresAt - Date.now()) >= 90 * 24 * 3600 * 1000)
+  );
+
   const formatCountdown = (targetMs, l) => {
     if (!targetMs) return null;
     const diff = targetMs - Date.now();
@@ -132,6 +138,10 @@ export default function TopupView({ lang, onToast }) {
 
   const handleTopup = async (e) => {
     if (e) e.preventDefault();
+    if (isMaxStacked) {
+      onToast('warning', lang === 'th' ? 'วันใช้งานสะสมเต็มเพดาน' : 'Max Cap Reached', lang === 'th' ? 'เซิร์ฟเวอร์นี้มีวันสะสมครบ 90 วันแล้ว กรุณารอให้วันลดลงก่อนเติมเพิ่มครับ' : 'Server reached 90-day cap');
+      return;
+    }
     if (!guildId.trim()) {
       onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID', lang === 'th' ? 'เลือกหรือกรอกไอดีเซิร์ฟเวอร์ก่อนครับ' : 'Provide Guild ID first');
       return;
@@ -616,9 +626,24 @@ export default function TopupView({ lang, onToast }) {
                       <IconClock size={13} style={{ color: 'var(--cyan-freq)' }} />
                       {lang === 'th' ? 'วันใช้งานคงเหลือ:' : 'Remaining Time:'}
                     </span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
-                      {formatExpiry(guildData.guild.expiresAt)}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
+                        {formatExpiry(guildData.guild.expiresAt)}
+                      </span>
+                      {isMaxStacked && (
+                        <span style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: 'var(--amber-warn)',
+                          background: 'rgba(245, 158, 11, 0.1)',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                          padding: '1px 6px',
+                          borderRadius: 4
+                        }}>
+                          {lang === 'th' ? 'เต็มเพดาน' : 'Max Cap'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -960,19 +985,21 @@ export default function TopupView({ lang, onToast }) {
 
                 <input
                   type="text"
-                  placeholder="https://gift.truemoney.com/campaign/?v=..."
+                  placeholder={isMaxStacked ? (lang === 'th' ? 'เซิร์ฟเวอร์มีวันสะสมครบ 90 วันแล้ว (ล็อกการเติมเงิน)' : 'Server reached 90-day max cap') : "https://gift.truemoney.com/campaign/?v=..."}
                   value={voucher}
                   onChange={(e) => setVoucher(e.target.value)}
+                  disabled={isMaxStacked}
                   style={{
                     width: '100%',
                     padding: '11px 14px',
                     borderRadius: 10,
-                    background: 'rgba(5, 7, 12, 0.8)',
-                    border: '1px solid var(--border-light)',
-                    color: '#FFFFFF',
-                    fontSize: 12.5
+                    background: isMaxStacked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
+                    border: '1px solid ' + (isMaxStacked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
+                    color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
+                    fontSize: 12.5,
+                    cursor: isMaxStacked ? 'not-allowed' : 'text'
                   }}
-                  required
+                  required={!isMaxStacked}
                 />
 
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
@@ -1007,30 +1034,33 @@ export default function TopupView({ lang, onToast }) {
                           setReferralCode(val);
                           if (!val) setReferrerName('');
                         }}
+                        disabled={isMaxStacked}
                         style={{
                           flex: 1,
                           padding: '10px 14px',
                           borderRadius: 10,
-                          background: 'rgba(5, 7, 12, 0.8)',
-                          border: '1px solid var(--border-light)',
-                          color: '#FFFFFF',
+                          background: isMaxStacked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
+                          border: '1px solid ' + (isMaxStacked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
+                          color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
                           fontSize: 12.5,
                           fontFamily: 'var(--font-mono)',
-                          letterSpacing: '0.04em'
+                          letterSpacing: '0.04em',
+                          cursor: isMaxStacked ? 'not-allowed' : 'text'
                         }}
                       />
                       <button
                         type="button"
                         onClick={handleApplyReferral}
+                        disabled={isMaxStacked}
                         style={{
                           padding: '0 16px',
                           borderRadius: 10,
                           background: 'rgba(255, 255, 255, 0.08)',
                           border: '1px solid rgba(255, 255, 255, 0.16)',
-                          color: '#FFFFFF',
+                          color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
                           fontWeight: 600,
                           fontSize: 12.5,
-                          cursor: 'pointer',
+                          cursor: isMaxStacked ? 'not-allowed' : 'pointer',
                           whiteSpace: 'nowrap'
                         }}
                       >
@@ -1050,7 +1080,7 @@ export default function TopupView({ lang, onToast }) {
 
               {/* Order Breakdown / Pricing Summary */}
               <div style={{
-                marginBottom: 16,
+                marginBottom: 12,
                 padding: '12px 14px',
                 borderRadius: 10,
                 background: 'rgba(255, 255, 255, 0.02)',
@@ -1080,11 +1110,41 @@ export default function TopupView({ lang, onToast }) {
                 </div>
               </div>
 
+              {/* Important Contribution & 90-Day Cap Tip Box */}
+              <div style={{
+                marginBottom: 16,
+                padding: '10px 14px',
+                borderRadius: 10,
+                background: isMaxStacked ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.07)',
+                border: '1px solid ' + (isMaxStacked ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.25)'),
+                fontSize: 11.5,
+                lineHeight: 1.55,
+                color: isMaxStacked ? '#FCA5A5' : '#FDE68A'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, marginBottom: 4, color: isMaxStacked ? '#EF4444' : '#F59E0B' }}>
+                  <IconAlertCircle size={14} />
+                  <span>{lang === 'th' ? (isMaxStacked ? 'วันใช้งานสะสมครบโควตาสูงสุดแล้ว' : 'ข้อควรรู้ก่อนส่งซอง:') : (isMaxStacked ? 'Max 90-Day Subscription Reached' : 'Important Contribution Rules:')}</span>
+                </div>
+                {isMaxStacked ? (
+                  <div>
+                    {lang === 'th'
+                      ? 'เซิร์ฟเวอร์นี้มีวันใช้งานสะสมครบโควตาสูงสุด 90 วัน (3 เดือน) แล้ว ระบบล็อกการทำรายการชั่วคราวเพื่อป้องกันการเสียสิทธิ์ กรุณารอให้วันใช้งานเหลือน้อยกว่า 90 วันจึงจะเติมเพิ่มได้ครับ'
+                      : 'This server has reached the maximum 90-day subscription cap. New contributions are temporarily locked to protect your funds. Please wait until remaining days drop below 90.'}
+                  </div>
+                ) : (
+                  <div>
+                    {lang === 'th'
+                      ? 'ระบบคำนวณวันสะสมสูงสุดไม่เกิน 90 วัน (3 เดือน) กรุณาสร้างซองตรงตามยอด 29 บาทพอดี หากใส่ยอดเงินเกินกว่าเพดาน 90 วัน ระบบจะไม่สามารถทบวันเพิ่มได้และไม่รับผิดชอบยอดส่วนเกินครับ'
+                      : 'Maximum accumulated subscription is capped at 90 days. Please set voucher amount to exactly 29 THB. Any excess funds exceeding the 90-day cap cannot be stacked or refunded.'}
+                  </div>
+                )}
+              </div>
+
               {/* Confirm Support Button */}
               <div style={{ marginTop: 'auto' }}>
                 <button
                   type="submit"
-                  disabled={submittingTopup}
+                  disabled={isMaxStacked || submittingTopup}
                   className="btn btn-primary"
                   style={{
                     width: '100%',
@@ -1094,10 +1154,19 @@ export default function TopupView({ lang, onToast }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 8,
-                    borderRadius: 12
+                    borderRadius: 12,
+                    opacity: isMaxStacked ? 0.6 : 1,
+                    cursor: isMaxStacked ? 'not-allowed' : 'pointer',
+                    background: isMaxStacked ? 'rgba(255, 255, 255, 0.08)' : undefined,
+                    borderColor: isMaxStacked ? 'rgba(255, 255, 255, 0.15)' : undefined
                   }}
                 >
-                  {submittingTopup ? (
+                  {isMaxStacked ? (
+                    <>
+                      <IconLock size={16} />
+                      <span>{lang === 'th' ? 'วันใช้งานสะสมเต็มโควตาแล้ว (สูงสุด 90 วัน)' : 'Max 90-Day Cap Reached'}</span>
+                    </>
+                  ) : submittingTopup ? (
                     <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
                   ) : (
                     <>

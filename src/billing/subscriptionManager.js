@@ -59,6 +59,27 @@ class SubscriptionManager extends EventEmitter {
         return `http://${process.env.PUBLIC_IP || '15.235.164.106'}:${publicPort}`;
     }
 
+    canAcceptTopup(guildId) {
+        if (!guildId) return { allowed: false, error: 'กรุณาระบุรหัสเซิร์ฟเวอร์ครับ' };
+        const sub = this.getGuildSubscription(guildId);
+        if (!sub) return { allowed: true, remainingDays: 0, maxDays: 90 };
+        const now = Date.now();
+        if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
+            const remainingDays = Math.ceil((sub.expiresAt - now) / (24 * 3600 * 1000));
+            const MAX_ACCUMULATED_DAYS = 90;
+            if (remainingDays >= MAX_ACCUMULATED_DAYS) {
+                return {
+                    allowed: false,
+                    remainingDays,
+                    maxDays: MAX_ACCUMULATED_DAYS,
+                    error: `เซิร์ฟเวอร์นี้มีวันใช้งานสะสมครบโควตาสูงสุดแล้ว (${remainingDays}/${MAX_ACCUMULATED_DAYS} วัน) กรุณารอให้วันใช้งานเหลือน้อยกว่า ${MAX_ACCUMULATED_DAYS} วันก่อนเติมเพิ่มครับ`
+                };
+            }
+            return { allowed: true, remainingDays, maxDays: MAX_ACCUMULATED_DAYS };
+        }
+        return { allowed: true, remainingDays: 0, maxDays: 90 };
+    }
+
     _generateReferralCode(guildId) {
         const hash = crypto.createHash('md5').update(`ref:${guildId}`).digest('hex').slice(0, 6).toUpperCase();
         return `REF-${hash}`;
@@ -287,8 +308,8 @@ class SubscriptionManager extends EventEmitter {
             sub.expiresAt = now + addedMs;
         }
 
-        // Lock maximum accumulated subscription ceiling to 365 days (1 year)
-        const MAX_ACCUMULATED_DAYS = 365;
+        // Lock maximum accumulated subscription ceiling to 90 days (3 months / 3 billing cycles)
+        const MAX_ACCUMULATED_DAYS = 90;
         const maxDurationMs = MAX_ACCUMULATED_DAYS * 24 * 3600 * 1000;
         if (sub.expiresAt > now + maxDurationMs) {
             sub.expiresAt = now + maxDurationMs;
