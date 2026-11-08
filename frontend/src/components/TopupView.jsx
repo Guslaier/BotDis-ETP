@@ -787,6 +787,10 @@ export default function TopupView({ lang, onToast }) {
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
                     <span>{lang === 'th' ? 'คิวเพลงสูงสุด 10 เพลง' : 'Max 10 songs in queue'}</span>
                   </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#CBD5E1' }}>
+                    <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'ใส่เพลย์ลิสต์ ครั้งละ 5 เพลง' : 'Add up to 5 songs per playlist'}</span>
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#94A3B8' }}>
                     <IconX size={15} style={{ color: '#F87171', flexShrink: 0 }} />
                     <span>{lang === 'th' ? 'จำกัดความยาว 30 นาที/เพลง' : 'Track capped at 30 mins'}</span>
@@ -847,6 +851,10 @@ export default function TopupView({ lang, onToast }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
                     <span>{lang === 'th' ? 'ขยายคิวเพลงสูงสุด 50 เพลง' : 'Expand queue to 50 songs'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
+                    <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'ใส่เพลย์ลิสต์ ครั้งละ 25 เพลง' : 'Add up to 25 songs per playlist'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
