@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, CheckCircle2, AlertCircle, Gift, Server, ShieldCheck, 
-  Clock, ArrowRight, Share2, Copy, Zap, Music2, Award,
-  FileText, X, ChevronRight, Check
+  Clock, ArrowRight, Copy, Zap, Music2, Award,
+  FileText, X, Check, Radio, Headphones
 } from 'lucide-react';
 
 export default function TopupView({ lang, onToast }) {
@@ -148,7 +148,7 @@ export default function TopupView({ lang, onToast }) {
       });
       const data = await res.json();
       if (data.success) {
-        onToast('success', lang === 'th' ? 'เคลมสิทธิ์สำเร็จ!' : 'Code Redeemed!', lang === 'th' ? `ยินดีด้วยครับ! ได้รับสิทธิ์ ${data.campaignName} (+${data.addedDays} วัน)` : `Received +${data.addedDays} days`);
+        onToast('success', lang === 'th' ? 'เคลมสิทธิ์สำเร็จ!' : 'Code Redeemed!', lang === 'th' ? `ได้รับสิทธิ์ ${data.campaignName} (+${data.addedDays} วัน)` : `Received +${data.addedDays} days`);
         setPromoCode('');
         verifyGuild(guildId, userId);
       } else {
@@ -165,7 +165,7 @@ export default function TopupView({ lang, onToast }) {
     if (!guildData?.guild?.referralCode) return;
     const link = `${window.location.origin}/?ref=${guildData.guild.referralCode}`;
     navigator.clipboard.writeText(link);
-    onToast('success', lang === 'th' ? 'คัดลอกลิงก์แล้ว!' : 'Copied Link!', link);
+    onToast('success', lang === 'th' ? 'คัดลอกลิงก์แล้ว' : 'Copied Link', link);
   };
 
   const formatExpiry = (timestamp) => {
@@ -178,13 +178,106 @@ export default function TopupView({ lang, onToast }) {
     return `${days} ${lang === 'th' ? 'วัน' : 'days'} ${hours} ${lang === 'th' ? 'ชม.' : 'hrs'} (${new Date(timestamp).toLocaleDateString('th-TH')})`;
   };
 
+  const priceRate = guildData?.config?.price30Days ?? 29;
+
   return (
-    <div style={{ maxWidth: 940, margin: '36px auto', padding: '0 20px' }} className="fade-in">
-      {/* Top Banner: Early Bird Drop (if active on server) */}
+    <div style={{ maxWidth: 1040, margin: '24px auto', padding: '0 20px' }} className="fade-in">
+      {/* 1. HERO SOUNDSTAGE HEADER */}
+      <section style={{
+        textAlign: 'center',
+        padding: '36px 20px 28px',
+        position: 'relative'
+      }}>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '4px 14px',
+          borderRadius: 999,
+          background: 'rgba(0, 255, 135, 0.08)',
+          border: '1px solid rgba(0, 255, 135, 0.25)',
+          color: 'var(--slime-green)',
+          fontSize: 11.5,
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          marginBottom: 16
+        }}>
+          <Zap size={13} />
+          <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับสตูดิโอ' : 'GOOLIX High-Fidelity Audio Core'}</span>
+        </div>
+
+        <h1 style={{
+          fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
+          fontWeight: 800,
+          letterSpacing: '-0.03em',
+          lineHeight: 1.15,
+          color: '#FFFFFF',
+          margin: '0 0 12px 0'
+        }}>
+          {lang === 'th' ? (
+            <>
+              ปลดล็อกเสียงคมชัดระดับ <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span><br />
+              ให้ทุกคนในเซิร์ฟเวอร์ของคุณ
+            </>
+          ) : (
+            <>
+              Upgrade to <span style={{ color: 'var(--slime-green)' }}>Studio HQ</span> Sound<br />
+              For Your Entire Community
+            </>
+          )}
+        </h1>
+
+        <p style={{
+          maxWidth: 620,
+          margin: '0 auto 20px',
+          color: 'var(--text-sub)',
+          fontSize: 14,
+          lineHeight: 1.6
+        }}>
+          {lang === 'th'
+            ? `สิทธิ์ Supporter ผูกระดับเซิร์ฟเวอร์ สมาชิกทุกคนในห้องเสียงฟังเพลงคุณภาพ 96 kbps และเข้าใช้งาน Priority Slot พร้อมกันโดยไม่ต้องจ่ายรายคน เพียง ${priceRate} บาท / 30 วัน`
+            : `One single guild unlock covers everyone in the voice channel with Opus 96k Studio HQ streaming and instant Priority Lane access for ${priceRate} THB / 30 Days.`}
+        </p>
+
+        {/* Feature Pills Strip */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 10,
+          flexWrap: 'wrap',
+          fontSize: 12,
+          color: 'var(--text-sub)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+            <Headphones size={13} style={{ color: 'var(--slime-green)' }} />
+            <span>96 kbps Studio HQ</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+            <Zap size={13} style={{ color: 'var(--slime-green)' }} />
+            <span>Priority Fast Slot</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+            <Clock size={13} style={{ color: 'var(--slime-green)' }} />
+            <span>Unlimited Duration</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+            <Music2 size={13} style={{ color: 'var(--slime-green)' }} />
+            <span>50-Track Queue</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+            <Sparkles size={13} style={{ color: 'var(--slime-green)' }} />
+            <span>Smart Autoplay</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. EARLY-BIRD DROP BANNER (When Active) */}
       {guildData?.campaign && (
         <div className="glass-panel" style={{
-          padding: '18px 24px',
-          marginBottom: 28,
+          padding: '16px 22px',
+          marginBottom: 24,
           border: '1px solid rgba(0, 255, 135, 0.35)',
           background: 'linear-gradient(135deg, rgba(0, 255, 135, 0.08) 0%, rgba(14, 20, 34, 0.98) 100%)',
           display: 'flex',
@@ -195,8 +288,8 @@ export default function TopupView({ lang, onToast }) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{
-              width: 44,
-              height: 44,
+              width: 42,
+              height: 42,
               borderRadius: 12,
               background: 'rgba(0, 255, 135, 0.12)',
               border: '1px solid rgba(0, 255, 135, 0.3)',
@@ -205,19 +298,19 @@ export default function TopupView({ lang, onToast }) {
               justifyContent: 'center',
               color: 'var(--slime-green)'
             }}>
-              <Gift size={22} />
+              <Gift size={20} />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontWeight: 800, fontSize: 15, color: '#FFF', letterSpacing: '-0.01em' }}>
+                <span style={{ fontWeight: 800, fontSize: 14.5, color: '#FFF' }}>
                   {guildData.campaign.name}
                 </span>
                 <span className="slime-badge" style={{ fontSize: 10, padding: '2px 8px' }}>
                   FREE {guildData.campaign.days || 30} DAYS
                 </span>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 3 }}>
-                {lang === 'th' ? 'แคมเปญสิทธิ์พิเศษเปิดตัวเซิร์ฟเวอร์ เหลือเพียง' : 'Limited Launch Drop remaining:'}{' '}
+              <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                {lang === 'th' ? 'สิทธิ์เปิดตัวเซิร์ฟเวอร์ เหลือเพียง' : 'Launch Drop remaining:'}{' '}
                 <strong style={{ color: 'var(--slime-green)' }}>{guildData.campaign.remaining}</strong> / {guildData.campaign.maxClaims} {lang === 'th' ? 'สิทธิ์' : 'claims'}
                 {guildData.campaign.expiresAt && (
                   <span style={{ marginLeft: 8 }}>
@@ -234,7 +327,7 @@ export default function TopupView({ lang, onToast }) {
               placeholder={lang === 'th' ? 'กรอกรหัสแคมเปญ...' : 'Promo code...'}
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-              style={{ width: 150, padding: '8px 12px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+              style={{ width: 140, padding: '8px 12px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}
             />
             <button type="submit" disabled={submittingPromo} className="btn btn-sm btn-primary">
               {submittingPromo ? '...' : (lang === 'th' ? 'รับสิทธิ์' : 'Claim')}
@@ -243,27 +336,27 @@ export default function TopupView({ lang, onToast }) {
         </div>
       )}
 
-      {/* Main Studio Grid: Left Server Info & Right Topup Console */}
+      {/* 3. MAIN WORKFLOW: 2-COLUMN PRO-CONSOLE */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: 24,
+        gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+        gap: 22,
         marginBottom: 32
       }}>
-        {/* Left Column: Server Status Console */}
+        {/* Left Column: Target Server Identification & Live Status */}
         <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
               <Server size={17} style={{ color: 'var(--slime-green)' }} />
-              <span>{lang === 'th' ? 'ข้อมูลเซิร์ฟเวอร์เป้าหมาย' : 'Target Server Node'}</span>
+              <span>{lang === 'th' ? '1. เซิร์ฟเวอร์เป้าหมาย (Target Guild)' : '1. Target Guild'}</span>
             </h2>
             <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              {lang === 'th' ? 'สเตจเสียง' : 'Audio Node'}
+              Step 01
             </span>
           </div>
 
           {/* Search Box */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
             <input
               type="text"
               placeholder={lang === 'th' ? 'ระบุ Discord Server ID (เช่น 123456...)' : 'Discord Server ID...'}
@@ -284,7 +377,7 @@ export default function TopupView({ lang, onToast }) {
 
           {guildData?.guild ? (
             <div style={{
-              background: 'rgba(5, 7, 11, 0.65)',
+              background: 'rgba(5, 7, 11, 0.7)',
               border: '1px solid var(--border-subtle)',
               borderRadius: 14,
               padding: 18,
@@ -292,32 +385,32 @@ export default function TopupView({ lang, onToast }) {
               flexDirection: 'column',
               gap: 14
             }}>
-              {/* Guild Header */}
+              {/* Guild Header Info */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 {guildData.guild.icon ? (
                   <img
                     src={guildData.guild.icon}
                     alt=""
                     style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 12,
+                      width: 52,
+                      height: 52,
+                      borderRadius: 14,
                       objectFit: 'cover',
                       border: '1px solid var(--border-light)'
                     }}
                   />
                 ) : (
                   <div style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: 12,
+                    width: 52,
+                    height: 52,
+                    borderRadius: 14,
                     background: 'var(--bg-elevated)',
                     border: '1px solid var(--border-subtle)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 800,
-                    fontSize: 19,
+                    fontSize: 20,
                     color: 'var(--text-sub)'
                   }}>
                     {guildData.guild.name.charAt(0)}
@@ -397,7 +490,7 @@ export default function TopupView({ lang, onToast }) {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                     <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--cyber-pink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {lang === 'th' ? 'รหัสชวนเพื่อนรับวันฟรี' : 'Referral Invite Code'}
+                      {lang === 'th' ? 'รหัสชวนเพื่อนรับวันฟรี' : 'Referral Code'}
                     </span>
                     <button
                       onClick={copyReferralLink}
@@ -487,19 +580,19 @@ export default function TopupView({ lang, onToast }) {
           )}
         </div>
 
-        {/* Right Column: Support & Voucher Console */}
+        {/* Right Column: Instant Support & Voucher Terminal */}
         <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
               <Sparkles size={17} style={{ color: 'var(--cyber-pink)' }} />
-              <span>{lang === 'th' ? 'ร่วมสนับสนุน & ปลดล็อกสิทธิ์' : 'Server Contribution & Perks'}</span>
+              <span>{lang === 'th' ? '2. ทำรายการสนับสนุน (Checkout Terminal)' : '2. Checkout Terminal'}</span>
             </h2>
             <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              {lang === 'th' ? 'ช่องทางทำรายการ' : 'Channel'}
+              Step 02
             </span>
           </div>
 
-          {/* Tab Switcher */}
+          {/* Segmented Mode Selector */}
           <div style={{
             display: 'flex',
             gap: 6,
@@ -530,7 +623,7 @@ export default function TopupView({ lang, onToast }) {
               }}
             >
               <Sparkles size={14} />
-              <span>{lang === 'th' ? 'ซองของขวัญ TrueMoney' : 'TrueMoney Voucher'}</span>
+              <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney Voucher'}</span>
             </button>
             <button
               type="button"
@@ -553,7 +646,7 @@ export default function TopupView({ lang, onToast }) {
               }}
             >
               <Gift size={14} />
-              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Drop)' : 'Promo Code'}</span>
+              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Drop)' : 'Promo Drop'}</span>
             </button>
           </div>
 
@@ -561,7 +654,7 @@ export default function TopupView({ lang, onToast }) {
             <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Gift Voucher Link)' : 'Gift Voucher URL'}
+                  {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Voucher Link)' : 'Gift Voucher URL'}
                 </label>
                 <input
                   type="text"
@@ -571,7 +664,7 @@ export default function TopupView({ lang, onToast }) {
                   required
                 />
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Set voucher to "1 recipient" in TrueMoney app'}
+                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Create voucher set to 1 recipient in TrueMoney app'}
                 </div>
               </div>
 
@@ -688,16 +781,16 @@ export default function TopupView({ lang, onToast }) {
           }}>
             <span>{lang === 'th' ? 'เรตผู้สนับสนุนมาตรฐาน:' : 'Standard Supporter Rate:'}</span>
             <strong style={{ color: '#FFF', letterSpacing: '-0.01em' }}>
-              {guildData?.config?.price30Days ?? 29} {lang === 'th' ? 'บาท = 30 วัน (Supporter)' : 'THB = 30 Days (Supporter)'}
+              {priceRate} {lang === 'th' ? 'บาท = 30 วัน (Supporter)' : 'THB = 30 Days (Supporter)'}
             </strong>
           </div>
         </div>
       </div>
 
-      {/* Feature Comparison Matrix */}
-      <div className="glass-panel" style={{ padding: 28, marginBottom: 32 }}>
+      {/* 4. FEATURE SPECIFICATIONS & TIER COMPARISON MATRIX */}
+      <section className="glass-panel" style={{ padding: 28, marginBottom: 32 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em', marginBottom: 4 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em', marginBottom: 4 }}>
             {lang === 'th' ? 'เปรียบเทียบสิทธิประโยชน์แพ็กเกจ' : 'Tier Specifications & Audio Matrix'}
           </h3>
           <p style={{ fontSize: 12, color: 'var(--text-dim)' }}>
@@ -707,7 +800,7 @@ export default function TopupView({ lang, onToast }) {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: 20
         }}>
           {/* General / Free Tier */}
@@ -780,7 +873,7 @@ export default function TopupView({ lang, onToast }) {
                 </div>
               </div>
               <span style={{ fontWeight: 800, fontSize: 15, color: '#FFF', letterSpacing: '-0.01em' }}>
-                {guildData?.config?.price30Days ?? 29} {lang === 'th' ? 'บาท / 30 วัน' : 'THB / 30 Days'}
+                {priceRate} {lang === 'th' ? 'บาท / 30 วัน' : 'THB / 30 Days'}
               </span>
             </div>
 
@@ -814,18 +907,18 @@ export default function TopupView({ lang, onToast }) {
             </ul>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Short Terms of Service & Legal Disclaimer */}
-      <div style={{
-        padding: '20px 24px',
+      {/* 5. TERMS OF SERVICE & LEGAL DISCLAIMER SUMMARY */}
+      <section style={{
+        padding: '22px 26px',
         borderRadius: 16,
         background: 'rgba(255, 255, 255, 0.02)',
         border: '1px solid var(--border-subtle)',
         color: 'var(--text-sub)',
         fontSize: 12,
         lineHeight: 1.65,
-        marginBottom: 20
+        marginBottom: 24
       }}>
         <div style={{
           display: 'flex',
@@ -890,9 +983,9 @@ export default function TopupView({ lang, onToast }) {
               : 'Add-on audio features and processing options may undergo temporary maintenance, throttling, or toggling based on cluster hardware load and upstream platform changes to ensure overall streaming stability.'}
           </li>
         </ol>
-      </div>
+      </section>
 
-      {/* Full Terms of Service Modal Dialog */}
+      {/* 6. FULL TERMS OF SERVICE MODAL DIALOG */}
       {showTosModal && (
         <div style={{
           position: 'fixed',
