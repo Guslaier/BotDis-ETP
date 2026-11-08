@@ -851,17 +851,30 @@ export default function TopupView({ lang, onToast }) {
         <div className="glass-panel" style={{ padding: '22px 24px', borderRadius: 18, display: 'flex', flexDirection: 'column' }}>
           
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <IconTrueMoneyVoucher size={22} stroke={1.8} style={{ color: 'var(--text-pure)' }} />
+              <div className="terminal-badge">2</div>
               <h2 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
-                {lang === 'th' ? '2. ทำรายการสนับสนุน (Checkout Terminal)' : '2. Checkout Terminal'}
+                {lang === 'th' ? 'ทำรายการสนับสนุน (Checkout Terminal)' : 'Checkout Terminal'}
               </h2>
             </div>
-            <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              STEP 02
+            <span style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              color: 'var(--slime-green)',
+              padding: '2px 9px',
+              borderRadius: 999,
+              border: '1px solid rgba(0, 255, 135, 0.3)',
+              background: 'rgba(0, 255, 135, 0.05)',
+              letterSpacing: '0.04em'
+            }}>
+              Step 02
             </span>
           </div>
+
+          <p style={{ fontSize: 12, color: 'var(--text-dim)', margin: '0 0 16px 0' }}>
+            {lang === 'th' ? 'เลือกช่องทางชำระเงินและระบุข้อมูลเพื่อเปิดใช้งานสิทธิ์' : 'Select payment method and complete contribution'}
+          </p>
 
           {/* Segmented Form Tabs: TrueMoney Voucher | Promo Drop */}
           <div style={{
