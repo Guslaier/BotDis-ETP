@@ -454,7 +454,7 @@ class CacheManager {
 
         const maxCacheDurationSec = parseInt(process.env.MAX_CACHE_DURATION_SEC || '1800', 10); // 30 minutes threshold
 
-        const isLive = track.isStream || durationSec <= 0 || track.title?.includes('🔴');
+        const isLive = Boolean(track.isStream || track.isLive || track.title?.includes('🔴'));
 
         // 1. Live streams or infinite feeds MUST ALWAYS pipe directly (Never attempt to cache infinite feeds to disk)
         if (isLive || streamMode === 'pipe' || (streamMode === 'auto' && durationSec > maxCacheDurationSec)) {
@@ -505,7 +505,7 @@ class CacheManager {
             const ytdlpProc = spawn(this.binPath, ytdlpArgs, { windowsHide: true });
 
             const durationSec = track.duration || (track.length ? Math.round(track.length / 1000) : 0);
-            const isLive = track.isStream || durationSec <= 0 || track.title?.includes('🔴');
+            const isLive = Boolean(track.isStream || track.isLive || track.title?.includes('🔴'));
             const filterChain = this._buildAudioFilterChain(volume, filter);
             // YouTube Live streams use HLS AAC (not WebM Opus), so they must route through FFmpeg to transcode to Opus
             const useDirectPassthrough = isYouTube && !filterChain && !isLive;

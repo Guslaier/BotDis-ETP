@@ -271,6 +271,8 @@ class AudioNodeServer {
                 const bitrate = query.bitrate || '64k';
                 const title = query.title ? decodeURIComponent(query.title) : 'Track';
                 const identifier = query.identifier || crypto.createHash('md5').update(uri).digest('hex').slice(0, 20);
+                const duration = parseInt(query.duration || '0', 10) || 0;
+                const isStream = query.isStream === 'true';
 
                 this.activeStreams++;
                 console.log(`[AudioNode] Stream requested: "${title}" (${uri}) (Active: ${this.activeStreams}/${this.maxRooms})`);
@@ -293,7 +295,7 @@ class AudioNodeServer {
                 res.on('error', cleanup);
 
                 try {
-                    const track = { title, uri, identifier };
+                    const track = { title, uri, identifier, duration, length: duration * 1000, isStream };
                     const targetPath = cacheManager.getTrackPath(identifier);
 
                     let spawned = null;
