@@ -362,6 +362,10 @@ class AdminServer {
                     maxReferralMonths: config?.maxReferralMonths || 6,
                     earlyBirdUsed: sub.earlyBirdUsed
                 },
+                config: {
+                    price30Days: config?.price30Days || 29,
+                    paymentMode: config?.paymentMode || 'sandbox'
+                },
                 user: userObj,
                 referralConfig: {
                     enabled: config.referralEnabled !== false,

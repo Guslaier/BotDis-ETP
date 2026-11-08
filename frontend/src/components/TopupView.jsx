@@ -650,7 +650,9 @@ export default function TopupView({ lang, onToast }) {
             alignItems: 'center'
           }}>
             <span>{lang === 'th' ? 'เรตผู้สนับสนุนมาตรฐาน:' : 'Standard Supporter Rate:'}</span>
-            <strong style={{ color: '#FFF' }}>29 บาท = 30 วัน (Supporter)</strong>
+            <strong style={{ color: '#FFF' }}>
+              {guildData?.config?.price30Days ?? 29} {lang === 'th' ? 'บาท = 30 วัน (Supporter)' : 'THB = 30 Days (Supporter)'}
+            </strong>
           </div>
         </div>
       </div>
@@ -699,7 +701,7 @@ export default function TopupView({ lang, onToast }) {
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dim)' }}>
                 <AlertCircle size={14} />
-                <span>{lang === 'th' ? 'ไม่รองรับระบบ Equalizer และ Autoplay' : 'No Equalizer filters or continuous Autoplay'}</span>
+                <span>{lang === 'th' ? 'ไม่รองรับระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)' : 'No continuous Autoplay'}</span>
               </li>
             </ul>
           </div>
@@ -718,7 +720,9 @@ export default function TopupView({ lang, onToast }) {
                 <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--slime-green)' }}>SUPPORTER</span>
                 <span className="slime-badge" style={{ marginLeft: 8, fontSize: 10, background: 'rgba(0, 255, 136, 0.08)', border: '1px solid rgba(0, 255, 136, 0.25)', boxShadow: 'none' }}>RECOMMENDED</span>
               </div>
-              <span style={{ fontWeight: 700, fontSize: 14, color: '#FFF' }}>{lang === 'th' ? '29 บาท / 30 วัน' : '29 THB / 30 Days'}</span>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#FFF' }}>
+                {guildData?.config?.price30Days ?? 29} {lang === 'th' ? 'บาท / 30 วัน' : 'THB / 30 Days'}
+              </span>
             </div>
             <ul style={{ listStyle: 'none', fontSize: 12.5, color: '#FFF', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6, borderBottom: '1px solid rgba(0, 255, 136, 0.15)' }}>
@@ -742,10 +746,6 @@ export default function TopupView({ lang, onToast }) {
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Award size={14} style={{ color: 'var(--slime-green)' }} />
                 <span>{lang === 'th' ? 'ขยายคิวเพลงสูงสุด 50 เพลง (เพลย์ลิสต์ครั้งละ 25 เพลง)' : 'Expanded queue up to 50 songs (25 songs per playlist)'}</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Sliders size={14} style={{ color: 'var(--slime-green)' }} />
-                <span>{lang === 'th' ? 'ปลดล็อกตัวปรับแต่งเสียง Equalizer (Bass Boost, Nightcore, Pop ฯลฯ)' : 'Unlock Equalizer audio presets (Bass Boost, Nightcore, Pop)'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Sparkles size={14} style={{ color: 'var(--slime-green)' }} />
@@ -822,6 +822,12 @@ export default function TopupView({ lang, onToast }) {
             {lang === 'th'
               ? 'ระบบให้บริการตามสภาพจริง (As-Is) ไม่รับประกันการออนไลน์ 100% ตลอด 24 ชั่วโมง และขอสงวนสิทธิ์ในการตัดสายอัตโนมัติเมื่อไม่มีผู้ฟังในห้องเสียง ปิดปรับปรุงชั่วคราว หรือระงับสิทธิ์เซิร์ฟเวอร์ที่ใช้งานผิดปกติโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
               : 'Service is provided on an "As-Is" basis with no guarantee of uninterrupted 24/7 uptime. We reserve the right to auto-disconnect empty channels, perform maintenance, or suspend abusive guilds without prior notice.'}
+          </li>
+          <li>
+            <strong style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'การปรับเปลี่ยนและบำรุงรักษาฟังก์ชัน:' : 'Feature Maintenance & Availability:'}</strong>{' '}
+            {lang === 'th'
+              ? 'ฟังก์ชันและตัวเลือกการประมวลผลเสียงเสริมต่าง ๆ (เช่น ระบบเล่นต่อเนื่อง หรือฟิลเตอร์เสียง) อาจถูกเปิด-ปิด ปรับปรุง หรือระงับชั่วคราวตามสถานะภาระเครื่องเซิร์ฟเวอร์และการเปลี่ยนแปลงของแพลตฟอร์มต้นทาง เพื่อรักษาเสถียรภาพการสตรีมเสียงของส่วนรวมเป็นหลัก'
+              : 'Add-on audio features and processing options may undergo temporary maintenance, throttling, or toggling based on cluster hardware load and upstream platform changes to ensure overall streaming stability.'}
           </li>
         </ol>
       </div>
@@ -966,6 +972,12 @@ export default function TopupView({ lang, onToast }) {
                     {lang === 'th'
                       ? 'เมื่อระบบทำการรับซองของขวัญและอนุมัติวันใช้งานเข้าสู่ระบบสำเร็จแล้ว ไม่สามารถขอคืนเงิน ยกเลิก หรือแลกเปลี่ยนเป็นสิ่งอื่นได้ในทุกกรณี'
                       : 'Once a voucher is successfully redeemed and days are credited, all contributions are strictly non-refundable and irrevocable.'}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• ความพร้อมใช้งานและการปรับปรุงฟังก์ชัน (Feature Availability & Maintenance):' : '• Feature Availability & Maintenance:'}</strong>{' '}
+                    {lang === 'th'
+                      ? 'สิทธิประโยชน์ของผู้สนับสนุนเน้นการขยายขีดความสามารถหลัก ได้แก่ โควตาสตรีม คิวเพลง และสิทธิ์เข้าใช้งานช่องสัญญาณด่วน (Priority Slot) โดยฟังก์ชันเสริมเฉพาะทาง (เช่น Autoplay หรือตัวปรับแต่งเสียงขั้นสูง) อาจมีการปิดปรับปรุงชั่วคราว ปรับเปลี่ยน หรือจำกัดสิทธิ์ตามสถานการณ์ภาระเซิร์ฟเวอร์และการอัปเดตของ API ต้นทาง เพื่อรักษาความต่อเนื่องของสัญญาณเสียงส่วนรวมเป็นสำคัญ โดยไม่ถือเป็นการผิดข้อตกลงหรือเงื่อนไขการสนับสนุน'
+                      : 'Supporter privileges primarily ensure elevated stream capacity, extended queues, and Priority Slot access. Add-on features (such as Autoplay or advanced audio filters) may be temporarily suspended or adjusted based on server load and upstream changes to guarantee collective audio stability, without constituting a breach of service terms.'}
                   </div>
                 </div>
               </div>
