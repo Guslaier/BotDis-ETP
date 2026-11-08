@@ -34,6 +34,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [editNodeModal, setEditNodeModal] = useState(null); // node obj
   const [nodeNameInput, setNodeNameInput] = useState('');
   const [nodeMaxRoomsInput, setNodeMaxRoomsInput] = useState(15);
+  const [nodeMaxFreeRoomsInput, setNodeMaxFreeRoomsInput] = useState(15);
 
   // Add Node Modal State
   const [addNodeModal, setAddNodeModal] = useState(false);
@@ -41,6 +42,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [addNodeHost, setAddNodeHost] = useState('');
   const [addNodePort, setAddNodePort] = useState(2333);
   const [addNodeMaxRooms, setAddNodeMaxRooms] = useState(15);
+  const [addNodeMaxFreeRooms, setAddNodeMaxFreeRooms] = useState(15);
 
   // New Drop Form State
   const [dropCode, setDropCode] = useState('');
@@ -219,6 +221,11 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       onToast('warning', lang === 'th' ? 'กรุณาระบุจำนวนห้องที่ถูกต้อง' : 'Valid room count required');
       return;
     }
+    const maxFreeNum = parseInt(nodeMaxFreeRoomsInput, 10);
+    if (isNaN(maxFreeNum) || maxFreeNum < 0 || maxFreeNum > maxRoomsNum) {
+      onToast('warning', lang === 'th' ? 'โควตาสายฟรีต้องอยู่ระหว่าง 0 ถึง Max Rooms' : 'Free slots must be between 0 and Max Rooms');
+      return;
+    }
     try {
       const res = await fetch(`/api/admin/nodes/${editNodeModal.id}/config`, {
         method: 'POST',
@@ -228,7 +235,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         },
         body: JSON.stringify({
           name: nodeNameInput,
-          maxRooms: maxRoomsNum
+          maxRooms: maxRoomsNum,
+          maxFreeRooms: maxFreeNum
         })
       });
       const resJson = await res.json();
@@ -236,6 +244,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         onToast('success', lang === 'th' ? 'บันทึกการตั้งค่าโหนดแล้ว' : 'Node Config Saved');
         setEditNodeModal(null);
         fetchData();
+      } else {
+        onToast('error', 'Failed', resJson.error);
       }
     } catch (err) {
       onToast('error', 'Error', err.message);
@@ -248,6 +258,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       onToast('warning', lang === 'th' ? 'กรุณาระบุ Host หรือ IP' : 'Host is required');
       return;
     }
+    const maxRoomsNum = parseInt(addNodeMaxRooms, 10) || 15;
+    const maxFreeNum = Math.min(maxRoomsNum, parseInt(addNodeMaxFreeRooms, 10) || maxRoomsNum);
     try {
       const res = await fetch('/api/admin/nodes', {
         method: 'POST',
@@ -258,8 +270,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         body: JSON.stringify({
           name: addNodeName.trim(),
           host: addNodeHost.trim(),
-          port: parseInt(addNodePort, 10),
-          maxRooms: parseInt(addNodeMaxRooms, 10)
+          port: parseInt(addNodePort, 10) || 2333,
+          maxRooms: maxRoomsNum,
+          maxFreeRooms: maxFreeNum
         })
       });
       const resJson = await res.json();
@@ -619,6 +632,27 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   // Config Actions
   const handleSaveSettings = async (e) => {
     e.preventDefault();
+    const clusterCap = data?.stats?.clusterCapacity;
+    if (clusterCap) {
+      if (settingsForm.maxTotalStreams > clusterCap.clusterMaxTotal) {
+        onToast('warning',
+          lang === 'th' ? 'เกินภาระสตรีมจริงของคลัสเตอร์' : 'Exceeds Cluster Capacity',
+          lang === 'th'
+            ? `โควตาสตรีมรวม (${settingsForm.maxTotalStreams} ห้อง) เกินภาระสตรีมจริงที่ทุกโหนดรองรับได้ (${clusterCap.clusterMaxTotal} ห้อง) กรุณาปรับไม่เกิน ${clusterCap.clusterMaxTotal}`
+            : `Total quota (${settingsForm.maxTotalStreams}) cannot exceed combined physical capacity (${clusterCap.clusterMaxTotal})`
+        );
+        return;
+      }
+      if (settingsForm.maxFreeStreams > clusterCap.clusterMaxFree) {
+        onToast('warning',
+          lang === 'th' ? 'เกินความจุสายฟรีของคลัสเตอร์' : 'Exceeds Free Capacity',
+          lang === 'th'
+            ? `โควตาสายฟรี (${settingsForm.maxFreeStreams} ห้อง) เกินความจุสายฟรีจริงที่ทุกโหนดรวมกัน (${clusterCap.clusterMaxFree} ห้อง)`
+            : `Free quota (${settingsForm.maxFreeStreams}) cannot exceed combined free capacity (${clusterCap.clusterMaxFree})`
+        );
+        return;
+      }
+    }
     try {
       const res = await fetch('/api/admin/config', {
         method: 'POST',
@@ -1096,11 +1130,15 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
                       Streams: <span style={{ color: isOffline ? 'var(--danger)' : 'var(--slime-green)' }}>
-                        {isOffline ? '0' : (isRemote ? (selectedNode.activeRooms || 0) : (data?.stats?.slots?.total || selectedNode.activeRooms || 0))}
-                      </span> / {isRemote ? (selectedNode.maxRooms || 15) : (data?.stats?.slots?.maxTotal || selectedNode.maxRooms || 4)}
+                        {isOffline ? '0' : (selectedNode.activeRooms || 0)}
+                      </span> / {selectedNode.maxRooms || (selectedNode.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15)}
                       <span style={{ fontSize: 12, color: 'var(--text-sub)', marginLeft: 6 }}>
-                        {isOffline ? '(Offline)' : `Rooms (${Math.round((((isRemote ? selectedNode.activeRooms : data?.stats?.slots?.total) || 0) / Math.max(1, (isRemote ? selectedNode.maxRooms : data?.stats?.slots?.maxTotal) || 4)) * 100)}%)`}
+                        {isOffline ? '(Offline)' : `Rooms (${Math.round(((selectedNode.activeRooms || 0) / Math.max(1, selectedNode.maxRooms || 4)) * 100)}%)`}
                       </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, fontSize: 11.5, color: 'var(--text-sub)', margin: '2px 0 6px' }}>
+                      <span>Free: <strong style={{ color: 'var(--slime-green)' }}>{selectedNode.activeFreeRooms || 0}/{selectedNode.maxFreeRooms ?? selectedNode.maxRooms ?? 4}</strong></span>
+                      <span>VIP: <strong style={{ color: 'var(--cyber-pink)' }}>{selectedNode.activeSupporterRooms || 0}/{Math.max(0, (selectedNode.maxRooms || 4) - (selectedNode.maxFreeRooms ?? selectedNode.maxRooms ?? 4))}</strong></span>
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
                       Stream Guard: <strong style={{ color: isOffline ? 'var(--text-dim)' : 'var(--accent-yellow)' }}>
@@ -1129,7 +1167,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     onClick={() => {
                       setEditNodeModal(selectedNode);
                       setNodeNameInput(selectedNode.name || selectedNode.id);
-                      setNodeMaxRoomsInput(selectedNode.maxRooms ?? (selectedNode.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15));
+                      const maxR = selectedNode.maxRooms ?? (selectedNode.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15);
+                      setNodeMaxRoomsInput(maxR);
+                      setNodeMaxFreeRoomsInput(selectedNode.maxFreeRooms !== undefined ? selectedNode.maxFreeRooms : maxR);
                     }}
                     className="btn btn-sm"
                   >
@@ -1231,7 +1271,12 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                           {n.cpu || '-'} • {n.ram || '-'}
                         </td>
                         <td style={{ fontWeight: 700 }}>
-                          <span style={{ color: 'var(--slime-green)' }}>{n.activeRooms ?? 0}</span> / {n.maxRooms ?? (n.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15)}
+                          <div>
+                            <span style={{ color: 'var(--slime-green)' }}>{n.activeRooms ?? 0}</span> / {n.maxRooms ?? (n.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15)}
+                          </div>
+                          <div style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 500 }}>
+                            F: {n.activeFreeRooms ?? 0}/{n.maxFreeRooms ?? n.maxRooms} • VIP: {n.activeSupporterRooms ?? 0}/{Math.max(0, (n.maxRooms || 0) - (n.maxFreeRooms ?? n.maxRooms))}
+                          </div>
                         </td>
                         <td style={{ fontSize: 11.5 }}>
                           {n.activeSpawns || 0}/{n.maxSpawns || 2} (Q: {n.queuedSpawns || 0})
@@ -1958,6 +2003,51 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             <span>{lang === 'th' ? 'ตั้งค่าระบบด่วน (Live Config)' : 'System Configuration'}</span>
           </h3>
 
+          {/* Cluster Physical Capacity Reference Banner */}
+          {data?.stats?.clusterCapacity && (
+            <div style={{
+              background: 'rgba(0, 210, 255, 0.08)',
+              border: '1px solid rgba(0, 210, 255, 0.25)',
+              borderRadius: 10,
+              padding: '12px 16px',
+              marginBottom: 20,
+              fontSize: 12
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontWeight: 700, color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Server size={14} />
+                  {lang === 'th' ? 'ภาระสตรีมจริงของทุกโหนดรวมกัน:' : 'Cluster Total Physical Capacity:'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    isSettingsDirtyRef.current = true;
+                    setSettingsForm(prev => ({
+                      ...prev,
+                      maxTotalStreams: data.stats.clusterCapacity.clusterMaxTotal,
+                      maxFreeStreams: data.stats.clusterCapacity.clusterMaxFree
+                    }));
+                  }}
+                  className="btn btn-sm"
+                  style={{ fontSize: 10.5, padding: '3px 8px', background: 'rgba(0, 210, 255, 0.15)', color: 'var(--accent-blue)', border: 'none' }}
+                >
+                  ⚡ {lang === 'th' ? 'ซิงค์ตามโหนดจริง' : 'Auto-Sync with Nodes'}
+                </button>
+              </div>
+              <div style={{ color: '#FFF', fontSize: 13, fontWeight: 700 }}>
+                {data.stats.clusterCapacity.clusterMaxTotal} {lang === 'th' ? 'ห้องรวมสูงสุด' : 'Total Max Rooms'} 
+                <span style={{ fontWeight: 400, color: 'var(--text-sub)', fontSize: 11.5, marginLeft: 8 }}>
+                  (🟢 สายฟรี {data.stats.clusterCapacity.clusterMaxFree} ห้อง • 💎 สำรอง VIP {data.stats.clusterCapacity.clusterSupporterReserved} ห้อง)
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                {lang === 'th' 
+                  ? `* โควตาสตรีมรวมที่ตั้งด้านล่างไม่ควรเกินภาระสตรีมจริง (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง) เพื่อป้องกันเครื่องทำงานหนักเกินพิกัด`
+                  : `* System quotas should not exceed physical cluster capacity (${data.stats.clusterCapacity.clusterMaxTotal} rooms)`}
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSaveSettings}>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
@@ -2005,7 +2095,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     setSettingsForm(prev => ({ ...prev, maxFreeStreams: v === '' ? '' : (parseInt(v, 10) || 0) }));
                   }}
                   min="0"
+                  style={data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree ? { borderColor: 'var(--danger)' } : undefined}
                 />
+                {data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree && (
+                  <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>
+                    ⚠️ {lang === 'th' ? `เกินโควตาสายฟรีของโหนด (${data.stats.clusterCapacity.clusterMaxFree} ห้อง)` : `Exceeds cluster free limit (${data.stats.clusterCapacity.clusterMaxFree})`}
+                  </div>
+                )}
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
@@ -2020,7 +2116,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     setSettingsForm(prev => ({ ...prev, maxTotalStreams: v === '' ? '' : (parseInt(v, 10) || 0) }));
                   }}
                   min="1"
+                  style={data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal ? { borderColor: 'var(--danger)' } : undefined}
                 />
+                {data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal && (
+                  <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>
+                    ⚠️ {lang === 'th' ? `เกินภาระสตรีมจริงของโหนด (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง)` : `Exceeds cluster hardware limit (${data.stats.clusterCapacity.clusterMaxTotal})`}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2149,20 +2251,85 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 onChange={(e) => setNodeNameInput(e.target.value)}
               />
             </div>
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
-                {lang === 'th' ? 'ความจุห้องสูงสุด (Max Rooms)' : 'Max Rooms'}
-              </label>
-              <input
-                type="number"
-                value={nodeMaxRoomsInput}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setNodeMaxRoomsInput(v === '' ? '' : (parseInt(v, 10) || 0));
-                }}
-                min="1"
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'ความจุห้องสูงสุด (Max Rooms)' : 'Max Rooms'}
+                </label>
+                <input
+                  type="number"
+                  value={nodeMaxRoomsInput}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const parsed = v === '' ? '' : (parseInt(v, 10) || 0);
+                    setNodeMaxRoomsInput(parsed);
+                    if (typeof parsed === 'number' && typeof nodeMaxFreeRoomsInput === 'number' && nodeMaxFreeRoomsInput > parsed) {
+                      setNodeMaxFreeRoomsInput(parsed);
+                    }
+                  }}
+                  min="1"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'โควตาสายฟรี (Max Free)' : 'Max Free Slots'}
+                </label>
+                <input
+                  type="number"
+                  value={nodeMaxFreeRoomsInput}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const parsed = v === '' ? '' : (parseInt(v, 10) || 0);
+                    setNodeMaxFreeRoomsInput(parsed);
+                  }}
+                  min="0"
+                  max={typeof nodeMaxRoomsInput === 'number' ? nodeMaxRoomsInput : undefined}
+                />
+              </div>
             </div>
+
+            {/* Live Capacity Ratio Indicator */}
+            {typeof nodeMaxRoomsInput === 'number' && typeof nodeMaxFreeRoomsInput === 'number' && (
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid var(--card-border)',
+                borderRadius: 10,
+                padding: '12px 14px',
+                marginBottom: 20,
+                fontSize: 12
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ color: 'var(--text-sub)' }}>{lang === 'th' ? 'สัดส่วนจัดสรรช่องสัญญาณ:' : 'Slot Allocation:'}</span>
+                  <span style={{ fontWeight: 700 }}>
+                    {nodeMaxFreeRoomsInput} Free / {Math.max(0, nodeMaxRoomsInput - nodeMaxFreeRoomsInput)} Supporter
+                  </span>
+                </div>
+                {/* Visual Ratio Progress Bar */}
+                <div style={{
+                  height: 6,
+                  borderRadius: 3,
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  overflow: 'hidden',
+                  marginBottom: 8
+                }}>
+                  <div style={{
+                    width: `${Math.min(100, Math.round((nodeMaxFreeRoomsInput / Math.max(1, nodeMaxRoomsInput)) * 100))}%`,
+                    background: 'var(--slime-green)',
+                    transition: 'width 0.2s'
+                  }} title="Free Slots" />
+                  <div style={{
+                    width: `${Math.min(100, Math.max(0, 100 - Math.round((nodeMaxFreeRoomsInput / Math.max(1, nodeMaxRoomsInput)) * 100)))}%`,
+                    background: 'var(--cyber-pink)',
+                    transition: 'width 0.2s'
+                  }} title="Supporter Slots" />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-sub)' }}>
+                  <span>🟢 Free: {nodeMaxFreeRoomsInput} ห้อง</span>
+                  <span style={{ color: 'var(--cyber-pink)' }}>💎 VIP Reserved: {Math.max(0, nodeMaxRoomsInput - nodeMaxFreeRoomsInput)} ห้อง</span>
+                </div>
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setEditNodeModal(null)} className="btn btn-sm">
                 {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
@@ -2545,11 +2712,36 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     value={addNodeMaxRooms}
                     onChange={(e) => {
                       const v = e.target.value;
-                      setAddNodeMaxRooms(v === '' ? '' : (parseInt(v, 10) || 0));
+                      const parsed = v === '' ? '' : (parseInt(v, 10) || 0);
+                      setAddNodeMaxRooms(parsed);
+                      if (typeof parsed === 'number' && addNodeMaxFreeRooms > parsed) {
+                        setAddNodeMaxFreeRooms(parsed);
+                      }
                     }}
                     min="1"
                     required
                   />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'โควตาสตรีมสายฟรี (Max Free Slots)' : 'Max Free Slots'}
+                </label>
+                <input
+                  type="number"
+                  value={addNodeMaxFreeRooms}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setAddNodeMaxFreeRooms(v === '' ? '' : (parseInt(v, 10) || 0));
+                  }}
+                  min="0"
+                  max={typeof addNodeMaxRooms === 'number' ? addNodeMaxRooms : undefined}
+                />
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                  {lang === 'th' 
+                    ? `* ที่เหลือ (${Math.max(0, (parseInt(addNodeMaxRooms, 10) || 0) - (parseInt(addNodeMaxFreeRooms, 10) || 0))} ห้อง) จะสงวนสิทธิ์ให้ผู้สนับสนุน (Supporter VIP)` 
+                    : `* Remaining slots reserved for Supporter VIP`}
                 </div>
               </div>
 

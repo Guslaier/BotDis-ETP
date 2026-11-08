@@ -16,6 +16,8 @@ class NodeRouter extends EventEmitter {
         const overrides = dbManager.get('nodesConfig') || {};
         const override = overrides['local-0'];
         const billingConfig = dbManager.get('billingConfig', 'config') || {};
+        const maxRooms = override?.maxRooms || billingConfig.maxTotalStreams || parseInt(process.env.MAX_TOTAL_STREAMS || '4', 10);
+        const maxFreeRooms = override?.maxFreeRooms !== undefined ? override.maxFreeRooms : (billingConfig.maxFreeStreams || parseInt(process.env.MAX_FREE_STREAMS || '2', 10));
 
         this.nodes.set('local-0', {
             id: 'local-0',
@@ -24,7 +26,10 @@ class NodeRouter extends EventEmitter {
             host: '127.0.0.1',
             status: 'online',
             activeRooms: 0,
-            maxRooms: override?.maxRooms || billingConfig.maxTotalStreams || parseInt(process.env.MAX_TOTAL_STREAMS || '4', 10),
+            activeFreeRooms: 0,
+            activeSupporterRooms: 0,
+            maxRooms: maxRooms,
+            maxFreeRooms: Math.min(maxFreeRooms, maxRooms),
             latency: 0,
             lastPing: Date.now(),
             vpn: null
@@ -51,13 +56,16 @@ class NodeRouter extends EventEmitter {
                         if (node.host) {
                             const port = parseInt(node.port || '2333', 10);
                             const id = node.id || `remote-${String(node.host).replace(/[^a-zA-Z0-9]/g, '-')}-${port}`;
+                            const maxRooms = node.maxRooms || 15;
+                            const maxFreeRooms = node.maxFreeRooms !== undefined ? node.maxFreeRooms : maxRooms;
                             const nodeRecord = {
                                 id: id,
                                 name: node.name || id,
                                 type: 'remote',
                                 host: node.host,
                                 port: port,
-                                maxRooms: node.maxRooms || 15,
+                                maxRooms: maxRooms,
+                                maxFreeRooms: maxFreeRooms,
                                 createdAt: Date.now()
                             };
                             dbManager.set('nodesRegistry', id, nodeRecord);
@@ -75,6 +83,8 @@ class NodeRouter extends EventEmitter {
             if (node && node.host) {
                 const port = parseInt(node.port || '2333', 10);
                 const override = overrides[id];
+                const maxRooms = override?.maxRooms || node.maxRooms || 15;
+                const maxFreeRooms = override?.maxFreeRooms !== undefined ? override.maxFreeRooms : (node.maxFreeRooms !== undefined ? node.maxFreeRooms : maxRooms);
                 this.nodes.set(id, {
                     id: id,
                     name: override?.name || node.name || id,
@@ -83,7 +93,10 @@ class NodeRouter extends EventEmitter {
                     port: port,
                     status: 'offline',
                     activeRooms: 0,
-                    maxRooms: override?.maxRooms || node.maxRooms || 15,
+                    activeFreeRooms: 0,
+                    activeSupporterRooms: 0,
+                    maxRooms: maxRooms,
+                    maxFreeRooms: Math.min(maxFreeRooms, maxRooms),
                     latency: 0,
                     lastPing: 0,
                     vpn: null
@@ -96,7 +109,10 @@ class NodeRouter extends EventEmitter {
         const host = (data.host || '').trim();
         const port = parseInt(data.port || '2333', 10);
         const name = (data.name || '').trim();
-        const maxRooms = parseInt(data.maxRooms || '15', 10);
+        const maxRooms = Math.max(1, parseInt(data.maxRooms || '15', 10));
+        let maxFreeRooms = data.maxFreeRooms !== undefined ? parseInt(data.maxFreeRooms, 10) : maxRooms;
+        if (isNaN(maxFreeRooms) || maxFreeRooms < 0) maxFreeRooms = maxRooms;
+        maxFreeRooms = Math.min(maxFreeRooms, maxRooms);
 
         if (!host) {
             return { success: false, error: 'Host or IP address is required' };
@@ -118,7 +134,10 @@ class NodeRouter extends EventEmitter {
             port: port,
             status: 'offline',
             activeRooms: 0,
-            maxRooms: Math.max(1, maxRooms),
+            activeFreeRooms: 0,
+            activeSupporterRooms: 0,
+            maxRooms: maxRooms,
+            maxFreeRooms: maxFreeRooms,
             latency: 0,
             lastPing: 0,
             vpn: null,
@@ -133,6 +152,7 @@ class NodeRouter extends EventEmitter {
             host: nodeObj.host,
             port: nodeObj.port,
             maxRooms: nodeObj.maxRooms,
+            maxFreeRooms: nodeObj.maxFreeRooms,
             createdAt: nodeObj.createdAt
         });
 
@@ -221,6 +241,14 @@ class NodeRouter extends EventEmitter {
                             node.maxRooms = parsed.maxRooms;
                         }
 
+                        if (override?.maxFreeRooms !== undefined) {
+                            node.maxFreeRooms = override.maxFreeRooms;
+                        } else if (parsed.maxFreeRooms !== undefined) {
+                            node.maxFreeRooms = parsed.maxFreeRooms;
+                        } else if (node.maxFreeRooms === undefined) {
+                            node.maxFreeRooms = node.maxRooms;
+                        }
+
                         node.cpu = parsed.cpu || '-';
                         node.ram = parsed.ram || '-';
                         node.hostRam = parsed.hostRam || '-';
@@ -276,7 +304,10 @@ class NodeRouter extends EventEmitter {
             const override = overrides['local-0'];
 
             if (stats.activeRooms !== undefined) local.activeRooms = stats.activeRooms;
+            if (stats.activeFreeRooms !== undefined) local.activeFreeRooms = stats.activeFreeRooms;
+            if (stats.activeSupporterRooms !== undefined) local.activeSupporterRooms = stats.activeSupporterRooms;
             local.maxRooms = override?.maxRooms || stats.maxRooms || local.maxRooms;
+            local.maxFreeRooms = override?.maxFreeRooms !== undefined ? override.maxFreeRooms : (local.maxFreeRooms ?? local.maxRooms);
             if (stats.cpu !== undefined) local.cpu = stats.cpu;
             if (stats.ram !== undefined) local.ram = stats.ram;
             if (stats.hostRam !== undefined) local.hostRam = stats.hostRam;
@@ -386,16 +417,52 @@ class NodeRouter extends EventEmitter {
         return { success: true };
     }
 
+    getClusterCapacity() {
+        let clusterMaxTotal = 0;
+        let clusterMaxFree = 0;
+        let clusterOnlineNodes = 0;
+        let clusterTotalNodes = 0;
+
+        for (const node of this.nodes.values()) {
+            clusterTotalNodes++;
+            const isEligible = node.status === 'online' || node.type === 'local';
+            if (isEligible) {
+                clusterOnlineNodes++;
+                const maxRooms = node.maxRooms || 0;
+                const maxFree = node.maxFreeRooms !== undefined ? node.maxFreeRooms : maxRooms;
+                clusterMaxTotal += maxRooms;
+                clusterMaxFree += maxFree;
+            }
+        }
+
+        return {
+            clusterMaxTotal: Math.max(1, clusterMaxTotal),
+            clusterMaxFree: Math.max(0, clusterMaxFree),
+            clusterSupporterReserved: Math.max(0, clusterMaxTotal - clusterMaxFree),
+            onlineNodes: clusterOnlineNodes,
+            totalNodes: clusterTotalNodes
+        };
+    }
+
     selectBestNode(guildId, isSupporter = false) {
         const availableNodes = Array.from(this.nodes.values()).filter(n => n.status === 'online');
         if (!availableNodes.length) {
             return this.nodes.get('local-0');
         }
 
-        // Prioritize online remote residential nodes over datacenter local-0 to avoid IP rate limits
+        // Prioritize online nodes based on Supporter VIP vs Free slot allocation
         availableNodes.sort((a, b) => {
-            const aHasCapacity = a.activeRooms < a.maxRooms;
-            const bHasCapacity = b.activeRooms < b.maxRooms;
+            const aFreeMax = a.maxFreeRooms !== undefined ? a.maxFreeRooms : a.maxRooms;
+            const bFreeMax = b.maxFreeRooms !== undefined ? b.maxFreeRooms : b.maxRooms;
+
+            const aHasCapacity = isSupporter
+                ? (a.activeRooms < a.maxRooms)
+                : (a.activeRooms < a.maxRooms && (a.activeFreeRooms || 0) < aFreeMax);
+
+            const bHasCapacity = isSupporter
+                ? (b.activeRooms < b.maxRooms)
+                : (b.activeRooms < b.maxRooms && (b.activeFreeRooms || 0) < bFreeMax);
+
             if (aHasCapacity && !bHasCapacity) return -1;
             if (!aHasCapacity && bHasCapacity) return 1;
 
@@ -428,12 +495,18 @@ class NodeRouter extends EventEmitter {
         if (config.maxRooms !== undefined && !isNaN(parseInt(config.maxRooms, 10))) {
             node.maxRooms = Math.max(1, parseInt(config.maxRooms, 10));
         }
+        if (config.maxFreeRooms !== undefined && !isNaN(parseInt(config.maxFreeRooms, 10))) {
+            node.maxFreeRooms = Math.min(Math.max(0, parseInt(config.maxFreeRooms, 10)), node.maxRooms);
+        } else if (node.maxFreeRooms === undefined || node.maxFreeRooms > node.maxRooms) {
+            node.maxFreeRooms = node.maxRooms;
+        }
 
         // Persist to database
         const allOverrides = dbManager.get('nodesConfig') || {};
         allOverrides[nodeId] = {
             name: node.name,
             maxRooms: node.maxRooms,
+            maxFreeRooms: node.maxFreeRooms,
             updatedAt: Date.now()
         };
         dbManager.save('nodesConfig');
@@ -442,7 +515,11 @@ class NodeRouter extends EventEmitter {
         if (node.type === 'remote') {
             try {
                 await new Promise((resolve) => {
-                    const payload = JSON.stringify({ name: node.name, maxRooms: node.maxRooms });
+                    const payload = JSON.stringify({
+                        name: node.name,
+                        maxRooms: node.maxRooms,
+                        maxFreeRooms: node.maxFreeRooms
+                    });
                     const req = http.request({
                         hostname: node.host,
                         port: node.port || 2333,

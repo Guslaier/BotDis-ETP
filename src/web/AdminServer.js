@@ -634,22 +634,36 @@ class AdminServer {
                 const isVpnActive = proxyManager.vpnEnabled && !!vpnSourceIp;
 
                 let localRoomsCount = 0;
+                let localFreeCount = 0;
+                let localSupporterCount = 0;
                 const remoteNodeRooms = new Map();
+                const remoteNodeFreeRooms = new Map();
+                const remoteNodeSupporterRooms = new Map();
 
                 if (this.kazagumo && this.kazagumo.players) {
                     for (const [gId, p] of this.kazagumo.players.entries()) {
                         if (!p || !p.connection || p._destroyed) continue;
+                        const isSupporter = subscriptionManager.isSupporter(gId);
                         const nId = p.node?.id || 'local-0';
                         if (nId === 'local-0') {
                             localRoomsCount++;
+                            if (isSupporter) localSupporterCount++;
+                            else localFreeCount++;
                         } else {
                             remoteNodeRooms.set(nId, (remoteNodeRooms.get(nId) || 0) + 1);
+                            if (isSupporter) {
+                                remoteNodeSupporterRooms.set(nId, (remoteNodeSupporterRooms.get(nId) || 0) + 1);
+                            } else {
+                                remoteNodeFreeRooms.set(nId, (remoteNodeFreeRooms.get(nId) || 0) + 1);
+                            }
                         }
                     }
                 }
 
                 nodeRouter.updateLocalStats({
                     activeRooms: localRoomsCount,
+                    activeFreeRooms: localFreeCount,
+                    activeSupporterRooms: localSupporterCount,
                     maxRooms: maxTotal,
                     cpu: cpuUsage.display,
                     ram: `${rssMb} MB (Node)`,
@@ -674,14 +688,25 @@ class AdminServer {
                     }
                 });
 
+                const clusterCapacity = nodeRouter.getClusterCapacity();
+
                 const nodes = nodeRouter.getNodes().map(n => {
-                    if (n.type === 'remote') {
-                        return {
-                            ...n,
-                            activeRooms: remoteNodeRooms.get(n.id) || 0
-                        };
-                    }
-                    return n;
+                    const activeRooms = n.type === 'remote' ? (remoteNodeRooms.get(n.id) || 0) : (localRoomsCount || n.activeRooms || 0);
+                    const activeFreeRooms = n.type === 'remote' ? (remoteNodeFreeRooms.get(n.id) || 0) : (localFreeCount || n.activeFreeRooms || 0);
+                    const activeSupporterRooms = n.type === 'remote' ? (remoteNodeSupporterRooms.get(n.id) || 0) : (localSupporterCount || n.activeSupporterRooms || 0);
+                    const maxRooms = n.maxRooms || 1;
+                    const maxFreeRooms = n.maxFreeRooms !== undefined ? n.maxFreeRooms : maxRooms;
+                    const maxSupporterRooms = Math.max(0, maxRooms - maxFreeRooms);
+
+                    return {
+                        ...n,
+                        activeRooms,
+                        activeFreeRooms,
+                        activeSupporterRooms,
+                        maxRooms,
+                        maxFreeRooms,
+                        maxSupporterRooms
+                    };
                 });
 
                 return this._sendJson(res, 200, {
@@ -695,6 +720,7 @@ class AdminServer {
                             maxTotal: maxTotal,
                             dynamicVipMax: dynamicVipMax
                         },
+                        clusterCapacity: clusterCapacity,
                         cpu: cpuUsage.host,
                         cpuDisplay: cpuUsage.display,
                         hostCpu: cpuUsage.host,
@@ -1007,6 +1033,22 @@ class AdminServer {
                 if (maxFree > maxTotal) {
                     return this._sendJson(res, 400, { success: false, error: 'โควตาสตรีมสายฟรี (Max Free Streams) ต้องไม่มากกว่าโควตาสตรีมรวม (Max Total Streams) ครับ' });
                 }
+
+                // Enforce that maxTotal and maxFree do not exceed physical cluster hardware capacity
+                const clusterCapacity = nodeRouter.getClusterCapacity();
+                if (maxTotal > clusterCapacity.clusterMaxTotal) {
+                    return this._sendJson(res, 400, {
+                        success: false,
+                        error: `โควตาสตรีมรวม (${maxTotal} ห้อง) เกินภาระสตรีมจริงที่ทุกโหนดรองรับได้ (${clusterCapacity.clusterMaxTotal} ห้อง) กรุณาเพิ่มโหนดหรือปรับไม่เกิน ${clusterCapacity.clusterMaxTotal} ห้องครับ`
+                    });
+                }
+                if (maxFree > clusterCapacity.clusterMaxFree) {
+                    return this._sendJson(res, 400, {
+                        success: false,
+                        error: `โควตาสายฟรีรวม (${maxFree} ห้อง) เกินโควตาสายฟรีจริงของทุกโหนดรวมกัน (${clusterCapacity.clusterMaxFree} ห้อง) ครับ`
+                    });
+                }
+
                 if (!isNaN(price) && price < 0) {
                     return this._sendJson(res, 400, { success: false, error: 'ราคาต้องไม่ติดลบครับ' });
                 }
@@ -1043,8 +1085,6 @@ class AdminServer {
                 }
 
                 const updated = subscriptionManager.updateConfig(configPayload);
-                // Sync local-0 Controller node capacity live
-                await nodeRouter.updateNodeConfig('local-0', { maxRooms: maxTotal });
                 return this._sendJson(res, 200, { success: true, config: updated });
             }
 
@@ -1100,17 +1140,9 @@ class AdminServer {
                 const body = await this._parseBody(req);
                 const resConfig = await nodeRouter.updateNodeConfig(nodeId, {
                     name: body.name,
-                    maxRooms: body.maxRooms
+                    maxRooms: body.maxRooms,
+                    maxFreeRooms: body.maxFreeRooms
                 });
-                // If modifying local-0, keep billing maxTotalStreams synchronized
-                if (nodeId === 'local-0' && body.maxRooms !== undefined && !isNaN(parseInt(body.maxRooms, 10))) {
-                    const newMaxTotal = parseInt(body.maxRooms, 10);
-                    const currentBilling = subscriptionManager.getConfig();
-                    subscriptionManager.updateConfig({
-                        maxTotalStreams: newMaxTotal,
-                        maxFreeStreams: Math.min(currentBilling.maxFreeStreams || 2, newMaxTotal)
-                    });
-                }
                 return this._sendJson(res, resConfig.success ? 200 : 400, resConfig);
             }
 

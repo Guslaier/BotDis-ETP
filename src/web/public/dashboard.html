@@ -1204,10 +1204,13 @@
                     <td><span class="badge-pill ${statusBadge}">${statusText}</span></td>
                     <td><strong style="color: var(--slime-green);">${cpuDisplay}</strong></td>
                     <td><span style="font-size: 11.5px; color: var(--text-sub);">${ramDisplay}</span></td>
-                    <td><strong>${n.activeRooms || 0} / ${n.maxRooms || 12}</strong></td>
+                    <td>
+                        <strong>${n.activeRooms || 0} / ${n.maxRooms || 12}</strong>
+                        <div style="font-size: 10px; color: var(--text-sub);">F: ${n.activeFreeRooms || 0}/${n.maxFreeRooms ?? n.maxRooms ?? 12} • VIP: ${n.activeSupporterRooms || 0}/${Math.max(0, (n.maxRooms || 12) - (n.maxFreeRooms ?? n.maxRooms ?? 12))}</div>
+                    </td>
                     <td>
                         <div style="display: flex; gap: 4px; align-items: center;">
-                            <button class="btn btn-sm" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid var(--accent-blue); font-size: 11px; padding: 4px 7px;" onclick="openEditNodeModal('${n.id}', '${escapeHtml(n.name || n.id).replace(/'/g, "\\'")}', ${n.maxRooms || 12})" title="แก้ไขการตั้งค่าโหนด">✏️</button>
+                            <button class="btn btn-sm" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid var(--accent-blue); font-size: 11px; padding: 4px 7px;" onclick="openEditNodeModal('${n.id}', '${escapeHtml(n.name || n.id).replace(/'/g, "\\'")}', ${n.maxRooms || 12}, ${n.maxFreeRooms !== undefined ? n.maxFreeRooms : (n.maxRooms || 12)})" title="แก้ไขการตั้งค่าโหนด">✏️</button>
                             ${drainBtn}
                         </div>
                     </td>
@@ -1314,8 +1317,9 @@
         }
     }
 
-    async function openEditNodeModal(nodeId, currentName, currentMaxRooms) {
+    async function openEditNodeModal(nodeId, currentName, currentMaxRooms, currentMaxFreeRooms) {
         const swal = getSwal();
+        const initialFree = currentMaxFreeRooms !== undefined ? currentMaxFreeRooms : currentMaxRooms;
         const { value: formValues } = await swal.fire({
             title: '⚙️ ตั้งค่าโหนด',
             html: `
@@ -1326,9 +1330,18 @@
                     <label style="display: block; font-size: 11.5px; color: var(--text-sub); margin-bottom: 4px;">ชื่อโหนด (Node Name):</label>
                     <input id="swalNodeName" class="swal2-input" style="width: 100%; margin: 0; box-sizing: border-box; font-size: 13px;" value="${escapeHtml(currentName)}">
                 </div>
-                <div style="text-align: left; margin-bottom: 10px;">
-                    <label style="display: block; font-size: 11.5px; color: var(--text-sub); margin-bottom: 4px;">ความจุสตรีมสูงสุด (Max Streams):</label>
-                    <input id="swalNodeMaxRooms" type="number" min="1" max="100" class="swal2-input" style="width: 100%; margin: 0; box-sizing: border-box; font-size: 13px;" value="${currentMaxRooms}">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; text-align: left;">
+                    <div>
+                        <label style="display: block; font-size: 11.5px; color: var(--text-sub); margin-bottom: 4px;">ความจุห้องสูงสุด (Max):</label>
+                        <input id="swalNodeMaxRooms" type="number" min="1" max="200" class="swal2-input" style="width: 100%; margin: 0; box-sizing: border-box; font-size: 13px;" value="${currentMaxRooms}">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11.5px; color: var(--text-sub); margin-bottom: 4px;">โควตาสายฟรี (Free):</label>
+                        <input id="swalNodeMaxFreeRooms" type="number" min="0" max="200" class="swal2-input" style="width: 100%; margin: 0; box-sizing: border-box; font-size: 13px;" value="${initialFree}">
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-sub); text-align: left; padding: 6px 10px; background: rgba(255,255,255,0.04); border-radius: 6px;">
+                    💡 ช่องที่เหลือจะสงวนสิทธิ์ให้ผู้สนับสนุน (Supporter VIP) โดยเฉพาะ
                 </div>
             `,
             focusConfirm: false,
@@ -1340,6 +1353,7 @@
             preConfirm: () => {
                 const name = document.getElementById('swalNodeName').value.trim();
                 const maxRooms = parseInt(document.getElementById('swalNodeMaxRooms').value, 10);
+                const maxFreeRooms = parseInt(document.getElementById('swalNodeMaxFreeRooms').value, 10);
                 if (!name) {
                     swal.showValidationMessage('กรุณากรอกชื่อโหนด');
                     return false;
@@ -1348,7 +1362,11 @@
                     swal.showValidationMessage('ความจุสตรีมต้องมากกว่า 0');
                     return false;
                 }
-                return { name, maxRooms };
+                if (isNaN(maxFreeRooms) || maxFreeRooms < 0 || maxFreeRooms > maxRooms) {
+                    swal.showValidationMessage('โควตาสายฟรีต้องอยู่ระหว่าง 0 ถึงความจุห้องสูงสุด');
+                    return false;
+                }
+                return { name, maxRooms, maxFreeRooms };
             }
         });
 

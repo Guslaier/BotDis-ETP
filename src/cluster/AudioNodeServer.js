@@ -23,6 +23,7 @@ class AudioNodeServer {
         this.name = process.env.NODE_NAME || `AudioNode-${this.port}`;
         this.authSecret = process.env.NODE_AUTH_SECRET || null;
         this.maxRooms = parseInt(process.env.NODE_MAX_ROOMS || process.env.MAX_TOTAL_STREAMS || '100', 10);
+        this.maxFreeRooms = parseInt(process.env.NODE_MAX_FREE_ROOMS || process.env.MAX_FREE_STREAMS || String(this.maxRooms), 10);
         this.activeStreams = 0;
         this.isDraining = false;
         this.server = null;
@@ -171,6 +172,7 @@ class AudioNodeServer {
                     status: this.isDraining ? 'draining' : 'online',
                     activeRooms: this.activeStreams,
                     maxRooms: this.maxRooms,
+                    maxFreeRooms: this.maxFreeRooms,
                     uptime: process.uptime()
                 });
             }
@@ -196,6 +198,7 @@ class AudioNodeServer {
                     status: this.isDraining ? 'draining' : 'online',
                     activeRooms: this.activeStreams,
                     maxRooms: this.maxRooms,
+                    maxFreeRooms: this.maxFreeRooms,
                     activeSpawns: typeof cacheManager.getActiveSpawns === 'function' ? cacheManager.getActiveSpawns() : 0,
                     maxSpawns: cacheManager.maxConcurrentSpawns || 2,
                     queuedSpawns: typeof cacheManager.getQueuedSpawnsCount === 'function' ? cacheManager.getQueuedSpawnsCount() : 0,
@@ -377,12 +380,16 @@ class AudioNodeServer {
                         if (body.maxRooms && !isNaN(parseInt(body.maxRooms, 10))) {
                             this.maxRooms = Math.max(1, parseInt(body.maxRooms, 10));
                         }
-                        console.log(`[AudioNode] Config updated live: Name="${this.name}", MaxRooms=${this.maxRooms}`);
+                        if (body.maxFreeRooms !== undefined && !isNaN(parseInt(body.maxFreeRooms, 10))) {
+                            this.maxFreeRooms = Math.min(Math.max(0, parseInt(body.maxFreeRooms, 10)), this.maxRooms);
+                        }
+                        console.log(`[AudioNode] Config updated live: Name="${this.name}", MaxRooms=${this.maxRooms}, MaxFreeRooms=${this.maxFreeRooms}`);
                         return this._sendJson(res, 200, {
                             success: true,
                             id: this.id,
                             name: this.name,
-                            maxRooms: this.maxRooms
+                            maxRooms: this.maxRooms,
+                            maxFreeRooms: this.maxFreeRooms
                         });
                     } catch (err) {
                         return this._sendJson(res, 400, { success: false, error: err.message });
