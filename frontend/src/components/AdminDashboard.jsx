@@ -1787,7 +1787,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: 12 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                    💡 {lang === 'th' ? `ปัจจุบัน: เพื่อนเติมขั้นต่ำ ${data?.config?.referralMinTopup ?? 29} บาท -> ผู้ชวนรับ +${data?.config?.referralRewardDays ?? 30} วัน (จำกัด ${data?.config?.maxReferralMonths ?? 6} ครั้ง)` : `Active rule: Min ${data?.config?.referralMinTopup ?? 29} THB topup -> +${data?.config?.referralRewardDays ?? 30} days`}
+                    [Rule] {lang === 'th' ? `ปัจจุบัน: เพื่อนเติมขั้นต่ำ ${data?.config?.referralMinTopup ?? 29} บาท -> ผู้ชวนรับ +${data?.config?.referralRewardDays ?? 30} วัน (จำกัด ${data?.config?.maxReferralMonths ?? 6} ครั้ง)` : `Active rule: Min ${data?.config?.referralMinTopup ?? 29} THB topup -> +${data?.config?.referralRewardDays ?? 30} days`}
                   </div>
                   <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '8px 18px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <Save size={13} />
@@ -2078,13 +2078,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     className="btn btn-sm"
                     style={{ fontSize: 10.5, padding: '3px 8px', background: 'rgba(0, 210, 255, 0.15)', color: 'var(--accent-blue)', border: 'none' }}
                   >
-                    ⚡ {lang === 'th' ? 'ซิงค์ตามโหนดจริง' : 'Auto-Sync with Nodes'}
+                    {lang === 'th' ? 'ซิงค์ตามโหนดจริง' : 'Auto-Sync with Nodes'}
                   </button>
                 </div>
                 <div style={{ color: '#FFF', fontSize: 13, fontWeight: 700 }}>
                   {data.stats.clusterCapacity.clusterMaxTotal} {lang === 'th' ? 'ห้องรวมสูงสุด' : 'Total Max Rooms'} 
                   <span style={{ fontWeight: 400, color: 'var(--text-sub)', fontSize: 11.5, marginLeft: 8 }}>
-                    (🟢 สายฟรี {data.stats.clusterCapacity.clusterMaxFree} ห้อง • 💎 สำรอง VIP {data.stats.clusterCapacity.clusterSupporterReserved} ห้อง)
+                    (Free: {data.stats.clusterCapacity.clusterMaxFree} ห้อง • Supporter Reserved: {data.stats.clusterCapacity.clusterSupporterReserved} ห้อง)
                   </span>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
@@ -2145,8 +2145,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     style={data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree ? { borderColor: 'var(--danger)' } : undefined}
                   />
                   {data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree && (
-                    <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>
-                      ⚠️ {lang === 'th' ? `เกินโควตาสายฟรีของโหนด (${data.stats.clusterCapacity.clusterMaxFree} ห้อง)` : `Exceeds cluster free limit (${data.stats.clusterCapacity.clusterMaxFree})`}
+                    <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <AlertTriangle size={12} />
+                      <span>{lang === 'th' ? `เกินโควตาสายฟรีของโหนด (${data.stats.clusterCapacity.clusterMaxFree} ห้อง)` : `Exceeds cluster free limit (${data.stats.clusterCapacity.clusterMaxFree})`}</span>
                     </div>
                   )}
                 </div>
@@ -2166,8 +2167,9 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     style={data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal ? { borderColor: 'var(--danger)' } : undefined}
                   />
                   {data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal && (
-                    <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>
-                      ⚠️ {lang === 'th' ? `เกินภาระสตรีมจริงของโหนด (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง)` : `Exceeds cluster hardware limit (${data.stats.clusterCapacity.clusterMaxTotal})`}
+                    <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <AlertTriangle size={12} />
+                      <span>{lang === 'th' ? `เกินภาระสตรีมจริงของโหนด (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง)` : `Exceeds cluster hardware limit (${data.stats.clusterCapacity.clusterMaxTotal})`}</span>
                     </div>
                   )}
                 </div>
@@ -2263,17 +2265,17 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                       <div>
                         {isAll && (
                           <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: 600 }}>
-                            🟢 {lang === 'th' ? 'เปิดทุกคน' : 'Public'}
+                            {lang === 'th' ? 'เปิดทุกคน' : 'Public'}
                           </span>
                         )}
                         {isSupporter && (
                           <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(255, 46, 147, 0.15)', color: '#FF2E93', fontWeight: 600 }}>
-                            💎 {lang === 'th' ? 'เฉพาะ VIP' : 'Supporter'}
+                            {lang === 'th' ? 'เฉพาะ VIP' : 'Supporter'}
                           </span>
                         )}
                         {isDisabled && (
                           <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', fontWeight: 600 }}>
-                            ⛔ {lang === 'th' ? 'ปิดปรับปรุง' : 'Disabled'}
+                            {lang === 'th' ? 'ปิดปรับปรุง' : 'Disabled'}
                           </span>
                         )}
                       </div>
@@ -2314,7 +2316,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                           transition: 'all 0.15s'
                         }}
                       >
-                        🟢 {lang === 'th' ? 'ทุกคน (Public)' : 'Public'}
+                        {lang === 'th' ? 'ทุกคน (Public)' : 'Public'}
                       </button>
 
                       <button
@@ -2338,7 +2340,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                           transition: 'all 0.15s'
                         }}
                       >
-                        💎 {lang === 'th' ? 'เฉพาะ VIP' : 'VIP Only'}
+                        {lang === 'th' ? 'เฉพาะ VIP' : 'VIP Only'}
                       </button>
 
                       <button
@@ -2362,7 +2364,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                           transition: 'all 0.15s'
                         }}
                       >
-                        ⛔ {lang === 'th' ? 'ปิดปรับปรุง' : 'Disabled'}
+                        {lang === 'th' ? 'ปิดปรับปรุง' : 'Disabled'}
                       </button>
                     </div>
 
@@ -2391,7 +2393,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                               padding: '0 4px'
                             }}
                           >
-                            {lang === 'th' ? '✕ เคลียร์ข้อความ' : '✕ Clear'}
+                            {lang === 'th' ? 'เคลียร์ข้อความ' : 'Clear'}
                           </button>
                         )}
                       </div>
@@ -2421,8 +2423,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                       />
                       <div style={{ fontSize: 10.5, marginTop: 4, color: feat.customMessage ? 'var(--accent-blue)' : 'var(--text-dim)' }}>
                         {feat.customMessage 
-                          ? `✨ ${lang === 'th' ? 'กำลังใช้ข้อความกำหนดเองข้างต้น แจ้งเตือนใน Discord' : 'Using custom notice in Discord responses'}`
-                          : `ℹ️ ${lang === 'th' ? 'เว้นว่างไว้ ระบบจะใช้ข้อความมาตรฐานอัตโนมัติ' : 'Empty: system will use default notice'}`}
+                          ? `[Custom Notice] ${lang === 'th' ? 'กำลังใช้ข้อความกำหนดเองข้างต้น แจ้งเตือนใน Discord' : 'Using custom notice in Discord responses'}`
+                          : `[Default] ${lang === 'th' ? 'เว้นว่างไว้ ระบบจะใช้ข้อความมาตรฐานอัตโนมัติ' : 'Empty: system will use default notice'}`}
                       </div>
                     </div>
                   </div>
@@ -2622,8 +2624,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   }} title="Supporter Slots" />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-sub)' }}>
-                  <span>🟢 Free: {nodeMaxFreeRoomsInput} ห้อง</span>
-                  <span style={{ color: 'var(--cyber-pink)' }}>💎 VIP Reserved: {Math.max(0, nodeMaxRoomsInput - nodeMaxFreeRoomsInput)} ห้อง</span>
+                  <span>Free: {nodeMaxFreeRoomsInput} ห้อง</span>
+                  <span style={{ color: 'var(--cyber-pink)' }}>VIP Reserved: {Math.max(0, nodeMaxRoomsInput - nodeMaxFreeRoomsInput)} ห้อง</span>
                 </div>
               </div>
             )}
@@ -2904,7 +2906,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             </div>
 
             <div style={{ background: 'rgba(255, 75, 75, 0.08)', border: '1px solid rgba(255, 75, 75, 0.25)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, fontSize: 12, color: 'var(--text-main)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--danger)' }}>⚠️ ผลลัพธ์ของการรีเซ็ต:</strong>
+              <strong style={{ color: 'var(--danger)' }}>[Warning] ผลลัพธ์ของการรีเซ็ต:</strong>
               <ul style={{ margin: '6px 0 0', paddingLeft: 18, color: 'var(--text-sub)' }}>
                 <li>จำนวนเพื่อนที่ชวนสำเร็จ (<code style={{ color: '#FFF' }}>referralCount</code>) ของทุกกิลด์จะกลับเป็น 0</li>
                 <li>ทุกกิลด์จะสามารถชวนเพื่อนเพื่อรับสิทธิ์รอบใหม่ได้อีกครั้ง</li>
@@ -3294,7 +3296,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 </div>
                 {willBeDowngraded && (
                   <div style={{ fontSize: 11, color: 'var(--danger)', marginTop: 6 }}>
-                    {lang === 'th' ? '⚠️ วันที่ผลลัพธ์น้อยกว่าปัจจุบัน เซิร์ฟเวอร์จะถูกลดระดับเป็น FREE ทันที' : '⚠️ Resulting date is past/zero. Server will downgrade to FREE.'}
+                    {lang === 'th' ? '[Warning] วันที่ผลลัพธ์น้อยกว่าปัจจุบัน เซิร์ฟเวอร์จะถูกลดระดับเป็น FREE ทันที' : '[Warning] Resulting date is past/zero. Server will downgrade to FREE.'}
                   </div>
                 )}
               </div>
