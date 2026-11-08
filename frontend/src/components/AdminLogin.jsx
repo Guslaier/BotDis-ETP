@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, User, ArrowRight, KeyRound } from 'lucide-react';
+import { IconKey, IconLock, IconUser, IconArrowRight } from '@tabler/icons-react';
 
 export default function AdminLogin({ lang, onLoginSuccess, onToast }) {
   const [username, setUsername] = useState('');
@@ -60,7 +60,7 @@ export default function AdminLogin({ lang, onLoginSuccess, onToast }) {
             boxShadow: '0 8px 24px rgba(255, 43, 133, 0.2)',
             marginBottom: 16
           }}>
-            <KeyRound size={26} />
+            <IconKey size={26} stroke={1.8} />
           </div>
           <h2 style={{ fontSize: 21, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em', margin: 0 }}>
             {lang === 'th' ? 'ศูนย์ควบคุมแอดมิน' : 'Master Cluster Console'}
@@ -84,7 +84,7 @@ export default function AdminLogin({ lang, onLoginSuccess, onToast }) {
                 required
                 style={{ paddingLeft: 40 }}
               />
-              <User size={16} style={{ position: 'absolute', left: 14, top: 13, color: 'var(--text-muted)' }} />
+              <IconUser size={17} stroke={1.8} style={{ position: 'absolute', left: 14, top: 13, color: 'var(--text-muted)' }} />
             </div>
           </div>
 
@@ -101,7 +101,7 @@ export default function AdminLogin({ lang, onLoginSuccess, onToast }) {
                 required
                 style={{ paddingLeft: 40 }}
               />
-              <Lock size={16} style={{ position: 'absolute', left: 14, top: 13, color: 'var(--text-muted)' }} />
+              <IconLock size={17} stroke={1.8} style={{ position: 'absolute', left: 14, top: 13, color: 'var(--text-muted)' }} />
             </div>
           </div>
 
@@ -116,7 +116,7 @@ export default function AdminLogin({ lang, onLoginSuccess, onToast }) {
             ) : (
               <>
                 <span>{lang === 'th' ? 'เข้าสู่ระบบคอนโซล' : 'Access Master Console'}</span>
-                <ArrowRight size={15} />
+                <IconArrowRight size={16} stroke={2} />
               </>
             )}
           </button>

@@ -197,7 +197,7 @@ class SubscriptionManager extends EventEmitter {
             return {
                 allowed: false,
                 reason: 'GUILD_BANNED',
-                message: `⛔ เซิร์ฟเวอร์นี้ถูกระงับการใช้งาน (${timeStr}) เนื่องจาก: ${banInfo.reason}`
+                message: `เซิร์ฟเวอร์นี้ถูกระงับการใช้งาน (${timeStr}) เนื่องจาก: ${banInfo.reason}`
             };
         }
 

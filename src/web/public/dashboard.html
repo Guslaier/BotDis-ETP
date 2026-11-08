@@ -255,7 +255,7 @@
 <div id="loginModal">
     <div class="login-box">
         <img src="/assets/goolix-avatar.jpg" class="slime-logo" style="width: 54px; height: 54px; margin-bottom: 12px;">
-        <h2 style="font-size: 18px; margin-bottom: 6px;" id="loginTitle">🔐 แดชบอร์ดผู้ดูแลระบบ</h2>
+        <h2 style="font-size: 18px; margin-bottom: 6px;" id="loginTitle"> แดชบอร์ดผู้ดูแลระบบ</h2>
         <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 18px;" id="loginSubtitle">กรุณาเข้าสู่ระบบด้วยรหัสผ่านแอดมิน</p>
         <div id="loginError" style="font-size: 12px; color: #EF4444; margin-bottom: 12px; display: none;"></div>
         <input type="text" id="adminUser" placeholder="Username" style="margin-bottom: 10px;">
@@ -267,7 +267,7 @@
 <!-- Ban Modal -->
 <div id="banModal" style="position: fixed; inset: 0; background: rgba(8, 11, 16, 0.94); display: none; align-items: center; justify-content: center; z-index: 1000;">
     <div class="login-box" style="max-width: 420px; text-align: left;">
-        <h2 style="font-size: 18px; margin-bottom: 6px; color: #EF4444;" id="banModalTitle">🔨 แบนเซิร์ฟเวอร์ (Guild Ban)</h2>
+        <h2 style="font-size: 18px; margin-bottom: 6px; color: #EF4444;" id="banModalTitle"> แบนเซิร์ฟเวอร์ (Guild Ban)</h2>
         <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 16px;" id="banModalSub">สั่งระงับการใช้งานบอทในเซิร์ฟเวอร์นี้ทันที</p>
         
         <input type="hidden" id="banGuildId">
@@ -307,7 +307,7 @@
             <button class="lang-btn active" id="btnDashTh" onclick="setDashboardLanguage('th')">🇹🇭 TH</button>
             <button class="lang-btn" id="btnDashEn" onclick="setDashboardLanguage('en')">🇬🇧 EN</button>
         </div>
-        <button class="btn btn-danger" onclick="triggerSweep()" id="btnForceSweep">🧹 Force Sweep</button>
+        <button class="btn btn-danger" onclick="triggerSweep()" id="btnForceSweep"> Force Sweep</button>
         <button class="btn" onclick="logout()" id="btnLogout">ออกจากระบบ</button>
     </div>
 </div>
@@ -328,7 +328,7 @@
     </div>
     <!-- 3. NVMe Disk & Cache -->
     <div class="stat-card">
-        <h4><span id="lblStatDisk">ดิสก์ & แคชเพลง (Storage)</span> <button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="clearCache()" title="ล้างแคชไฟล์เสียงเพลงทั้งหมด">🗑️ ล้างแคช</button></h4>
+        <h4><span id="lblStatDisk">ดิสก์ & แคชเพลง (Storage)</span> <button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="clearCache()" title="ล้างแคชไฟล์เสียงเพลงทั้งหมด"> ล้างแคช</button></h4>
         <div class="val" id="diskVal">0 / 350 MB (Cache)</div>
         <div class="sub" id="diskSub">Disk รวม: 0 GB / 0 GB</div>
     </div>
@@ -340,7 +340,7 @@
     </div>
     <!-- 5. Network & VPN -->
     <div class="stat-card">
-        <h4><span id="lblStatVpn">เครือข่าย & VPN</span> <button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="switchVpn()">🔄 สลับ</button></h4>
+        <h4><span id="lblStatVpn">เครือข่าย & VPN</span> <button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="switchVpn()"> สลับ</button></h4>
         <div class="val" id="vpnVal" style="font-size: 17px; line-height: 24px;">Active</div>
         <div class="sub" id="vpnSub">Exit IP: Checking...</div>
     </div>
@@ -357,7 +357,7 @@
     <div>
         <!-- Live Players Panel -->
         <div class="panel">
-            <h3><span id="lblLiveStreamsTitle">🎵 ห้องที่กำลังเล่นเพลง (Live Streams)</span> <span id="playerCount" style="font-size: 13px; color: var(--slime-green);">0 ห้อง</span></h3>
+            <h3><span id="lblLiveStreamsTitle"> ห้องที่กำลังเล่นเพลง (Live Streams)</span> <span id="playerCount" style="font-size: 13px; color: var(--slime-green);">0 ห้อง</span></h3>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -378,7 +378,7 @@
 
         <!-- Guild Subscriptions Panel -->
         <div class="panel">
-            <h3 id="lblGuildSubTitle">🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)</h3>
+            <h3 id="lblGuildSubTitle"> จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)</h3>
             <div class="form-row">
                 <input type="text" id="guildSearchInput" placeholder="พิมพ์ชื่อเซิร์ฟเวอร์ หรือ Guild ID เพื่อค้นหา..." oninput="filterGuilds()">
             </div>
@@ -403,7 +403,7 @@
 
         <!-- Transaction & Audit Log Panel -->
         <div class="panel">
-            <h3 id="lblTxTitle">📋 ประวัติธุรกรรมและการเงินล่าสุด (Transactions & Audit Log)</h3>
+            <h3 id="lblTxTitle"> ประวัติธุรกรรมและการเงินล่าสุด (Transactions & Audit Log)</h3>
             <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
                 <table>
                     <thead>
@@ -425,7 +425,7 @@
 
         <!-- Audio Nodes Cluster Panel -->
         <div class="panel">
-            <h3 id="lblNodesTitle">🌐 โหนดประมวลผลเสียง (Audio Nodes & Cluster)</h3>
+            <h3 id="lblNodesTitle"> โหนดประมวลผลเสียง (Audio Nodes & Cluster)</h3>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -452,7 +452,7 @@
     <div>
         <!-- Settings & Config Panel -->
         <div class="panel">
-            <h3 id="lblConfigTitle">⚙️ ตั้งค่าระบบด่วน (Live Config)</h3>
+            <h3 id="lblConfigTitle"> ตั้งค่าระบบด่วน (Live Config)</h3>
             <div id="configAlert" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12px;"></div>
             
             <div style="font-size: 12px; margin-bottom: 12px;">
@@ -474,12 +474,12 @@
                 <label style="display: block; margin-bottom: 4px; color: var(--text-sub);" id="lblTotalSlots">โควต้าสตรีมรวมสูงสุด (Max Total Streams)</label>
                 <input type="number" id="cfgTotalSlots" min="1">
             </div>
-            <button class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="saveConfig()" id="btnSaveConfig">💾 บันทึกการตั้งค่า (Save Settings)</button>
+            <button class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="saveConfig()" id="btnSaveConfig"> บันทึกการตั้งค่า (Save Settings)</button>
         </div>
 
         <!-- Campaigns & Early-Bird Drop Panel -->
         <div class="panel">
-            <h3 id="lblEarlyBirdTitle">🎁 แคมเปญ Early-Bird Drop</h3>
+            <h3 id="lblEarlyBirdTitle"> แคมเปญ Early-Bird Drop</h3>
             <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                 <input type="text" id="newCampCode" placeholder="รหัสโค้ด เช่น DROP1">
                 <div style="display: flex; gap: 8px;">
@@ -596,7 +596,7 @@
         th: {
             title: "GOOLIX • Master Admin Dashboard",
             tagline: "ระบบควบคุมและโทรมาตรสตรีมมิ่งบอทเพลง",
-            forceSweep: "🧹 Force Sweep ห้องค้าง",
+            forceSweep: " Force Sweep ห้องค้าง",
             logout: "ออกจากระบบ",
             statSlots: "ช่องสัญญาณสตรีม (Slots)",
             statRes: "ทรัพยากรระบบ (CPU / RAM)",
@@ -604,14 +604,14 @@
             statNet: "แบนด์วิธ (Monthly Quota)",
             statVpn: "เครือข่าย & VPN",
             statBilling: "โหมดชำระเงิน (BILLING)",
-            liveStreams: "🎵 ห้องที่กำลังเล่นเพลง (Live Streams)",
+            liveStreams: " ห้องที่กำลังเล่นเพลง (Live Streams)",
             noLiveStreams: "ไม่มีห้องที่กำลังเล่นเพลงอยู่",
             thServer: "เซิร์ฟเวอร์",
             thNowPlaying: "เพลงที่เล่นอยู่",
             thProgress: "ความยาว & ผู้ฟัง",
             thNode: "โหนด",
             thAction: "จัดการ",
-            guildSubs: "🏰 จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)",
+            guildSubs: " จัดการวันใช้งานเซิร์ฟเวอร์ (Guild Subscriptions)",
             guildSearchPlaceholder: "พิมพ์ชื่อเซิร์ฟเวอร์ หรือ Guild ID เพื่อค้นหา...",
             thGuildName: "ชื่อเซิร์ฟเวอร์",
             thStatus: "สถานะ",
@@ -625,8 +625,8 @@
             thTxCode: "รหัสซอง / โค้ด",
             thTxUser: "ผู้ทำรายการ",
             thTxStatus: "สถานะ",
-            lblTxTitle: "📋 ประวัติธุรกรรมและการเงินล่าสุด (Transactions & Audit Log)",
-            lblNodesTitle: "🌐 โหนดประมวลผลเสียง (Audio Nodes & Cluster)",
+            lblTxTitle: " ประวัติธุรกรรมและการเงินล่าสุด (Transactions & Audit Log)",
+            lblNodesTitle: " โหนดประมวลผลเสียง (Audio Nodes & Cluster)",
             thNodeName: "ชื่อโหนด",
             thNodeType: "ชนิด",
             thNodeHost: "Host",
@@ -635,24 +635,24 @@
             thNodeRam: "RAM",
             thNodeLoad: "ภาระสตรีม",
             thNodeAction: "จัดการ",
-            liveConfig: "⚙️ ตั้งค่าระบบด่วน (Live Config)",
+            liveConfig: " ตั้งค่าระบบด่วน (Live Config)",
             paymentMode: "โหมดการชำระเงิน (Payment Mode)",
             optSandbox: "โหมดทดสอบ (SANDBOX - ปลอดภัย ไม่เสียเงินจริง)",
             optProd: "โหมดใช้งานจริง (PRODUCTION - รับซอง TrueMoney จริง)",
             price30d: "ราคาผู้สนับสนุน (บาท / 30 วัน)",
             freeSlots: "โควต้าสตรีมสายฟรีสูงสุด (Max Free Streams)",
             totalSlots: "โควต้าสตรีมรวมสูงสุด (Max Total Streams)",
-            btnSaveConfig: "💾 บันทึกการตั้งค่า (Save Settings)",
-            earlyBirdTitle: "🎁 แคมเปญ Early-Bird Drop",
+            btnSaveConfig: " บันทึกการตั้งค่า (Save Settings)",
+            earlyBirdTitle: " แคมเปญ Early-Bird Drop",
             btnCreateCamp: "สร้างรอบแคมเปญ",
             campPlaceholderCode: "รหัสโค้ด เช่น DROP1",
             campPlaceholderLimit: "จำนวนสิทธิ์ (เช่น 50)",
             campPlaceholderDays: "จำนวนวัน (เช่น 30)",
-            loginTitle: "🔐 แดชบอร์ดผู้ดูแลระบบ",
+            loginTitle: " แดชบอร์ดผู้ดูแลระบบ",
             loginSub: "กรุณาเข้าสู่ระบบด้วยรหัสผ่านแอดมิน",
             btnLogin: "เข้าสู่ระบบ",
             rateSub: "เรต: {price} บาท / 30 วัน",
-            banModalTitle: "🔨 แบนเซิร์ฟเวอร์ (Guild Ban)",
+            banModalTitle: " แบนเซิร์ฟเวอร์ (Guild Ban)",
             banModalSub: "สั่งระงับการใช้งานบอทในเซิร์ฟเวอร์นี้ทันที",
             lblBanTargetGuild: "เซิร์ฟเวอร์เป้าหมาย",
             lblBanDays: "จำนวนวัน (0 = ถาวร)",
@@ -663,7 +663,7 @@
         en: {
             title: "GOOLIX • Master Admin Dashboard",
             tagline: "Cluster Control & Streaming Telemetry",
-            forceSweep: "🧹 Force Sweep Idle Rooms",
+            forceSweep: " Force Sweep Idle Rooms",
             logout: "Sign Out",
             statSlots: "Stream Slots (Dynamic Quota)",
             statRes: "System CPU & RAM",
@@ -671,14 +671,14 @@
             statNet: "Monthly Bandwidth (800 GB)",
             statVpn: "Egress Network & VPN",
             statBilling: "Billing Economics",
-            liveStreams: "🎵 Active Music Streams",
+            liveStreams: " Active Music Streams",
             noLiveStreams: "No active voice channels streaming right now",
             thServer: "Guild Server",
             thNowPlaying: "Current Track",
             thProgress: "Duration & Listeners",
             thNode: "Node",
             thAction: "Action",
-            guildSubs: "🏰 Guild Subscriptions & Quotas",
+            guildSubs: " Guild Subscriptions & Quotas",
             guildSearchPlaceholder: "Type server name or Guild ID to search...",
             thGuildName: "Server Name",
             thStatus: "Tier Status",
@@ -692,8 +692,8 @@
             thTxCode: "Voucher / Code",
             thTxUser: "Initiator",
             thTxStatus: "Status",
-            lblTxTitle: "📋 Transactions & Audit Log (Last 50)",
-            lblNodesTitle: "🌐 Audio Processing Nodes (Cluster)",
+            lblTxTitle: " Transactions & Audit Log (Last 50)",
+            lblNodesTitle: " Audio Processing Nodes (Cluster)",
             thNodeName: "Node Name",
             thNodeType: "Type",
             thNodeHost: "Host",
@@ -702,24 +702,24 @@
             thNodeRam: "RAM",
             thNodeLoad: "Stream Load",
             thNodeAction: "Action",
-            liveConfig: "⚙️ Live Cluster Configuration",
+            liveConfig: " Live Cluster Configuration",
             paymentMode: "Billing Mode",
             optSandbox: "Sandbox Simulation (Safe, No real funds charged)",
             optProd: "Production (Real TrueMoney Vouchers processed)",
             price30d: "Supporter Price (THB / 30 Days)",
             freeSlots: "Max Free Concurrent Streams",
             totalSlots: "Max Total Concurrent Streams",
-            btnSaveConfig: "💾 Save Configuration",
-            earlyBirdTitle: "🎁 Early-Bird Promotional Drops",
+            btnSaveConfig: " Save Configuration",
+            earlyBirdTitle: " Early-Bird Promotional Drops",
             btnCreateCamp: "Create Batch",
             campPlaceholderCode: "Code e.g. DROP1",
             campPlaceholderLimit: "Max claims (e.g. 50)",
             campPlaceholderDays: "Days granted (e.g. 30)",
-            loginTitle: "🔐 Master Admin Portal",
+            loginTitle: " Master Admin Portal",
             loginSub: "Authenticate with administrative credentials",
             btnLogin: "Sign In",
             rateSub: "Rate: {price} THB / 30 Days",
-            banModalTitle: "🔨 Ban Guild Server",
+            banModalTitle: " Ban Guild Server",
             banModalSub: "Immediately restrict this guild from bot usage",
             lblBanTargetGuild: "Target Guild",
             lblBanDays: "Duration Days (0 = Permanent)",
@@ -851,12 +851,12 @@
                 checkAuth();
                 Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
             } else {
-                errEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง หรือถูกล็อกชั่วคราว';
+                errEl.textContent = ' รหัสผ่านไม่ถูกต้อง หรือถูกล็อกชั่วคราว';
                 errEl.style.display = 'block';
                 notifyError('เข้าสู่ระบบไม่สำเร็จ', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
             }
         } catch {
-            errEl.textContent = '❌ ไม่สามารถเชื่อมต่อ API ได้';
+            errEl.textContent = ' ไม่สามารถเชื่อมต่อ API ได้';
             errEl.style.display = 'block';
             notifyError('เชื่อมต่อล้มเหลว', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ API ได้');
         }
@@ -945,7 +945,7 @@
         const vpnServer = (s.vpn && s.vpn.server) || 'SG-FREE';
         const publicIp = s.vpn && s.vpn.publicIp;
         const ifaceIp = (s.vpn && s.vpn.internalIp) || s.vpnIp || '10.96.0.5';
-        const circuit = s.circuit ? (s.circuit.isOpen ? '⚠️ OPEN' : '✅ CLOSED') : 'CLOSED';
+        const circuit = s.circuit ? (s.circuit.isOpen ? ' OPEN' : ' CLOSED') : 'CLOSED';
 
         document.getElementById('vpnVal').textContent = vpnConn ? `${vpnServer} (Online)` : 'Standby / Direct';
         if (publicIp) {
@@ -975,11 +975,11 @@
                     <span style="font-size: 11px; color: var(--text-sub);">${p.source} • ${p.bitrate}</span>
                 </td>
                 <td>
-                    <span>⏱ ${p.elapsed || '00:00'}</span><br>
-                    <span style="font-size: 11px; color: var(--text-sub);">🎧 ${p.listeners || 0} คน • คิว: ${p.queueLength || 0} เพลง</span>
+                    <span> ${p.elapsed || '00:00'}</span><br>
+                    <span style="font-size: 11px; color: var(--text-sub);"> ${p.listeners || 0} คน • คิว: ${p.queueLength || 0} เพลง</span>
                 </td>
                 <td><span style="font-size: 11px; color: var(--accent-blue);">${p.nodeName || 'LocalNode-0'}</span></td>
-                <td><button class="btn btn-danger btn-sm" onclick="stopPlayer('${p.guildId}')">⏹ Stop</button></td>
+                <td><button class="btn btn-danger btn-sm" onclick="stopPlayer('${p.guildId}')"> Stop</button></td>
             </tr>
         `).join('');
     }
@@ -1035,7 +1035,7 @@
                     <td><strong>${safeName}</strong><br><span style="font-size: 11px; color: var(--text-sub);">${g.guildId}</span></td>
                     <td>
                         <span class="badge-pill ${g.isSupporter ? 'badge-vip' : 'badge-free'}">${g.isSupporter ? 'Supporter 96k' : 'FREE 64k'}</span>
-                        ${g.isBanned ? '<br><span class="badge-pill" style="margin-top: 4px; background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid #EF4444;">⛔ BANNED</span>' : ''}
+                        ${g.isBanned ? '<br><span class="badge-pill" style="margin-top: 4px; background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid #EF4444;"> BANNED</span>' : ''}
                     </td>
                     <td>
                         ${g.isBanned 
@@ -1055,10 +1055,10 @@
                     <td>
                         <div style="display: flex; gap: 4px; align-items: center;">
                             ${g.isBanned ? `
-                                <button class="btn btn-sm" style="background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green); font-size: 11px;" onclick="unbanGuild('${g.guildId}')">🔓 ปลดแบน</button>
+                                <button class="btn btn-sm" style="background: rgba(0, 255, 136, 0.15); color: var(--slime-green); border: 1px solid var(--slime-green); font-size: 11px;" onclick="unbanGuild('${g.guildId}')"> ปลดแบน</button>
                             ` : `
                                 <button class="btn btn-danger btn-sm" onclick="resetSub('${g.guildId}')" style="font-size: 11px;">Reset</button>
-                                <button class="btn btn-danger btn-sm" onclick="openBanModal('${g.guildId}', '${safeName.replace(/'/g, "\\'")}')" style="font-size: 11px; background: #7F1D1D; border-color: #991B1B;">🔨 แบน</button>
+                                <button class="btn btn-danger btn-sm" onclick="openBanModal('${g.guildId}', '${safeName.replace(/'/g, "\\'")}')" style="font-size: 11px; background: #7F1D1D; border-color: #991B1B;"> แบน</button>
                             `}
                         </div>
                     </td>
@@ -1137,13 +1137,13 @@
         tbody.innerHTML = txs.map(t => {
             const timeStr = new Date(t.timestamp).toLocaleString('th-TH');
             let badgeClass = 'badge-vip';
-            let statusText = '🟢 SUCCESS';
+            let statusText = ' SUCCESS';
             if (t.isSandbox) {
                 badgeClass = 'badge-free';
-                statusText = '🟡 SANDBOX';
+                statusText = ' SANDBOX';
             } else if (t.isRedeem) {
                 badgeClass = 'badge-vip';
-                statusText = '🟣 REDEEM';
+                statusText = ' REDEEM';
             }
 
             return `
@@ -1170,31 +1170,31 @@
             const isOnline = n.status === 'online';
             const isDraining = n.status === 'draining';
             let statusBadge = 'badge-free';
-            let statusText = '🔴 OFFLINE';
+            let statusText = ' OFFLINE';
             if (isOnline) {
                 statusBadge = 'badge-vip';
-                statusText = '🟢 ONLINE';
+                statusText = ' ONLINE';
             } else if (isDraining) {
                 statusBadge = 'badge-free';
-                statusText = '🟡 DRAINING';
+                statusText = ' DRAINING';
             }
 
             const drainBtn = isDraining 
-                ? `<button class="btn btn-primary btn-sm" onclick="toggleDrain('${n.id}')">🟢 Re-enable</button>`
-                : `<button class="btn btn-danger btn-sm" onclick="toggleDrain('${n.id}')">⏳ Drain</button>`;
+                ? `<button class="btn btn-primary btn-sm" onclick="toggleDrain('${n.id}')"> Re-enable</button>`
+                : `<button class="btn btn-danger btn-sm" onclick="toggleDrain('${n.id}')"> Drain</button>`;
 
             const cpuDisplay = n.cpu || '0%';
             const ramDisplay = n.ram ? `${n.ram}${n.hostRam ? ' • ' + n.hostRam : ''}` : (n.hostRam || '-');
 
             let vpnInfoHtml = '';
             if (n.vpn && n.vpn.enabled) {
-                vpnInfoHtml = `<div style="font-size: 10px; color: var(--slime-green); margin-top: 3px;">🔒 ${n.vpn.server} &bull; ${n.vpn.exitIp || n.vpn.interfaceIp || 'VPN'}</div>`;
+                vpnInfoHtml = `<div style="font-size: 10px; color: var(--slime-green); margin-top: 3px;"> ${n.vpn.server} &bull; ${n.vpn.exitIp || n.vpn.interfaceIp || 'VPN'}</div>`;
             } else if (n.vpn && !n.vpn.enabled) {
-                vpnInfoHtml = `<div style="font-size: 10px; color: var(--text-sub); margin-top: 3px;">🌐 Direct / No VPN</div>`;
+                vpnInfoHtml = `<div style="font-size: 10px; color: var(--text-sub); margin-top: 3px;"> Direct / No VPN</div>`;
             }
 
             const hostDisplay = (n.port && n.type === 'remote') ? `${n.host}:${n.port}` : (n.host || '127.0.0.1');
-            const latencyBadge = (n.latency > 0) ? `<span style="font-size: 10px; color: var(--slime-green); margin-left: 5px;">⚡ ${n.latency}ms</span>` : '';
+            const latencyBadge = (n.latency > 0) ? `<span style="font-size: 10px; color: var(--slime-green); margin-left: 5px;"> ${n.latency}ms</span>` : '';
 
             return `
                 <tr>
@@ -1210,7 +1210,7 @@
                     </td>
                     <td>
                         <div style="display: flex; gap: 4px; align-items: center;">
-                            <button class="btn btn-sm" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid var(--accent-blue); font-size: 11px; padding: 4px 7px;" onclick="openEditNodeModal('${n.id}', '${escapeHtml(n.name || n.id).replace(/'/g, "\\'")}', ${n.maxRooms || 12}, ${n.maxFreeRooms !== undefined ? n.maxFreeRooms : (n.maxRooms || 12)})" title="แก้ไขการตั้งค่าโหนด">✏️</button>
+                            <button class="btn btn-sm" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid var(--accent-blue); font-size: 11px; padding: 4px 7px;" onclick="openEditNodeModal('${n.id}', '${escapeHtml(n.name || n.id).replace(/'/g, "\\'")}', ${n.maxRooms || 12}, ${n.maxFreeRooms !== undefined ? n.maxFreeRooms : (n.maxRooms || 12)})" title="แก้ไขการตั้งค่าโหนด"></button>
                             ${drainBtn}
                         </div>
                     </td>
@@ -1321,7 +1321,7 @@
         const swal = getSwal();
         const initialFree = currentMaxFreeRooms !== undefined ? currentMaxFreeRooms : currentMaxRooms;
         const { value: formValues } = await swal.fire({
-            title: '⚙️ ตั้งค่าโหนด',
+            title: ' ตั้งค่าโหนด',
             html: `
                 <div style="text-align: left; font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">
                     รหัสโหนด: <code style="color: var(--slime-green);">${escapeHtml(nodeId)}</code>
@@ -1341,12 +1341,12 @@
                     </div>
                 </div>
                 <div style="font-size: 11px; color: var(--text-sub); text-align: left; padding: 6px 10px; background: rgba(255,255,255,0.04); border-radius: 6px;">
-                    💡 ช่องที่เหลือจะสงวนสิทธิ์ให้ผู้สนับสนุน (Supporter VIP) โดยเฉพาะ
+                     ช่องที่เหลือจะสงวนสิทธิ์ให้ผู้สนับสนุน (Supporter VIP) โดยเฉพาะ
                 </div>
             `,
             focusConfirm: false,
             showCancelButton: true,
-            confirmButtonText: '💾 บันทึก',
+            confirmButtonText: ' บันทึก',
             cancelButtonText: 'ยกเลิก',
             confirmButtonColor: '#00FF88',
             cancelButtonColor: '#374151',

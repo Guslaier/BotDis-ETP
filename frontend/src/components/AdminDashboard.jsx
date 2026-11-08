@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Shield, Server, HardDrive, Wifi, Activity, Cpu, RotateCw, 
-  Trash2, Play, Square, FastForward, Search, Plus, Ban, CheckCircle, 
-  AlertTriangle, Settings, RefreshCw, Power, Radio, Sliders, ExternalLink,
-  Users, Globe, MapPin, Cloud, Save, Gift, ChevronLeft, ChevronRight,
-  Calendar, Minus, ArrowRight, Eye, Edit2, Share2, ToggleLeft, ToggleRight,
-  Check, X, Sparkles, Clock
-} from 'lucide-react';
+import { IconShield, IconServer, IconDatabase, IconWifi, IconActivity, IconCpu, IconRotateClockwise, IconTrash, IconPlayerPlay, IconPlayerStop, IconPlayerSkipForward, IconSearch, IconPlus, IconBan, IconCircleCheck, IconAlertTriangle, IconSettings, IconRefresh, IconPower, IconRadio, IconAdjustments, IconExternalLink, IconUsers, IconGlobe, IconMapPin, IconCloud, IconDeviceFloppy, IconGift, IconChevronLeft, IconChevronRight, IconCalendar, IconMinus, IconArrowRight, IconEye, IconEdit, IconShare, IconToggleLeft, IconToggleRight, IconCheck, IconX, IconSparkles, IconClock } from '@tabler/icons-react';
 
 export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [loading, setLoading] = useState(false);
@@ -790,12 +783,12 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
             {nodesList.some(n => n.type === 'remote' && n.status === 'online') ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--accent-blue)' }}>
-                <Globe size={13} />
+                <IconGlobe size={13} />
                 <span>Hybrid Cloud & Residential Active</span>
               </span>
             ) : (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                <MapPin size={13} style={{ color: 'var(--text-dim)' }} />
+                <IconMapPin size={13} style={{ color: 'var(--text-dim)' }} />
                 <span>Local Core Only</span>
               </span>
             )}
@@ -843,12 +836,12 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         marginBottom: 24
       }}>
         {[
-          { id: 'nodes', label: lang === 'th' ? 'โหนดประมวลผลเสียง (Cluster)' : 'Audio Nodes', icon: <Server size={15} /> },
-          { id: 'streams', label: `${lang === 'th' ? 'ห้องที่กำลังเล่น' : 'Live Streams'} (${data?.players?.length || 0})`, icon: <Radio size={15} /> },
-          { id: 'guilds', label: lang === 'th' ? 'จัดการเซิร์ฟเวอร์ (Subscriptions)' : 'Guilds', icon: <Shield size={15} /> },
-          { id: 'drops', label: lang === 'th' ? 'แคมเปญ Early-Bird' : 'Drops', icon: <Plus size={15} /> },
-          { id: 'tx', label: lang === 'th' ? 'ประวัติธุรกรรม (Audit Log)' : 'Transactions', icon: <Activity size={15} /> },
-          { id: 'settings', label: lang === 'th' ? 'ตั้งค่าระบบ (Settings)' : 'Settings', icon: <Settings size={15} /> }
+          { id: 'nodes', label: lang === 'th' ? 'โหนดประมวลผลเสียง (Cluster)' : 'Audio Nodes', icon: <IconServer size={15} /> },
+          { id: 'streams', label: `${lang === 'th' ? 'ห้องที่กำลังเล่น' : 'Live Streams'} (${data?.players?.length || 0})`, icon: <IconRadio size={15} /> },
+          { id: 'guilds', label: lang === 'th' ? 'จัดการเซิร์ฟเวอร์ (Subscriptions)' : 'Guilds', icon: <IconShield size={15} /> },
+          { id: 'drops', label: lang === 'th' ? 'แคมเปญ Early-Bird' : 'Drops', icon: <IconPlus size={15} /> },
+          { id: 'tx', label: lang === 'th' ? 'ประวัติธุรกรรม (Audit Log)' : 'Transactions', icon: <IconActivity size={15} /> },
+          { id: 'settings', label: lang === 'th' ? 'ตั้งค่าระบบ (Settings)' : 'Settings', icon: <IconSettings size={15} /> }
         ].map(t => (
           <button
             key={t.id}
@@ -875,7 +868,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             style={{ padding: '8px 12px' }}
             title="Refresh"
           >
-            <RefreshCw size={13} />
+            <IconRefresh size={13} />
           </button>
         </div>
       </div>
@@ -898,7 +891,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', flex: 1, minWidth: 280 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-sub)', fontSize: 13, fontWeight: 700 }}>
-                <Server size={16} style={{ color: 'var(--slime-green)' }} />
+                <IconServer size={16} style={{ color: 'var(--slime-green)' }} />
                 <span>{lang === 'th' ? 'เลือกโหนดประมวลผลเสียง:' : 'Select Audio Node:'}</span>
               </div>
 
@@ -941,7 +934,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     style={{ padding: '6px 8px', borderRadius: 8 }}
                     title={lang === 'th' ? 'โหนดก่อนหน้า' : 'Previous Node'}
                   >
-                    <ChevronLeft size={14} />
+                    <IconChevronLeft size={14} />
                   </button>
                   <button
                     onClick={() => {
@@ -953,7 +946,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     style={{ padding: '6px 8px', borderRadius: 8 }}
                     title={lang === 'th' ? 'โหนดถัดไป' : 'Next Node'}
                   >
-                    <ChevronRight size={14} />
+                    <IconChevronRight size={14} />
                   </button>
                 </div>
               )}
@@ -1007,7 +1000,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   gap: 6
                 }}
               >
-                <Plus size={14} />
+                <IconPlus size={14} />
                 <span>{lang === 'th' ? 'เพิ่มโหนด (Add Node)' : 'Add Node'}</span>
               </button>
             </div>
@@ -1031,7 +1024,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                       <div>
                         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <HardDrive size={14} style={{ color: 'var(--slime-green)' }} />
+                          <IconDatabase size={14} style={{ color: 'var(--slime-green)' }} />
                           <span>{lang === 'th' ? 'ดิสก์ & แคชเพลง (STORAGE)' : 'Disk & Song Cache'}</span>
                         </div>
                         <div style={{ fontSize: 20, fontWeight: 800, color: isOffline ? 'var(--danger)' : '#FFF', margin: '8px 0 4px' }}>
@@ -1056,7 +1049,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                         title="Clear Cache"
                         disabled={isOffline}
                       >
-                        <Trash2 size={12} />
+                        <IconTrash size={12} />
                         <span>{lang === 'th' ? 'ล้างแคช' : 'Clear'}</span>
                       </button>
                     </div>
@@ -1075,7 +1068,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   {/* 2. Bandwidth Monthly Quota Card */}
                   <div className="glass-panel" style={{ padding: 20 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Wifi size={14} style={{ color: 'var(--accent-blue)' }} />
+                      <IconWifi size={14} style={{ color: 'var(--accent-blue)' }} />
                       <span>{lang === 'th' ? 'แบนด์วิธ (MONTHLY QUOTA)' : 'Bandwidth Quota'}</span>
                     </div>
                     <div style={{ fontSize: 20, fontWeight: 800, color: isOffline ? 'var(--danger)' : '#FFF', margin: '8px 0 4px' }}>
@@ -1108,7 +1101,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                       <div>
                         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <Radio size={14} style={{ color: 'var(--cyber-pink)' }} />
+                          <IconRadio size={14} style={{ color: 'var(--cyber-pink)' }} />
                           <span>{lang === 'th' ? 'เครือข่าย & VPN' : 'Network & VPN'}</span>
                         </div>
                         <div style={{ fontSize: 17, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
@@ -1154,7 +1147,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                           title="Switch VPN Server"
                           disabled={isOffline || isRemote}
                         >
-                          <RotateCw size={11} />
+                          <IconRotateClockwise size={11} />
                           <span>{lang === 'th' ? 'สลับ' : 'Switch'}</span>
                         </button>
                         {((isRemote && selectedNode.circuit?.isOpen) || (!isRemote && data?.stats?.circuit?.isOpen)) && (
@@ -1174,7 +1167,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   {/* 4. Streams & Compute Load */}
                   <div className="glass-panel" style={{ padding: 20 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Activity size={14} style={{ color: 'var(--accent-yellow)' }} />
+                      <IconActivity size={14} style={{ color: 'var(--accent-yellow)' }} />
                       <span>{lang === 'th' ? 'ภาระสตรีม & โหลดซีพียู (STREAMS & LOAD)' : 'Streams & Compute Load'}</span>
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 800, color: '#FFF', margin: '8px 0 4px' }}>
@@ -1209,7 +1202,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     onClick={() => handleToggleDrain(selectedNode.id)}
                     className={`btn btn-sm ${selectedNode.status === 'draining' ? 'btn-primary' : 'btn-danger'}`}
                   >
-                    <Power size={13} />
+                    <IconPower size={13} />
                     <span>{selectedNode.status === 'draining' ? (lang === 'th' ? 'ยกเลิกโหมด Drain (กลับสู่ปกติ)' : 'Resume Node') : (lang === 'th' ? 'เปิดโหมด Drain (ไม่รับงานใหม่)' : 'Drain Node')}</span>
                   </button>
                   <button
@@ -1222,7 +1215,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     }}
                     className="btn btn-sm"
                   >
-                    <Sliders size={13} />
+                    <IconAdjustments size={13} />
                     <span>{lang === 'th' ? 'แก้ไขชื่อ / ความจุโหนด' : 'Edit Node Settings'}</span>
                   </button>
                 </div>
@@ -1234,13 +1227,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           <div className="glass-panel" style={{ padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
               <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Server size={16} style={{ color: 'var(--slime-green)' }} />
+                <IconServer size={16} style={{ color: 'var(--slime-green)' }} />
                 <span>{lang === 'th' ? `รายชื่อโหนดในคลัสเตอร์ทั้งหมด (${nodesList.length})` : `Cluster Nodes (${nodesList.length})`}</span>
               </h3>
 
               {/* Node Search Bar for Scalable Cluster Management */}
               <div style={{ position: 'relative', width: 260, maxWidth: '100%' }}>
-                <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
+                <IconSearch size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
                 <input
                   type="text"
                   value={nodeSearchTerm}
@@ -1349,7 +1342,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                                 style={{ padding: '4px 8px', fontSize: 11 }}
                                 title="Delete Node"
                               >
-                                <Trash2 size={11} />
+                                <IconTrash size={11} />
                               </button>
                             )}
                           </div>
@@ -1368,7 +1361,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       {activeSubTab === 'streams' && (
         <div className="glass-panel fade-in" style={{ padding: 20 }}>
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Radio size={16} style={{ color: 'var(--slime-green)' }} />
+            <IconRadio size={16} style={{ color: 'var(--slime-green)' }} />
             <span>{lang === 'th' ? 'ห้องที่กำลังเล่นเพลง (Live Streams)' : 'Active Discord Audio Sessions'}</span>
           </h3>
 
@@ -1409,15 +1402,15 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                           border: `1px solid ${(p.sourceType === 'soundcloud' || p.source?.toLowerCase().includes('soundcloud')) ? 'rgba(255, 85, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)'}`
                         }}>
                           {(p.sourceType === 'soundcloud' || p.source?.toLowerCase().includes('soundcloud')) ? (
-                            <Cloud size={12} />
+                            <IconCloud size={12} />
                           ) : (
-                            <Play size={10} fill="currentColor" />
+                            <IconPlayerPlay size={10} fill="currentColor" />
                           )}
                           <span>{(p.sourceType === 'soundcloud' || p.source?.toLowerCase().includes('soundcloud')) ? 'SoundCloud' : 'YouTube'}</span>
                         </span>
                       </td>
                       <td style={{ fontSize: 12 }}>
-                        {p.elapsed} • <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Users size={12} /> {p.listeners || 0}</span>
+                        {p.elapsed} • <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconUsers size={12} /> {p.listeners || 0}</span>
                       </td>
                       <td>
                         <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#1A2230' }}>
@@ -1432,7 +1425,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                             style={{ padding: '4px 8px' }}
                             title="Skip"
                           >
-                            <FastForward size={12} />
+                            <IconPlayerSkipForward size={12} />
                           </button>
                           <button
                             onClick={() => handlePlayerAction(p.guildId, 'stop')}
@@ -1440,7 +1433,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                             style={{ padding: '4px 8px' }}
                             title="Stop"
                           >
-                            <Square size={12} />
+                            <IconPlayerStop size={12} />
                           </button>
                         </div>
                       </td>
@@ -1464,7 +1457,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         <div className="glass-panel fade-in" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Shield size={16} style={{ color: 'var(--slime-green)' }} />
+              <IconShield size={16} style={{ color: 'var(--slime-green)' }} />
               <span>{lang === 'th' ? 'จัดการวันใช้งานเซิร์ฟเวอร์ (Subscriptions)' : 'Guild Subscriptions'}</span>
             </h3>
             <div style={{ width: 260 }}>
@@ -1556,7 +1549,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                           }}
                           title={lang === 'th' ? 'ปรับแต่งวันใช้งานแบบกำหนดเอง (เพิ่ม/หักวัน หรือกำหนดวันที่)' : 'Custom adjustment (Add/Deduct/Set Date)'}
                         >
-                          <Sliders size={11} />
+                          <IconAdjustments size={11} />
                           <span>{lang === 'th' ? 'กำหนดเอง' : 'Custom'}</span>
                         </button>
                         <button
@@ -1624,7 +1617,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     justifyContent: 'center',
                     color: 'var(--cyber-pink)'
                   }}>
-                    <Share2 size={18} />
+                    <IconShare size={18} />
                   </div>
                   <div>
                     <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1658,7 +1651,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     style={{ padding: '6px 12px', fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 5 }}
                     title={lang === 'th' ? 'รีเซ็ตจำนวนการชวนของทุกเซิร์ฟเวอร์เพื่อเริ่ม Season ใหม่' : 'Reset all guilds referral progress for a new season'}
                   >
-                    <RotateCw size={12} />
+                    <IconRotateClockwise size={12} />
                     <span>{lang === 'th' ? 'เริ่ม Season ใหม่ (Reset All)' : 'Reset Season'}</span>
                   </button>
                 </div>
@@ -1681,7 +1674,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                       className={`btn btn-sm ${referralForm.enabled ? 'btn-primary' : 'btn-danger'}`}
                       style={{ width: '100%', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                     >
-                      {referralForm.enabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                      {referralForm.enabled ? <IconToggleRight size={16} /> : <IconToggleLeft size={16} />}
                       <span>{referralForm.enabled ? (lang === 'th' ? 'เปิดใช้งาน (ENABLED)' : 'ENABLED') : (lang === 'th' ? 'ปิดระบบ (DISABLED)' : 'DISABLED')}</span>
                     </button>
                   </div>
@@ -1794,7 +1787,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     [Rule] {lang === 'th' ? `ปัจจุบัน: เพื่อนเติมขั้นต่ำ ${data?.config?.referralMinTopup ?? 29} บาท -> ผู้ชวนรับ +${data?.config?.referralRewardDays ?? 30} วัน (จำกัด ${data?.config?.maxReferralMonths ?? 6} ครั้ง)` : `Active rule: Min ${data?.config?.referralMinTopup ?? 29} THB topup -> +${data?.config?.referralRewardDays ?? 30} days`}
                   </div>
                   <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '8px 18px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <Save size={13} />
+                    <IconDeviceFloppy size={13} />
                     <span>{lang === 'th' ? 'บันทึกการตั้งค่า Referral Season' : 'Save Referral Campaign'}</span>
                   </button>
                 </div>
@@ -1804,7 +1797,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             {/* 2. EARLY-BIRD PROMO DROPS MANAGER */}
             <div className="glass-panel" style={{ padding: 22 }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Gift size={16} style={{ color: 'var(--slime-green)' }} />
+                <IconGift size={16} style={{ color: 'var(--slime-green)' }} />
                 <span>{lang === 'th' ? 'แคมเปญแจกโค้ดวันฟรี (Early-Bird Drops)' : 'Early-Bird Promo Drops'}</span>
               </h3>
 
@@ -1891,7 +1884,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 )}
                 <div style={{ marginTop: 18 }}>
                   <button type="submit" className="btn btn-primary" style={{ padding: '9px 18px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <Plus size={14} />
+                    <IconPlus size={14} />
                     <span>{lang === 'th' ? 'สร้างแคมเปญ' : 'Create Drop'}</span>
                   </button>
                 </div>
@@ -1932,7 +1925,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                             }}
                             title={lang === 'th' ? 'คลิกดูรายชื่อเซิร์ฟเวอร์ที่กดรับโค้ดนี้' : 'View claimed guilds'}
                           >
-                            <Eye size={11} />
+                            <IconEye size={11} />
                             <span>{c.claimedCount || 0} / {c.maxClaims}</span>
                           </button>
                         </td>
@@ -1971,7 +1964,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                               }}
                               title={lang === 'th' ? 'แก้ไขโควตาสิทธิ์ หรือขยายวันหมดอายุ' : 'Edit Drop'}
                             >
-                              <Edit2 size={11} />
+                              <IconEdit size={11} />
                               <span style={{ fontSize: 11 }}>{lang === 'th' ? 'แก้ไข' : 'Edit'}</span>
                             </button>
                             <button
@@ -1981,7 +1974,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                               style={{ padding: '4px 8px' }}
                               title={lang === 'th' ? 'ลบแคมเปญนี้' : 'Delete Drop'}
                             >
-                              <Trash2 size={12} />
+                              <IconTrash size={12} />
                             </button>
                           </div>
                         </td>
@@ -1999,7 +1992,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       {activeSubTab === 'tx' && (
         <div className="glass-panel fade-in" style={{ padding: 20 }}>
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Activity size={16} style={{ color: 'var(--slime-green)' }} />
+            <IconActivity size={16} style={{ color: 'var(--slime-green)' }} />
             <span>{lang === 'th' ? 'ประวัติธุรกรรมและการเงินล่าสุด (Audit Log)' : 'Transactions & Topup Audit Log'}</span>
           </h3>
 
@@ -2050,7 +2043,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           {/* Card 1: System Live Configuration */}
           <div className="glass-panel fade-in" style={{ padding: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Settings size={18} style={{ color: 'var(--slime-green)' }} />
+              <IconSettings size={18} style={{ color: 'var(--slime-green)' }} />
               <span>{lang === 'th' ? 'ตั้งค่าระบบด่วน (Live Config)' : 'System Configuration'}</span>
             </h3>
 
@@ -2066,7 +2059,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <span style={{ fontWeight: 700, color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Server size={14} />
+                    <IconServer size={14} />
                     {lang === 'th' ? 'ภาระสตรีมจริงของทุกโหนดรวมกัน:' : 'Cluster Total Physical Capacity:'}
                   </span>
                   <button
@@ -2150,7 +2143,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   />
                   {data?.stats?.clusterCapacity && settingsForm.maxFreeStreams > data.stats.clusterCapacity.clusterMaxFree && (
                     <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <AlertTriangle size={12} />
+                      <IconAlertTriangle size={12} />
                       <span>{lang === 'th' ? `เกินโควตาสายฟรีของโหนด (${data.stats.clusterCapacity.clusterMaxFree} ห้อง)` : `Exceeds cluster free limit (${data.stats.clusterCapacity.clusterMaxFree})`}</span>
                     </div>
                   )}
@@ -2172,7 +2165,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   />
                   {data?.stats?.clusterCapacity && settingsForm.maxTotalStreams > data.stats.clusterCapacity.clusterMaxTotal && (
                     <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <AlertTriangle size={12} />
+                      <IconAlertTriangle size={12} />
                       <span>{lang === 'th' ? `เกินภาระสตรีมจริงของโหนด (${data.stats.clusterCapacity.clusterMaxTotal} ห้อง)` : `Exceeds cluster hardware limit (${data.stats.clusterCapacity.clusterMaxTotal})`}</span>
                     </div>
                   )}
@@ -2200,11 +2193,11 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   style={{ flex: '0 0 auto', padding: '12px 18px' }}
                   title="Reset to current server values"
                 >
-                  <RefreshCw size={14} />
+                  <IconRefresh size={14} />
                   <span>{lang === 'th' ? 'รีเซ็ตค่าเดิม' : 'Reset'}</span>
                 </button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px 18px' }}>
-                  <Save size={15} />
+                  <IconDeviceFloppy size={15} />
                   <span>{lang === 'th' ? 'บันทึกการตั้งค่าระบบ' : 'Save System Settings'}</span>
                 </button>
               </div>
@@ -2216,7 +2209,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 className="btn btn-sm"
                 style={{ width: '100%', padding: '10px' }}
               >
-                <RefreshCw size={14} />
+                <IconRefresh size={14} />
                 <span>{lang === 'th' ? 'สั่ง Sweep เคลียร์ห้องหมดอายุทันที (Force Sweep)' : 'Force Sweep Idle Rooms'}</span>
               </button>
             </div>
@@ -2227,7 +2220,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Sliders size={18} style={{ color: 'var(--cyber-pink)' }} />
+                  <IconAdjustments size={18} style={{ color: 'var(--cyber-pink)' }} />
                   <span>{lang === 'th' ? 'สวิตช์ฟังก์ชัน & ข้อความแจ้งเตือน (Feature Flags)' : 'Feature Flags & Maintenance'}</span>
                 </h3>
                 <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 4 }}>
@@ -2257,10 +2250,10 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {key === 'filter' && <Sliders size={16} style={{ color: '#00D2FF' }} />}
-                        {key === 'autoplay' && <RotateCw size={16} style={{ color: '#FF2E93' }} />}
-                        {key === 'lyrics' && <Search size={16} style={{ color: '#10B981' }} />}
-                        {key === 'seek' && <FastForward size={16} style={{ color: '#F59E0B' }} />}
+                        {key === 'filter' && <IconAdjustments size={16} style={{ color: '#00D2FF' }} />}
+                        {key === 'autoplay' && <IconRotateClockwise size={16} style={{ color: '#FF2E93' }} />}
+                        {key === 'lyrics' && <IconSearch size={16} style={{ color: '#10B981' }} />}
+                        {key === 'seek' && <IconPlayerSkipForward size={16} style={{ color: '#F59E0B' }} />}
                         <span style={{ fontWeight: 700, fontSize: 14 }}>{feat.name}</span>
                         <code style={{ fontSize: 11, background: 'rgba(255, 255, 255, 0.08)', padding: '2px 6px', borderRadius: 4, color: 'var(--accent-blue)' }}>
                           {feat.command}
@@ -2451,7 +2444,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 style={{ flex: '0 0 auto', padding: '12px 18px' }}
                 title="Reset to current server values"
               >
-                <RefreshCw size={14} />
+                <IconRefresh size={14} />
                 <span>{lang === 'th' ? 'รีเซ็ตค่าเดิม' : 'Reset'}</span>
               </button>
               <button
@@ -2461,7 +2454,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 className="btn btn-primary"
                 style={{ flex: 1, padding: '12px 18px' }}
               >
-                <Save size={15} />
+                <IconDeviceFloppy size={15} />
                 <span>
                   {savingFeatures
                     ? (lang === 'th' ? 'กำลังบันทึก...' : 'Saving...')
@@ -2673,7 +2666,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 justifyContent: 'center',
                 color: 'var(--accent-blue)'
               }}>
-                <Edit2 size={18} />
+                <IconEdit size={18} />
               </div>
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#FFF' }}>
@@ -2809,7 +2802,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   justifyContent: 'center',
                   color: 'var(--slime-green)'
                 }}>
-                  <Eye size={18} />
+                  <IconEye size={18} />
                 </div>
                 <div>
                   <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#FFF' }}>
@@ -2825,7 +2818,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 onClick={() => setViewClaimedModal(null)}
                 style={{ background: 'none', border: 'none', color: 'var(--text-sub)', cursor: 'pointer', padding: 4 }}
               >
-                <X size={18} />
+                <IconX size={18} />
               </button>
             </div>
 
@@ -2897,7 +2890,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 justifyContent: 'center',
                 color: 'var(--danger)'
               }}>
-                <RotateCw size={18} />
+                <IconRotateClockwise size={18} />
               </div>
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--danger)' }}>
@@ -2963,7 +2956,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         }}>
           <div className="glass-panel" style={{ width: 440, padding: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Server size={18} style={{ color: 'var(--slime-green)' }} />
+              <IconServer size={18} style={{ color: 'var(--slime-green)' }} />
               <span>{lang === 'th' ? 'เพิ่มโหนดประมวลผลเสียงเข้าคลัสเตอร์' : 'Add Audio Node to Cluster'}</span>
             </h3>
 
@@ -3053,7 +3046,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
                 </button>
                 <button type="submit" className="btn btn-sm btn-primary">
-                  <Plus size={13} />
+                  <IconPlus size={13} />
                   <span>{lang === 'th' ? 'บันทึกและเชื่อมต่อทันที' : 'Connect Node'}</span>
                 </button>
               </div>
@@ -3111,7 +3104,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   justifyContent: 'center',
                   color: 'var(--accent-blue)'
                 }}>
-                  <Sliders size={20} />
+                  <IconAdjustments size={20} />
                 </div>
                 <div>
                   <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#FFF' }}>
@@ -3162,7 +3155,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     gap: 4
                   }}
                 >
-                  <Plus size={13} />
+                  <IconPlus size={13} />
                   <span>{lang === 'th' ? 'เพิ่มวัน (Add)' : 'Add Days'}</span>
                 </button>
 
@@ -3184,7 +3177,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     gap: 4
                   }}
                 >
-                  <Minus size={13} />
+                  <IconMinus size={13} />
                   <span>{lang === 'th' ? 'หักวัน (Deduct)' : 'Deduct Days'}</span>
                 </button>
 
@@ -3206,7 +3199,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                     gap: 4
                   }}
                 >
-                  <Calendar size={13} />
+                  <IconCalendar size={13} />
                   <span>{lang === 'th' ? 'ระบุวันที่ (Date)' : 'Set Date'}</span>
                 </button>
               </div>
@@ -3293,7 +3286,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#FFF' }}>
                   <span>{isCurrentlySupporter ? `${currentRemainingDays} วัน` : 'FREE'}</span>
-                  <ArrowRight size={14} style={{ color: 'var(--text-sub)' }} />
+                  <IconArrowRight size={14} style={{ color: 'var(--text-sub)' }} />
                   <span style={{ color: willBeDowngraded ? 'var(--danger)' : 'var(--slime-green)', fontWeight: 800 }}>
                     {willBeDowngraded ? (lang === 'th' ? 'FREE (หมดอายุทันที)' : 'Expired -> FREE') : `${previewRemainingDays} วัน (${new Date(previewExpiry).toLocaleDateString('th-TH')})`}
                   </span>

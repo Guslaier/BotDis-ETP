@@ -174,7 +174,7 @@ class SmartProxyPool {
         this._saveBlacklist();
         this._savePool();
 
-        console.warn(`[SmartProxyPool] 🚫 Blacklisted (${proxyUrl}) for ${Math.round(durationMs / 3600000)}h - ${cleanReason}`);
+        console.warn(`[SmartProxyPool] Blacklisted (${proxyUrl}) for ${Math.round(durationMs / 3600000)}h - ${cleanReason}`);
     }
 
     /**

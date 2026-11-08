@@ -30,31 +30,30 @@ module.exports = {
         const slotStats = subscriptionManager.getLiveStreamStats(kazagumo, client);
         const slotConfig = subscriptionManager.getConfig();
 
-        let proxyBadge = '⚪ Direct (Bypass Mode)';
+        let proxyBadge = 'Direct (Bypass Mode)';
         if (proxyStatus.isVpn) {
-            proxyBadge = `🟢 ProtonVPN ${proxyStatus.serverName ? `(${proxyStatus.serverName})` : ''} [${proxyStatus.vpnIp}]`;
+            proxyBadge = `ProtonVPN ${proxyStatus.serverName ? `(${proxyStatus.serverName})` : ''} [${proxyStatus.vpnIp}]`;
         } else if (proxyStatus.configured) {
             proxyBadge = proxyStatus.isOnline 
-                ? `🟢 Smart Pool (${proxyStatus.activeCount} Live | 🚫 ${proxyStatus.blacklistCount || 0} Blocked | ${proxyStatus.bestLatency})` 
-                : '🔴 Pool Exhausted (Retrying)';
+                ? `Smart Pool (${proxyStatus.activeCount} Live | ${proxyStatus.blacklistCount || 0} Blocked | ${proxyStatus.bestLatency})` 
+                : 'Pool Exhausted (Retrying)';
         }
 
         const embed = new EmbedBuilder()
-            .setColor('#FF69B4')
-            .setTitle('📊 ข้อมูลสถิติและสถานะระบบ GOOLIX')
+            .setColor('#00FF88')
+            .setTitle('ข้อมูลสถิติและสถานะระบบ GOOLIX')
             .addFields(
-                { name: '⏱️ Uptime', value: `\`${uptimeStr}\``, inline: true },
-                { name: '🧠 RAM (RSS / Heap)', value: `\`${rssMB} MB / ${heapUsedMB} MB\``, inline: true },
-                { name: '🛡️ Proxy Egress', value: `\`${proxyBadge}\``, inline: true },
-                { name: '⚡ นกแดง Circuit', value: `\`${circuitStatus.status}\``, inline: true },
-                { name: '🎧 Active Slots', value: `\`${slotStats.total}/${slotConfig.maxTotalStreams || 12} (ฟรี ${slotStats.free}/${slotConfig.maxFreeStreams || 6})\``, inline: true },
-                { name: '🏰 Servers', value: `\`${totalGuilds} เซิร์ฟเวอร์\``, inline: true },
-                { name: '⚙️ Node.js / D.js', value: `\`${process.version} / v${djsVersion}\``, inline: true },
-                { name: '⚡ Audio Engine', value: '`Ultra-Light Direct OggOpus`', inline: true }
+                { name: 'Uptime', value: `\`${uptimeStr}\``, inline: true },
+                { name: 'RAM (RSS / Heap)', value: `\`${rssMB} MB / ${heapUsedMB} MB\``, inline: true },
+                { name: 'Proxy Egress', value: `\`${proxyBadge}\``, inline: true },
+                { name: 'YouTube Circuit', value: `\`${circuitStatus.status}\``, inline: true },
+                { name: 'Active Slots', value: `\`${slotStats.total}/${slotConfig.maxTotalStreams || 12} (ฟรี ${slotStats.free}/${slotConfig.maxFreeStreams || 6})\``, inline: true },
+                { name: 'Servers', value: `\`${totalGuilds} เซิร์ฟเวอร์\``, inline: true },
+                { name: 'Node.js / D.js', value: `\`${process.version} / v${djsVersion}\``, inline: true },
+                { name: 'Audio Engine', value: '`Ultra-Light Direct OggOpus`', inline: true }
             )
-            .setFooter({ text: 'ทำงานเบาสบาย กินแรมน้อย ไม่เปลืองทรัพยากรเครื่องครับ ⚡' });
+            .setFooter({ text: 'GOOLIX High-Performance Audio Engine | Studio Grade Telemetry' });
 
         return interaction.reply({ embeds: [embed] });
     }
 };
-

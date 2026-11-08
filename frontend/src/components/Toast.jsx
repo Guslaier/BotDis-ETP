@@ -1,14 +1,14 @@
 import React from 'react';
-import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
+import { IconCircleCheck, IconAlertCircle, IconInfoCircle, IconAlertTriangle, IconX } from '@tabler/icons-react';
 
 export default function Toast({ toasts, onDismiss }) {
   if (!toasts || toasts.length === 0) return null;
 
   const icons = {
-    success: <CheckCircle2 size={17} style={{ color: 'var(--slime-green)' }} />,
-    error: <AlertCircle size={17} style={{ color: 'var(--red-alert)' }} />,
-    warning: <AlertTriangle size={17} style={{ color: 'var(--amber-warn)' }} />,
-    info: <Info size={17} style={{ color: 'var(--cyan-freq)' }} />
+    success: <IconCircleCheck size={18} stroke={1.8} style={{ color: 'var(--slime-green)' }} />,
+    error: <IconAlertCircle size={18} stroke={1.8} style={{ color: 'var(--red-alert)' }} />,
+    warning: <IconAlertTriangle size={18} stroke={1.8} style={{ color: 'var(--amber-warn)' }} />,
+    info: <IconInfoCircle size={18} stroke={1.8} style={{ color: 'var(--cyan-freq)' }} />
   };
 
   const getBorderColor = (type) => {
@@ -71,7 +71,7 @@ export default function Toast({ toasts, onDismiss }) {
               transition: 'color 0.15s ease'
             }}
           >
-            <X size={14} />
+            <IconX size={14} stroke={2} />
           </button>
         </div>
       ))}

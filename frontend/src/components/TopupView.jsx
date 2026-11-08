@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Sparkles, CheckCircle2, AlertCircle, Gift, Server, ShieldCheck, 
-  Clock, ArrowRight, Copy, Zap, Music2, Award,
-  FileText, X, Check, Radio, Headphones
-} from 'lucide-react';
+  IconSparkles, IconCircleCheck, IconAlertCircle, IconGift, IconServer, IconShieldCheck, 
+  IconClock, IconArrowRight, IconCopy, IconBolt, IconMusic, IconAward,
+  IconFileText, IconX, IconCheck, IconRadio, IconHeadphones
+} from '@tabler/icons-react';
 
 export default function TopupView({ lang, onToast }) {
   const [guildId, setGuildId] = useState('');
@@ -203,7 +203,7 @@ export default function TopupView({ lang, onToast }) {
           textTransform: 'uppercase',
           marginBottom: 16
         }}>
-          <Zap size={13} />
+          <IconBolt size={14} stroke={1.8} />
           <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับสตูดิโอ' : 'GOOLIX High-Fidelity Audio Core'}</span>
         </div>
 
@@ -251,23 +251,23 @@ export default function TopupView({ lang, onToast }) {
           color: 'var(--text-sub)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <Headphones size={13} style={{ color: 'var(--slime-green)' }} />
+            <IconHeadphones size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
             <span>96 kbps Studio HQ</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <Zap size={13} style={{ color: 'var(--slime-green)' }} />
+            <IconBolt size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
             <span>Priority Fast Slot</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <Clock size={13} style={{ color: 'var(--slime-green)' }} />
+            <IconClock size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
             <span>Unlimited Duration</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <Music2 size={13} style={{ color: 'var(--slime-green)' }} />
+            <IconMusic size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
             <span>50-Track Queue</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-            <Sparkles size={13} style={{ color: 'var(--slime-green)' }} />
+            <IconSparkles size={14} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
             <span>Smart Autoplay</span>
           </div>
         </div>
@@ -298,7 +298,7 @@ export default function TopupView({ lang, onToast }) {
               justifyContent: 'center',
               color: 'var(--slime-green)'
             }}>
-              <Gift size={20} />
+              <IconGift size={20} stroke={1.8} />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -347,7 +347,7 @@ export default function TopupView({ lang, onToast }) {
         <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
-              <Server size={17} style={{ color: 'var(--slime-green)' }} />
+              <IconServer size={18} stroke={1.8} style={{ color: 'var(--slime-green)' }} />
               <span>{lang === 'th' ? '1. เซิร์ฟเวอร์เป้าหมาย (Target Guild)' : '1. Target Guild'}</span>
             </h2>
             <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
@@ -456,7 +456,7 @@ export default function TopupView({ lang, onToast }) {
                   alignItems: 'center',
                   gap: 6
                 }}>
-                  {guildData.guild.isSupporter ? <ShieldCheck size={14} /> : null}
+                  {guildData.guild.isSupporter ? <IconShieldCheck size={14} /> : null}
                   {guildData.guild.isSupporter ? 'SUPPORTER (HQ PASS)' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
                 </span>
               </div>
@@ -472,7 +472,7 @@ export default function TopupView({ lang, onToast }) {
                 border: '1px solid var(--border-subtle)'
               }}>
                 <span style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Clock size={13} style={{ color: 'var(--cyan-freq)' }} />
+                  <IconClock size={13} style={{ color: 'var(--cyan-freq)' }} />
                   {lang === 'th' ? 'วันใช้งานคงเหลือ:' : 'Remaining Time:'}
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
@@ -506,7 +506,7 @@ export default function TopupView({ lang, onToast }) {
                         fontWeight: 700
                       }}
                     >
-                      <Copy size={12} /> {lang === 'th' ? 'คัดลอกลิงก์' : 'Copy Link'}
+                      <IconCopy size={12} /> {lang === 'th' ? 'คัดลอกลิงก์' : 'Copy Link'}
                     </button>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
@@ -545,7 +545,7 @@ export default function TopupView({ lang, onToast }) {
                         </span>
                         {guildData?.referralConfig?.expiresAt && (
                           <div style={{ color: 'var(--amber-warn)', marginTop: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Clock size={12} />
+                            <IconClock size={12} />
                             <span>
                               {lang === 'th'
                                 ? `หมดเขต: ${new Date(guildData.referralConfig.expiresAt).toLocaleString('th-TH')} (${formatCountdown(guildData.referralConfig.expiresAt, 'th')})`
@@ -574,7 +574,7 @@ export default function TopupView({ lang, onToast }) {
               borderRadius: 14,
               background: 'rgba(5, 7, 11, 0.3)'
             }}>
-              <Server size={28} style={{ color: 'var(--text-dim)', marginBottom: 10, opacity: 0.6 }} />
+              <IconServer size={28} style={{ color: 'var(--text-dim)', marginBottom: 10, opacity: 0.6 }} />
               <div>{lang === 'th' ? 'ระบุ Discord Server ID ด้านบนเพื่อเริ่มรายการ' : 'Enter Discord Server ID above to inspect status'}</div>
             </div>
           )}
@@ -584,7 +584,7 @@ export default function TopupView({ lang, onToast }) {
         <div className="glass-panel" style={{ padding: 26, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#FFF' }}>
-              <Sparkles size={17} style={{ color: 'var(--cyber-pink)' }} />
+              <IconSparkles size={17} style={{ color: 'var(--cyber-pink)' }} />
               <span>{lang === 'th' ? '2. ทำรายการสนับสนุน (Checkout Terminal)' : '2. Checkout Terminal'}</span>
             </h2>
             <span style={{ fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
@@ -622,7 +622,7 @@ export default function TopupView({ lang, onToast }) {
                 gap: 6
               }}
             >
-              <Sparkles size={14} />
+              <IconSparkles size={14} />
               <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney Voucher'}</span>
             </button>
             <button
@@ -645,7 +645,7 @@ export default function TopupView({ lang, onToast }) {
                 gap: 6
               }}
             >
-              <Gift size={14} />
+              <IconGift size={14} />
               <span>{lang === 'th' ? 'โค้ดกิจกรรม (Drop)' : 'Promo Drop'}</span>
             </button>
           </div>
@@ -697,7 +697,7 @@ export default function TopupView({ lang, onToast }) {
                     />
                     {referrerName && (
                       <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-                        <CheckCircle2 size={13} />
+                        <IconCircleCheck size={13} />
                         <span>
                           {lang === 'th'
                             ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (ผู้ชวนรับโบนัส +${guildData?.referralConfig?.rewardDays ?? 30} วัน เมื่อยอดเติมขั้นต่ำ ${guildData?.referralConfig?.minTopup ?? 29} บาท)`
@@ -720,7 +720,7 @@ export default function TopupView({ lang, onToast }) {
                     <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
                   ) : (
                     <>
-                      <Sparkles size={16} />
+                      <IconSparkles size={16} />
                       <span>{lang === 'th' ? 'ยืนยันการร่วมสนับสนุน' : 'Confirm Server Contribution'}</span>
                     </>
                   )}
@@ -757,7 +757,7 @@ export default function TopupView({ lang, onToast }) {
                     <span>{lang === 'th' ? 'กำลังตรวจสอบสิทธิ์...' : 'Claiming...'}</span>
                   ) : (
                     <>
-                      <Gift size={16} />
+                      <IconGift size={16} />
                       <span>{lang === 'th' ? 'ยืนยันรับสิทธิ์โปรโมชัน' : 'Claim Promo Perk'}</span>
                     </>
                   )}
@@ -828,27 +828,27 @@ export default function TopupView({ lang, onToast }) {
 
             <ul style={{ listStyle: 'none', fontSize: 12.5, color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 12, margin: 0, padding: 0 }}>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <CheckCircle2 size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
+                <IconCircleCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'คุณภาพเสียงระดับมาตรฐาน (64 kbps)' : 'Standard audio quality (64 kbps)'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <CheckCircle2 size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
+                <IconCircleCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'รองรับลิงก์สตรีมเสียงและวิดีโอชั้นนำ (นกแดง / เมฆส้ม)' : 'Supports leading streaming providers'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+                <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'คิวเพลงสูงสุด 10 เพลง (เพลย์ลิสต์ 5 เพลง)' : 'Queue limit 10 songs (5 per playlist)'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+                <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'ความยาวคลิปไม่เกิน 30 นาทีต่อเพลง' : 'Maximum track duration 30 minutes'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+                <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'แชร์ช่องสัญญาณทั่วไป (หากเต็มต้องรอคิว)' : 'Shared stream slots (subject to wait queue)'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--text-dim)' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+                <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'ไม่รองรับระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay)' : 'No continuous Autoplay'}</span>
               </li>
             </ul>
@@ -879,29 +879,29 @@ export default function TopupView({ lang, onToast }) {
 
             <ul style={{ listStyle: 'none', fontSize: 12.5, color: '#FFF', display: 'flex', flexDirection: 'column', gap: 12, margin: 0, padding: 0 }}>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10, paddingBottom: 8, borderBottom: '1px solid rgba(0, 255, 135, 0.12)' }}>
-                <ShieldCheck size={16} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 1 }} />
+                <IconShieldCheck size={16} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 1 }} />
                 <strong style={{ color: 'var(--slime-green)', fontSize: 13, lineHeight: 1.4 }}>
                   {lang === 'th' ? 'ปลดล็อกสิทธิ์ใช้งานร่วมกันทั้งเซิร์ฟเวอร์ (ไม่ต้องจ่ายรายคน)' : 'Unlocks perks for the entire server (No per-user fees)'}
                 </strong>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Zap size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
+                <IconBolt size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
                 <strong>{lang === 'th' ? 'คุณภาพเสียงคมชัดสูงพิเศษ (96 kbps Studio HQ)' : 'Pristine Opus 96k Studio HQ audio streaming'}</strong>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Music2 size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
+                <IconMusic size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'ช่องสัญญาณด่วนพิเศษ (Priority Slot) เปิดเพลงได้ทันที ไม่ต้องรอคิว' : 'Dedicated Priority Slot — instant playback, bypass wait queue'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Clock size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
+                <IconClock size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'ฟังเพลงและไลฟ์สดยาวได้ไม่จำกัดความยาว (เกิน 30 นาทีได้)' : 'Unlimited duration for full albums and live broadcasts'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Award size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
+                <IconAward size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'ขยายคิวเพลงสูงสุด 50 เพลง (เพลย์ลิสต์ครั้งละ 25 เพลง)' : 'Expanded queue up to 50 songs (25 songs per playlist)'}</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Sparkles size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
+                <IconSparkles size={15} style={{ color: 'var(--slime-green)', flexShrink: 0, marginTop: 2 }} />
                 <span>{lang === 'th' ? 'ระบบเล่นเพลงต่อเนื่องอัตโนมัติ (Autoplay) ปาร์ตี้ไม่มีสะดุด' : 'Intelligent continuous Autoplay stream continuation'}</span>
               </li>
             </ul>
@@ -931,7 +931,7 @@ export default function TopupView({ lang, onToast }) {
           gap: 12
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 13, color: '#FFF' }}>
-            <FileText size={16} style={{ color: 'var(--slime-green)' }} />
+            <IconFileText size={16} style={{ color: 'var(--slime-green)' }} />
             <span>{lang === 'th' ? 'ข้อกำหนดและเงื่อนไขการสนับสนุน (Disclaimer & Terms of Use)' : 'Terms of Service & Disclaimer'}</span>
           </div>
           <button
@@ -953,7 +953,7 @@ export default function TopupView({ lang, onToast }) {
             }}
           >
             <span>{lang === 'th' ? 'อ่านข้อตกลงฉบับเต็ม' : 'Read Full Terms'}</span>
-            <ArrowRight size={13} />
+            <IconArrowRight size={13} />
           </button>
         </div>
 
@@ -1044,7 +1044,7 @@ export default function TopupView({ lang, onToast }) {
                   transition: 'all 0.18s ease'
                 }}
               >
-                <X size={16} />
+                <IconX size={16} />
               </button>
             </div>
 

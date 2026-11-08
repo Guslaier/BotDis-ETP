@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Sparkles, LogOut, Radio } from 'lucide-react';
+import { IconLogout } from '@tabler/icons-react';
 
 export default function Navbar({ mode, lang, setLang, isAdminLoggedIn, onLogout }) {
   const isAdmin = mode === 'admin';
@@ -127,7 +127,7 @@ export default function Navbar({ mode, lang, setLang, isAdminLoggedIn, onLogout 
             className="btn btn-sm btn-danger"
             style={{ padding: '6px 14px' }}
           >
-            <LogOut size={13} />
+            <IconLogout size={14} stroke={1.8} />
             <span>{lang === 'th' ? 'ออกจากระบบ' : 'Logout'}</span>
           </button>
         )}

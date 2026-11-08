@@ -46,21 +46,21 @@ class OnboardingHelper {
 
         const embed = new EmbedBuilder()
             .setColor('#00FF88')
-            .setTitle(`🎉 Welcome to ${botName}! • ยินดีต้อนรับสู่ ${botName}!`)
-            .setDescription(`Hello **${guild.name}**! Thank you for inviting **${botName}** — your high-performance, studio-grade (Opus 96k) music companion.\n\nสวัสดีทุกคนใน **${guild.name}**! ขอบคุณที่เลือกใช้บริการบอทเพลงคุณภาพระดับสตูดิโอ (Opus 96k) เบสแน่น เสียงคมชัด พร้อมระบบคิวเพลงและออโต้เพลย์อัจฉริยะ 🎧🟢\n\n**Select your preferred server language below / เลือกภาษาที่ต้องการใช้งานด้านล่าง:**`)
+            .setTitle(`Welcome to ${botName}! • ยินดีต้อนรับสู่ ${botName}!`)
+            .setDescription(`Hello **${guild.name}**! Thank you for inviting **${botName}** — your high-performance, studio-grade (Opus 96k) music companion.\n\nสวัสดีทุกคนใน **${guild.name}**! ขอบคุณที่เลือกใช้บริการบอทเพลงคุณภาพระดับสตูดิโอ (Opus 96k) เบสแน่น เสียงคมชัด พร้อมระบบคิวเพลงและออโต้เพลย์อัจฉริยะ\n\n**Select your preferred server language below / เลือกภาษาที่ต้องการใช้งานด้านล่าง:**`)
             .setThumbnail(client.user?.displayAvatarURL() || null)
             .addFields(
                 {
-                    name: '🌐 1. Language Configuration / ตั้งค่าภาษา',
+                    name: '1. Language Configuration / ตั้งค่าภาษา',
                     value: [
                         'Click below to set the bot communication language:',
                         'กดปุ่มด้านล่างเพื่อเลือกภาษาที่บอทจะใช้สื่อสารในเซิร์ฟเวอร์นี้ (เปลี่ยนได้ตลอดด้วย `/glang`):',
-                        '• **🇬🇧 English (EN)** หรือ **🇹🇭 ภาษาไทย (TH)**'
+                        '• **English (EN)** หรือ **ภาษาไทย (TH)**'
                     ].join('\n'),
                     inline: false
                 },
                 {
-                    name: '🎵 2. Quick Start / คำสั่งเริ่มต้น',
+                    name: '2. Quick Start / คำสั่งเริ่มต้น',
                     value: [
                         '• `/gplay <song/URL>` — Play music from YouTube, SoundCloud, or Spotify',
                         '• `/gvolume <0-150>` — Adjust stage volume in real-time',
@@ -70,70 +70,59 @@ class OnboardingHelper {
                     inline: false
                 },
                 {
-                    name: '💎 3. Supporter Perks / สิทธิพิเศษผู้สนับสนุน',
+                    name: '3. Supporter Perks / สิทธิพิเศษผู้สนับสนุน',
                     value: [
-                        '⚡ **Priority Lane** — Instant stream slot, no waiting in line',
-                        '🎵 **Extended Queue** — Up to 50 songs & 25 playlist items',
-                        '📻 **Unlimited Stream** — Stream tracks and live broadcasts without length limits',
-                        '🔄 **Autoplay Engine** — Automatic continuous music streaming',
-                        '🎧 **Studio Quality** — Pristine Opus 96k Studio HQ audio'
+                        '• **Priority Lane** — Instant stream slot, no waiting in line',
+                        '• **Extended Queue** — Up to 50 songs & 25 playlist items',
+                        '• **Unlimited Stream** — Stream tracks and live broadcasts without length limits',
+                        '• **Autoplay Engine** — Automatic continuous music streaming',
+                        '• **Studio Quality** — Pristine Opus 96k Studio HQ audio'
                     ].join('\n'),
                     inline: false
                 }
             )
-            .setFooter({ text: `${botName} • High-Performance Audio Engine | Support starts at 29฿/month` });
+            .setFooter({ text: `${botName} • High-Performance Audio Engine | Support starts at 29 THB/month` });
 
         const langRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId('welcome_lang_en')
-                .setLabel('🇬🇧 English (EN)')
+                .setLabel('English (EN)')
                 .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
                 .setCustomId('welcome_lang_th')
-                .setLabel('🇹🇭 ภาษาไทย (Thai)')
+                .setLabel('ภาษาไทย (Thai)')
                 .setStyle(ButtonStyle.Success)
         );
 
         const actionRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 Supporter Portal')
+                .setLabel('Supporter Portal')
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl),
             new ButtonBuilder()
                 .setCustomId('welcome_help_guide')
-                .setLabel('📖 Quick Commands Guide')
+                .setLabel('Quick Commands Guide')
                 .setStyle(ButtonStyle.Secondary)
         );
 
         return { embeds: [embed], components: [langRow, actionRow] };
     }
 
-    async handleGuildCreate(client, guild) {
+    async sendWelcomeMessage(client, guild) {
         try {
-            console.log(`[GuildJoin] Bot joined new guild: ${guild.name} (${guild.id}) - Locale: ${guild.preferredLocale || 'unknown'}`);
-            
-            // Auto-detect initial language if not already configured
-            const settings = settingsManager.getGuildSettings(guild.id);
-            if (!settings.language) {
-                const autoLang = (guild.preferredLocale && guild.preferredLocale.toLowerCase().startsWith('th')) ? 'th' : 'en';
-                settingsManager.setGuildLanguage(guild.id, autoLang);
-                console.log(`[GuildJoin] Auto-detected language for ${guild.name}: ${autoLang}`);
-            }
-
-            // Wait 1.5s for guild permissions & channels cache to settle
-            await new Promise(r => setTimeout(r, 1500));
-
             const channel = this.findWelcomeChannel(guild);
             if (!channel) {
-                console.warn(`[GuildJoin] No suitable text channel found to send welcome message in: ${guild.name} (${guild.id})`);
-                return;
+                console.log(`[Onboarding] No suitable text channel found for welcome message in guild: ${guild.name} (${guild.id})`);
+                return false;
             }
 
-            const card = this.createWelcomeCard(client, guild);
-            await channel.send(card);
-            console.log(`[GuildJoin] Welcome card sent to #${channel.name} in ${guild.name} (${guild.id})`);
+            const welcomePayload = this.createWelcomeCard(client, guild);
+            await channel.send(welcomePayload);
+            console.log(`[Onboarding] Welcome card successfully posted to #${channel.name} in guild: ${guild.name} (${guild.id})`);
+            return true;
         } catch (err) {
-            console.error(`[GuildJoin] Error sending welcome card in ${guild?.name}:`, err.message);
+            console.error(`[Onboarding] Failed to send welcome card in ${guild.name} (${guild.id}):`, err.message);
+            return false;
         }
     }
 
@@ -144,7 +133,7 @@ class OnboardingHelper {
         if (customId === 'welcome_lang_th') {
             settingsManager.setGuildLanguage(guildId, 'th');
             await interaction.reply({
-                content: '🇹🇭 ตั้งค่าภาษาของบอทในเซิร์ฟเวอร์นี้เป็น **ภาษาไทย (TH)** เรียบร้อยแล้วครับ!\nเริ่มฟังเพลงได้ทันทีโดยพิมพ์คำสั่ง `/gplay` 🎶🟢',
+                content: 'ตั้งค่าภาษาของบอทในเซิร์ฟเวอร์นี้เป็น **ภาษาไทย (TH)** เรียบร้อยแล้วครับ!\nเริ่มฟังเพลงได้ทันทีโดยพิมพ์คำสั่ง `/gplay`',
                 flags: MessageFlags.Ephemeral
             }).catch(() => {});
             return true;
@@ -153,7 +142,7 @@ class OnboardingHelper {
         if (customId === 'welcome_lang_en') {
             settingsManager.setGuildLanguage(guildId, 'en');
             await interaction.reply({
-                content: '🇬🇧 Bot language for this server has been set to **English (EN)**!\nGet started by typing `/gplay` to play any song 🎶🟢',
+                content: 'Bot language for this server has been set to **English (EN)**!\nGet started by typing `/gplay` to play any song.',
                 flags: MessageFlags.Ephemeral
             }).catch(() => {});
             return true;
@@ -164,13 +153,13 @@ class OnboardingHelper {
             const isEn = currentLang === 'en';
             const guideEmbed = new EmbedBuilder()
                 .setColor('#00FF88')
-                .setTitle(isEn ? '📖 Quick Command Guide' : '📖 คู่มือคำสั่งใช้งานเบื้องต้น')
+                .setTitle(isEn ? 'Quick Command Guide' : 'คู่มือคำสั่งใช้งานเบื้องต้น')
                 .setDescription(isEn 
                     ? 'Here are the primary commands to control your music experience:' 
                     : 'คำสั่งหลักในการเปิดและควบคุมเพลง:')
                 .addFields(
                     {
-                        name: isEn ? '🎵 Playback Controls' : '🎵 ควบคุมการเล่นเพลง',
+                        name: isEn ? 'Playback Controls' : 'ควบคุมการเล่นเพลง',
                         value: [
                             '`/gplay <song>` — Play music from YouTube, SoundCloud, or Spotify',
                             '`/gpause` & `/gresume` — Pause or resume track',
@@ -180,7 +169,7 @@ class OnboardingHelper {
                         ].join('\n')
                     },
                     {
-                        name: isEn ? '🎛️ Audio & Stage Management' : '🎛️ ปรับแต่งเสียง & ระบบ',
+                        name: isEn ? 'Audio & Stage Management' : 'ปรับแต่งเสียง & ระบบ',
                         value: [
                             '`/gvolume <0-150>` — Adjust stage volume',
                             '`/gfilter` — Equalizer & BassBoost (Supporter)',

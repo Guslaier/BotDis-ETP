@@ -35,7 +35,7 @@ function createProgressBar(currentMs, totalMs, barLength = 15) {
     let bar = '';
     for (let i = 0; i < barLength; i++) {
         if (i === activeIndex) {
-            bar += '🔘';
+            bar += '●';
         } else if (i < activeIndex) {
             bar += '━';
         } else {
@@ -58,46 +58,46 @@ function createNowPlayingCard(player, track, options = {}) {
     const isStream = track?.isStream || false;
 
     const timeCurrent = isPreparing ? '00:00' : formatDuration(currentPosition);
-    const timeTotal = isStream ? '🔴 LIVE' : (totalDuration > 0 ? formatDuration(totalDuration) : '--:--');
+    const timeTotal = isStream ? 'LIVE' : (totalDuration > 0 ? formatDuration(totalDuration) : '--:--');
     const progressVisual = isPreparing 
-        ? '⏳ ━━━━━━━━━━━━━━' 
-        : (isStream ? '🔴 ━━━━━━━━━━━━━━' : createProgressBar(currentPosition, totalDuration));
+        ? 'Loading ━━━━━━━━━━━━━━' 
+        : (isStream ? 'LIVE ━━━━━━━━━━━━━━' : createProgressBar(currentPosition, totalDuration));
 
     const voiceChannel = player.manager.client.channels.cache.get(player.voiceId);
     const channelName = voiceChannel ? voiceChannel.name : 'Voice Channel';
     const membersCount = voiceChannel ? voiceChannel.members.filter(m => !m.user.bot).size : 1;
     const listeningText = i18n.t(guildId, 'CARD_LISTENING', { count: membersCount });
 
-    let sourceBadge = '🔴 YouTube';
+    let sourceBadge = 'YouTube';
     if (track?.realSource) {
         if (track.realSource.includes('Bypass')) {
-            sourceBadge = '🟠 SoundCloud (Bypass)';
+            sourceBadge = 'SoundCloud (Bypass)';
         } else if (track.realSource.includes('SoundCloud')) {
-            sourceBadge = '🟠 SoundCloud';
+            sourceBadge = 'SoundCloud';
         } else if (track.realSource.includes('Spotify')) {
-            sourceBadge = '🟢 Spotify';
+            sourceBadge = 'Spotify';
         } else {
-            sourceBadge = '🔴 YouTube';
+            sourceBadge = 'YouTube';
         }
     } else if (track?.uri && track.uri.includes('soundcloud.com')) {
-        sourceBadge = '🟠 SoundCloud';
+        sourceBadge = 'SoundCloud';
     } else if (track?.uri && track.uri.includes('spotify.com')) {
-        sourceBadge = '🟢 Spotify';
+        sourceBadge = 'Spotify';
     }
 
     const isSupporter = subscriptionManager.isSupporter(guildId);
-    const bufferText = `⚡ ${i18n.t(guildId, 'CARD_BUFFERING')}`;
+    const bufferText = i18n.t(guildId, 'CARD_BUFFERING');
     const bitrateBadge = isPreparing 
         ? bufferText 
-        : (isSupporter ? `⚡ ${i18n.t(guildId, 'CARD_SUPPORTER_TIER')}` : `📻 ${i18n.t(guildId, 'CARD_STANDARD_TIER')}`);
+        : (isSupporter ? i18n.t(guildId, 'CARD_SUPPORTER_TIER') : i18n.t(guildId, 'CARD_STANDARD_TIER'));
 
-    let loopBadge = `🔁 ${i18n.t(guildId, 'CARD_LOOP_OFF')}`;
-    if (player.loop === 'track') loopBadge = `🔂 ${i18n.t(guildId, 'CARD_LOOP_TRACK')}`;
-    else if (player.loop === 'queue') loopBadge = `🔁 ${i18n.t(guildId, 'CARD_LOOP_QUEUE')}`;
+    let loopBadge = i18n.t(guildId, 'CARD_LOOP_OFF');
+    if (player.loop === 'track') loopBadge = i18n.t(guildId, 'CARD_LOOP_TRACK');
+    else if (player.loop === 'queue') loopBadge = i18n.t(guildId, 'CARD_LOOP_QUEUE');
 
-    const volBadge = `🔊 ${player.volume || 100}%`;
-    const filterBadge = (!isPreparing && player.audioFilter && player.audioFilter !== 'off') ? `  \`🎛️ ${player.audioFilter}\`` : '';
-    const requesterTag = track?.requester ? `  •  👤 <@${track.requester.id || track.requester}>` : '';
+    const volBadge = `Vol: ${player.volume || 100}%`;
+    const filterBadge = (!isPreparing && player.audioFilter && player.audioFilter !== 'off') ? `  \`Filter: ${player.audioFilter}\`` : '';
+    const requesterTag = track?.requester ? `  •  <@${track.requester.id || track.requester}>` : '';
     const safeTitle = track?.title || 'Unknown Title';
     const safeAuthor = track?.author || 'Unknown Artist';
 
@@ -114,11 +114,11 @@ function createNowPlayingCard(player, track, options = {}) {
         .setURL((track?.realSource?.includes('Bypass') && track?.fallbackUri) ? track.fallbackUri : (track?.uri || 'https://discord.com'))
         .setDescription(
             `**${safeAuthor}**${requesterTag}\n\n` +
-            (isPreparing ? `\`⏳ ${statusText}\`  \`${bufferText}\`\n\n` : `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n`) +
+            (isPreparing ? `\`${statusText}\`  \`${bufferText}\`\n\n` : `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n`) +
             `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\``
         )
         .setFooter({
-            text: `🔊 #${channelName}  •  👥 ${listeningText}`
+            text: `#${channelName}  •  ${listeningText}`
         });
 
     if (track?.thumbnail) {
@@ -131,27 +131,27 @@ function createNowPlayingCard(player, track, options = {}) {
     const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_previous')
-            .setEmoji('⏮️')
+            .setLabel('<< Prev')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(!hasPrev),
         new ButtonBuilder()
             .setCustomId('music_backward')
-            .setEmoji('⏪')
+            .setLabel('-10s')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(isStream || isPreparing),
         new ButtonBuilder()
             .setCustomId('music_pause_resume')
-            .setEmoji(isPreparing ? '⏳' : (isPaused ? '▶️' : '⏸️'))
+            .setLabel(isPreparing ? 'Loading...' : (isPaused ? 'Play' : 'Pause'))
             .setStyle(isPaused ? ButtonStyle.Success : ButtonStyle.Primary)
             .setDisabled(isPreparing),
         new ButtonBuilder()
             .setCustomId('music_forward')
-            .setEmoji('⏩')
+            .setLabel('+10s')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(isStream || isPreparing),
         new ButtonBuilder()
             .setCustomId('music_skip')
-            .setEmoji('⏭️')
+            .setLabel('Skip >>')
             .setStyle(ButtonStyle.Secondary)
     );
 
@@ -159,29 +159,24 @@ function createNowPlayingCard(player, track, options = {}) {
     const row2 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_shuffle')
-            .setEmoji('🔀')
             .setLabel(i18n.t(guildId, 'BTN_SHUFFLE'))
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(isPreparing),
         new ButtonBuilder()
             .setCustomId('music_loop')
-            .setEmoji(player.loop === 'track' ? '🔂' : '🔁')
             .setLabel(i18n.t(guildId, 'BTN_LOOP'))
             .setStyle(player.loop !== 'none' ? ButtonStyle.Primary : ButtonStyle.Secondary)
             .setDisabled(isPreparing),
         new ButtonBuilder()
             .setCustomId('music_queue')
-            .setEmoji('📋')
             .setLabel(i18n.t(guildId, 'BTN_QUEUE'))
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('music_lyrics')
-            .setEmoji('📄')
             .setLabel(i18n.t(guildId, 'BTN_LYRICS'))
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('music_favorite')
-            .setEmoji('💖')
             .setLabel(i18n.t(guildId, 'BTN_FAVORITES'))
             .setStyle(ButtonStyle.Secondary)
     );
@@ -190,23 +185,19 @@ function createNowPlayingCard(player, track, options = {}) {
     const row3 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_add_song')
-            .setEmoji('➕')
             .setLabel(i18n.t(guildId, 'BTN_REQUEST_SONG'))
             .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
             .setCustomId('music_add_playlist')
-            .setEmoji('📑')
             .setLabel(i18n.t(guildId, 'BTN_PLAYLIST'))
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('music_volume')
-            .setEmoji('🔊')
             .setLabel(i18n.t(guildId, 'BTN_VOLUME'))
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(isPreparing),
         new ButtonBuilder()
             .setCustomId('music_autoplay')
-            .setEmoji('📻')
             .setLabel(player.autoplay ? i18n.t(guildId, 'BTN_AUTOPLAY_ON') : i18n.t(guildId, 'BTN_AUTOPLAY_OFF'))
             .setStyle(player.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary)
     );
@@ -215,7 +206,6 @@ function createNowPlayingCard(player, track, options = {}) {
     const rowOutside = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_stop')
-            .setEmoji('🛑')
             .setLabel(i18n.t(guildId, 'BTN_STOP'))
             .setStyle(ButtonStyle.Danger)
     );
@@ -231,16 +221,16 @@ function createNowPlayingCard(player, track, options = {}) {
     // Modern Discord Components V2: Container layout (Accent colored bar enclosing all text & buttons)
     const accentColorInt = isPreparing ? 0xFFA500 : (isSupporter ? 0x00FF88 : 0x00B0FF);
     const contentMarkdown = isPreparing
-        ? `### ⏳ ${player.manager.client.user.username} • ${stageTitle}\n` +
+        ? `### ${player.manager.client.user.username} • ${stageTitle}\n` +
           `**${safeTitle}**\n\n` +
-          `\`⏳ ${statusText}\`  \`${bufferText}\`\n\n` +
+          `\`${statusText}\`  \`${bufferText}\`\n\n` +
           `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\`\n\n` +
-          `*🔊 #${channelName}  •  👥 ${listeningText}*`
+          `*#${channelName}  •  ${listeningText}*`
         : `### [${safeTitle}](${track?.uri || 'https://discord.com'})\n` +
           `**${safeAuthor}**${requesterTag}\n\n` +
           `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n` +
           `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\`\n\n` +
-          `*🔊 #${channelName}  •  👥 ${listeningText}*`;
+          `*#${channelName}  •  ${listeningText}*`;
 
     const section = new SectionBuilder().addTextDisplayComponents(
         new TextDisplayBuilder().setContent(contentMarkdown)

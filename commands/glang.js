@@ -27,9 +27,9 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor('#00FF88')
-            .setTitle(lang === 'en' ? '🌐 Language Configuration' : '🌐 ตั้งค่าภาษาของเซิร์ฟเวอร์')
+            .setTitle(lang === 'en' ? 'Language Configuration' : 'ตั้งค่าภาษาของเซิร์ฟเวอร์')
             .setDescription(i18n.t(guildId, 'LANG_CHANGED'))
-            .setFooter({ text: 'GOOLIX Cosmic Slime Music Engine 🎧🟢' });
+            .setFooter({ text: 'GOOLIX Cosmic Slime Music Engine' });
 
         return interaction.reply({ embeds: [embed] });
     }
