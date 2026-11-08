@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -19,20 +20,21 @@ module.exports = {
         ]
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player) {
-            embed.setDescription('❌ ไม่มีคิวเพลงครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_QUEUE'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const mode = interaction.options.getString('mode');
         player.setLoop(mode);
 
-        let modeText = '❌ ปิดการวนลูปแล้วครับ';
-        if (mode === 'track') modeText = '🔂 วนซ้ำเพลงปัจจุบัน (Repeat Track)';
-        if (mode === 'queue') modeText = '🔁 วนซ้ำทั้งคิว (Repeat Queue)';
+        let modeText = i18n.t(guildId, 'LOOP_NONE');
+        if (mode === 'track') modeText = i18n.t(guildId, 'LOOP_TRACK');
+        if (mode === 'queue') modeText = i18n.t(guildId, 'LOOP_QUEUE');
 
         embed.setDescription(`**${modeText}** 🎧`);
         return interaction.reply({ embeds: [embed] });

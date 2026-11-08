@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -14,32 +15,33 @@ module.exports = {
         ],
     },
     run: async (client, interaction, kazagumo) => {
+        const guildId = interaction.guild.id;
         const position = interaction.options.getInteger('position');
-        const player = kazagumo.players.get(interaction.guild.id);
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_PLAYING_TRACK'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (player.queue.length === 0) {
-            embed.setDescription('❌ คิวเพลงว่างเปล่าครับ ไม่มีเพลงให้แซงคิว');
+            embed.setDescription(i18n.t(guildId, 'JUMP_NO_TRACKS'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (position < 1 || position > player.queue.length) {
-            embed.setDescription(`❌ ระบุลำดับคิวไม่ถูกต้องครับ ต้องอยู่ระหว่าง 1 ถึง ${player.queue.length}`);
+            embed.setDescription(i18n.t(guildId, 'INVALID_QUEUE_POS', { max: player.queue.length }));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const trackToJump = player.queue.remove(position - 1);
         if (!trackToJump) {
-            embed.setDescription('❌ ไม่สามารถดึงเพลงออกจากคิวได้ครับ');
+            embed.setDescription(i18n.t(guildId, 'JUMP_FAIL'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.queue.unshift(trackToJump);
 
-        embed.setDescription(`⬆️ Priority Jump! ดันเพลง **${trackToJump.title}** แซงคิวขึ้นมาเป็นเพลงถัดไปเรียบร้อยครับ ⚡`);
+        embed.setDescription(i18n.t(guildId, 'JUMP_SUCCESS', { title: trackToJump.title }));
         return interaction.reply({ embeds: [embed] });
     }
 };

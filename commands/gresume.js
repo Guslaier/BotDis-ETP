@@ -16,7 +16,7 @@ module.exports = {
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (!player.paused) {
-            embed.setDescription('⚠️ เพลงกำลังเล่นอยู่แล้วนะ เต้นต่อเลยไม่ต้องรอ! 💃🔥');
+            embed.setDescription(i18n.t(guildId, 'ALREADY_PLAYING'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

@@ -1,6 +1,7 @@
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const favoriteManager = require('../src/helpers/favoriteManager');
 const settingsManager = require('../src/helpers/settingsManager');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -30,23 +31,24 @@ module.exports = {
         ),
 
     run: async (client, interaction, kazagumo) => {
+        const guildId = interaction.guild.id;
         const sub = interaction.options.getSubcommand();
         const userId = interaction.user.id;
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (sub === 'add') {
-            const player = kazagumo.players.get(interaction.guild.id);
+            const player = kazagumo.players.get(guildId);
             if (!player || !player.playing || !player.queue.current) {
-                embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ตอนนี้ครับ เปิดเพลงก่อนแล้วค่อยกดบันทึกนะ');
+                embed.setDescription(i18n.t(guildId, 'FAV_NO_PLAYING'));
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const track = player.queue.current;
             const added = favoriteManager.addFavorite(userId, track);
             if (added) {
-                embed.setDescription(`💖 บันทึกเพลง **${track.title}** ลงในรายการเพลงโปรดของคุณเรียบร้อยแล้วครับ! ✨`);
+                embed.setDescription(i18n.t(guildId, 'FAV_ADDED', { title: track.title }));
             } else {
-                embed.setDescription(`ℹ️ เพลง **${track.title}** มีอยู่ในรายการโปรดของคุณอยู่แล้วครับ`);
+                embed.setDescription(i18n.t(guildId, 'FAV_ALREADY_EXISTS', { title: track.title }));
             }
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
@@ -54,19 +56,19 @@ module.exports = {
         if (sub === 'list') {
             const favorites = favoriteManager.getFavorites(userId);
             if (!favorites || favorites.length === 0) {
-                embed.setDescription('❌ คุณยังไม่มีเพลงโปรดครับ ลองฟังเพลงแล้วกดปุ่ม 💖 หรือใช้ `/gfav add` ดูนะ');
+                embed.setDescription(i18n.t(guildId, 'FAV_EMPTY'));
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
-            embed.setTitle(`💖 รายการเพลงโปรดของคุณ (${favorites.length} เพลง)`);
+            embed.setTitle(i18n.t(guildId, 'FAV_LIST_TITLE', { count: favorites.length }));
             let desc = '';
             favorites.slice(0, 15).forEach((item, index) => {
                 desc += `**${index + 1}.** [${item.title}](${item.uri}) - *${item.author}*\n`;
             });
             if (favorites.length > 15) {
-                desc += `\n*...และอีก ${favorites.length - 15} เพลง*`;
+                desc += `\n*${i18n.t(guildId, 'FAV_MORE', { count: favorites.length - 15 })}*`;
             }
-            desc += '\n\n💡 *พิมพ์ `/gfav play` เพื่อเล่นเพลงโปรดทั้งหมดเข้าคิวได้เลยครับ!*';
+            desc += `\n\n${i18n.t(guildId, 'FAV_PLAY_TIP')}`;
             embed.setDescription(desc);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
@@ -75,43 +77,43 @@ module.exports = {
             const index = interaction.options.getInteger('number');
             const favorites = favoriteManager.getFavorites(userId);
             if (!favorites || favorites.length === 0) {
-                embed.setDescription('❌ คุณยังไม่มีรายการเพลงโปรดครับ');
+                embed.setDescription(i18n.t(guildId, 'FAV_EMPTY'));
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             if (index < 1 || index > favorites.length) {
-                embed.setDescription(`❌ ลำดับไม่ถูกต้องครับ คุณมีเพลงโปรดทั้งหมด **${favorites.length}** เพลง`);
+                embed.setDescription(i18n.t(guildId, 'INVALID_QUEUE_POS', { max: favorites.length }));
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const target = favorites[index - 1];
             favoriteManager.removeFavorite(userId, target.identifier || target.uri);
-            embed.setDescription(`🗑️ ลบเพลง **${target.title}** ออกจากรายการเพลงโปรดเรียบร้อยแล้วครับ!`);
+            embed.setDescription(i18n.t(guildId, 'FAV_REMOVED', { title: target.title }));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         if (sub === 'play') {
             const voiceChannel = interaction.member?.voice?.channel;
             if (!voiceChannel) {
-                embed.setDescription('❌ ต้องเข้าห้องเสียงก่อนนะ เดี๋ยว GOOLIX เหงาแย่เลย! 🔊');
+                embed.setDescription(i18n.t(guildId, 'VOICE_JOIN_REQUIRED'));
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const favorites = favoriteManager.getFavorites(userId);
             if (!favorites || favorites.length === 0) {
-                embed.setDescription('❌ ยังไม่มีเพลงในรายการโปรดให้เปิดครับ ลองเพิ่มเพลงก่อนนะ 💖');
+                embed.setDescription(i18n.t(guildId, 'FAV_EMPTY'));
                 return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             await interaction.deferReply();
 
-            let player = kazagumo.players.get(interaction.guild.id);
+            let player = kazagumo.players.get(guildId);
             if (!player) {
                 player = await kazagumo.createPlayer({
-                    guildId: interaction.guild.id,
+                    guildId: guildId,
                     textId: interaction.channel.id,
                     voiceId: voiceChannel.id,
-                    volume: settingsManager.getGuildVolume(interaction.guild.id)
+                    volume: settingsManager.getGuildVolume(guildId)
                 });
             }
 
@@ -126,7 +128,7 @@ module.exports = {
                 }
             }
 
-            embed.setDescription(`💖 เพิ่มเพลงโปรด **${loadedCount}** เพลงลงในคิวเรียบร้อยแล้วครับ! ปาร์ตี้เริ่มได้เลย! ⚡`);
+            embed.setDescription(i18n.t(guildId, 'FAV_PLAY_ADDED', { count: loadedCount }));
             await interaction.followUp({ embeds: [embed] });
 
             if (!player.playing && !player._starting && !player.paused) {
@@ -139,4 +141,3 @@ module.exports = {
         }
     }
 };
-

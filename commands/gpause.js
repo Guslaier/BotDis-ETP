@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -6,20 +7,21 @@ module.exports = {
         description: 'Pause current music playback',
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_PLAYING_TRACK'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (player.paused) {
-            embed.setDescription('⚠️ เพลงถูกพักไว้อยู่แล้วครับ');
+            embed.setDescription(i18n.t(guildId, 'ALREADY_PAUSED'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.pause(true);
-        embed.setDescription('⏸️ หยุดเล่นเพลงชั่วคราวแล้วครับ');
+        embed.setDescription(i18n.t(guildId, 'PAUSED'));
         return interaction.reply({ embeds: [embed] });
     }
 };

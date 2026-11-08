@@ -1,4 +1,5 @@
 const { MessageFlags } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -6,16 +7,17 @@ module.exports = {
         description: 'Clean up lingering or duplicate music cards in this channel',
     },
     run: async (client, interaction, kazagumo) => {
+        const guildId = interaction.guild?.id;
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         const channel = interaction.channel;
         if (!channel || !channel.messages) {
             return interaction.followUp({
-                content: '❌ ไม่สามารถเข้าถึงข้อความในห้องนี้ได้ครับ',
+                content: i18n.t(guildId, 'CLEANCARD_NO_ACCESS'),
                 flags: MessageFlags.Ephemeral
             });
         }
 
-        const player = kazagumo.players.get(interaction.guild.id);
+        const player = kazagumo.players.get(guildId);
         const activeCardId = player?.nowPlayingMessage?.id;
 
         try {
@@ -38,7 +40,7 @@ module.exports = {
 
             if (deadCards.size === 0) {
                 return interaction.followUp({
-                    content: '✨ ไม่พบการ์ดเพลงที่ค้างอยู่เลยครับ ห้องแชทสะอาดเรียบร้อยดีแล้ว',
+                    content: i18n.t(guildId, 'CLEANCARD_NONE'),
                     flags: MessageFlags.Ephemeral
                 });
             }
@@ -57,12 +59,12 @@ module.exports = {
             }
 
             return interaction.followUp({
-                content: `🧹 กวาดล้างเรียบร้อย! ลบการ์ดเพลงเก่าที่ค้างอยู่จำนวน **${deletedCount}** ใบแล้วครับ ✨`,
+                content: i18n.t(guildId, 'CLEANCARD_SUCCESS', { count: deletedCount }),
                 flags: MessageFlags.Ephemeral
             });
         } catch (err) {
             return interaction.followUp({
-                content: `❌ เกิดข้อผิดพลาดขณะลบการ์ด: ${err.message}`,
+                content: `❌ Error: ${err.message}`,
                 flags: MessageFlags.Ephemeral
             });
         }

@@ -39,7 +39,7 @@ module.exports = {
         const donateUrl = `${host}/donate?guild=${guildId}&guildId=${guildId}&userId=${interaction.user.id}`;
         const donateRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (Supporter Stream Lanes)')
+                .setLabel(i18n.t(guildId, 'DONATE_BTN_LABEL'))
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl)
         );
@@ -47,9 +47,15 @@ module.exports = {
         // 1. Slot Guard Check
         const slotCheck = subscriptionManager.checkStreamSlot(guildId, kazagumo, client);
         if (!slotCheck.allowed) {
+            let msg = slotCheck.message;
+            if (slotCheck.reason === 'FREE_SLOTS_FULL') {
+                msg = i18n.t(guildId, 'SLOTS_FULL', { current: slotCheck.current, max: slotCheck.max });
+            } else if (slotCheck.reason === 'CLUSTER_FULL') {
+                msg = i18n.t(guildId, 'CLUSTER_FULL');
+            }
             embed.setColor('#FFD600')
-                .setTitle('⚠️ ช่องสัญญาณเซิร์ฟเวอร์เต็ม')
-                .setDescription(slotCheck.message);
+                .setTitle(i18n.t(guildId, 'SLOTS_FULL_TITLE'))
+                .setDescription(msg);
             return interaction.reply({ embeds: [embed], components: [donateRow] });
         }
 
@@ -77,7 +83,7 @@ module.exports = {
         });
 
         if (!result.tracks.length) {
-            embed.setDescription('❌ หาเพลย์ลิสต์ไม่เจอครับ (กรุณาตรวจสอบว่าลิงก์ไม่ได้ตั้งเป็น Private หรือพิมพ์ชื่อเพลย์ลิสต์ให้ชัดเจนขึ้นครับ)');
+            embed.setDescription(i18n.t(guildId, 'PLAYLIST_NOT_FOUND'));
             return interaction.followUp({ embeds: [embed] });
         }
 
@@ -101,10 +107,10 @@ module.exports = {
             desc += `\n*(${i18n.t(guildId, 'PLAYLIST_LIMIT_FREE')})*`;
         }
         if (requestedLimit && requestedLimit > maxPlaylistAllowed) {
-            desc += `\n*(จำกัดดึงสูงสุด ${maxPlaylistAllowed} เพลงตามโควต้าเซิร์ฟเวอร์ครับ)*`;
+            desc += `\n${i18n.t(guildId, 'PLAYLIST_LIMIT_WARNING', { limit: maxPlaylistAllowed })}`;
         }
         if (skippedOver30Min > 0) {
-            desc += `\n*(Skipped ${skippedOver30Min} tracks > 30 mins for Free Tier)*`;
+            desc += `\n${i18n.t(guildId, 'PLAYLIST_SKIPPED_30MIN', { count: skippedOver30Min })}`;
         }
         if (player.queue.length >= tierConfig.maxQueue) {
             desc += `\n*(${i18n.t(guildId, 'QUEUE_LIMIT_FREE')})*`;
@@ -118,7 +124,7 @@ module.exports = {
                 await player.play();
             } catch (error) {
                 console.error('[gplaylist] Play error:', error.message);
-                return interaction.followUp({ content: '❌ เกิดข้อผิดพลาดในการเริ่มเล่นเพลงครับ', flags: 64 });
+                return interaction.followUp({ content: i18n.t(guildId, 'PLAY_ERROR'), flags: 64 });
             }
         }
     }

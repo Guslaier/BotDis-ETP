@@ -1,4 +1,5 @@
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -18,11 +19,12 @@ module.exports = {
         ),
 
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || player.queue.length === 0) {
-            embed.setDescription('❌ ไม่มีเพลงในคิวให้ย้ายครับ ตอนนี้คิวว่างเปล่า');
+            embed.setDescription(i18n.t(guildId, 'MOVE_EMPTY'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -30,12 +32,12 @@ module.exports = {
         const toPos = interaction.options.getInteger('to');
 
         if (fromPos > player.queue.length || toPos > player.queue.length) {
-            embed.setDescription(`❌ ลำดับไม่ถูกต้องครับ ตอนนี้ในคิวมีเพลงรออยู่ **${player.queue.length}** เพลง`);
+            embed.setDescription(i18n.t(guildId, 'MOVE_INVALID_POS', { count: player.queue.length }));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         if (fromPos === toPos) {
-            embed.setDescription('❌ ตำแหน่งเดิมกับตำแหน่งใหม่เป็นตำแหน่งเดียวกันครับ');
+            embed.setDescription(i18n.t(guildId, 'MOVE_SAME_POS'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -43,8 +45,12 @@ module.exports = {
         player.queue.splice(fromPos - 1, 1);
         player.queue.splice(toPos - 1, 0, track);
 
-        embed.setDescription(`🔀 ย้ายเพลง **[${track.title}](${track.uri})** จากลำดับที่ **${fromPos}** ไปยังลำดับที่ **${toPos}** เรียบร้อยครับ ⚡`);
+        embed.setDescription(i18n.t(guildId, 'MOVE_SUCCESS', {
+            title: track.title,
+            uri: track.uri,
+            from: fromPos,
+            to: toPos
+        }));
         return interaction.reply({ embeds: [embed] });
     }
 };
-

@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -14,27 +15,28 @@ module.exports = {
         ],
     },
     run: async (client, interaction, kazagumo) => {
+        const guildId = interaction.guild.id;
         const position = interaction.options.getInteger('position');
-        const player = kazagumo.players.get(interaction.guild.id);
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
-        if (!player) {
-            embed.setDescription('❌ ไม่มีคิวเพลงครับ');
+        if (!player || player.queue.length === 0) {
+            embed.setDescription(i18n.t(guildId, 'NO_QUEUE'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
         
         if (position < 1 || position > player.queue.length) {
-            embed.setDescription(`❌ ระบุลำดับคิวไม่ถูกต้องครับ ในคิวมีเพลงรออยู่ ${player.queue.length} เพลง`);
+            embed.setDescription(i18n.t(guildId, 'INVALID_QUEUE_POS', { max: player.queue.length }));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const removedTrack = player.queue.remove(position - 1);
         if (!removedTrack) {
-            embed.setDescription('❌ ไม่สามารถลบเพลงออกจากคิวได้ครับ');
+            embed.setDescription(i18n.t(guildId, 'REMOVE_FAIL'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
-        embed.setDescription(`🗑️ ลบเพลง **${removedTrack.title}** ออกจากคิวเรียบร้อยแล้วครับ ⚡`);
+        embed.setDescription(i18n.t(guildId, 'REMOVE_SUCCESS', { title: removedTrack.title }));
         return interaction.reply({ embeds: [embed] });
     }
 };

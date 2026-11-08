@@ -1,4 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -6,19 +7,20 @@ module.exports = {
         description: 'View current song queue and upcoming playlist',
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || (!player.playing && player.queue.length === 0)) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นหรือรอคิวอยู่ครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_QUEUE'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const queue = player.queue;
         if (queue.length === 0) {
-            embed.setTitle('📋 คิวเพลงของค่ำคืนนี้');
+            embed.setTitle(i18n.t(guildId, 'QUEUE_TITLE_CURRENT'));
             const currentTitle = queue.current.title ? queue.current.title.replace(/\[/g, '(').replace(/\]/g, ')') : "Unknown";
-            embed.setDescription(`**กำลังเล่น:**\n[${currentTitle}](${queue.current.uri}) - ขอโดย: <@${queue.current.requester.id}>\n\nไม่มีเพลงในคิวแล้วครับ สั่งเพลงเพิ่มได้เลย! 🎶`);
+            embed.setDescription(`**${i18n.t(guildId, 'QUEUE_NOW_PLAYING_LABEL')}**\n[${currentTitle}](${queue.current.uri}) - ${i18n.t(guildId, 'QUEUE_REQUESTED_BY_LABEL')} <@${queue.current.requester.id}>\n\n${i18n.t(guildId, 'QUEUE_EMPTY_NEXT')}`);
             return interaction.reply({ embeds: [embed] });
         }
 
@@ -32,20 +34,19 @@ module.exports = {
             const currentTracks = queue.slice(start, end);
 
             const currentTitle = queue.current.title ? queue.current.title.replace(/\[/g, '(').replace(/\]/g, ')') : "Unknown";
-            let description = `**กำลังเล่น:**\n[${currentTitle}](${queue.current.uri}) - ขอโดย: <@${queue.current.requester.id}>\n\n**รอคิว (หน้า ${page + 1}/${totalPages}):**\n`;
+            let description = `**${i18n.t(guildId, 'QUEUE_NOW_PLAYING_LABEL')}**\n[${currentTitle}](${queue.current.uri}) - ${i18n.t(guildId, 'QUEUE_REQUESTED_BY_LABEL')} <@${queue.current.requester.id}>\n\n**${i18n.t(guildId, 'QUEUE_PAGE_HEADER', { page: page + 1, total: totalPages })}**\n`;
 
             currentTracks.forEach((track, index) => {
-                // ตัดชื่อเพลงถ้ายาวเกินไป กันคำอธิบายทะลุ 4096 ตัวอักษร
                 let title = track.title ? track.title.replace(/\[/g, '(').replace(/\]/g, ')') : "Unknown";
                 if (title.length > 40) title = title.substring(0, 40) + '...';
-                description += `**${start + index + 1}.** [${title}](${track.uri}) - ขอโดย: <@${track.requester.id}>\n`;
+                description += `**${start + index + 1}.** [${title}](${track.uri}) - ${i18n.t(guildId, 'QUEUE_REQUESTED_BY_LABEL')} <@${track.requester.id}>\n`;
             });
 
             const newEmbed = new EmbedBuilder()
                 .setColor('#FF69B4')
-                .setTitle(`📋 คิวเพลงทั้งหมดของค่ำคืนนี้ (${queue.length} เพลง)`)
+                .setTitle(i18n.t(guildId, 'QUEUE_ALL_TITLE', { count: queue.length }))
                 .setDescription(description)
-                .setFooter({ text: 'ปาร์ตี้นี้ยาวไปปป! 💃✨' });
+                .setFooter({ text: i18n.t(guildId, 'QUEUE_FOOTER') });
 
             return newEmbed;
         };
@@ -55,13 +56,13 @@ module.exports = {
 
             const btnPrev = new ButtonBuilder()
                 .setCustomId('queue_prev')
-                .setLabel('⬅️ หน้าก่อน')
+                .setLabel(i18n.t(guildId, 'QUEUE_BTN_PREV'))
                 .setStyle(ButtonStyle.Primary)
                 .setDisabled(page === 0);
 
             const btnNext = new ButtonBuilder()
                 .setCustomId('queue_next')
-                .setLabel('หน้าถัดไป ➡️')
+                .setLabel(i18n.t(guildId, 'QUEUE_BTN_NEXT'))
                 .setStyle(ButtonStyle.Primary)
                 .setDisabled(page === totalPages - 1);
 
@@ -71,7 +72,6 @@ module.exports = {
 
         const initialEmbed = generateEmbed(currentPage);
 
-        // ถ้ามีหน้าเดียว ไม่ต้องแสดงปุ่ม
         if (totalPages === 1) {
             return interaction.reply({ embeds: [initialEmbed] });
         }
@@ -84,12 +84,12 @@ module.exports = {
 
         const collector = response.createMessageComponentCollector({
             componentType: ComponentType.Button,
-            time: 120000 // ปุ่มเปิดให้กดได้ 2 นาที
+            time: 120000
         });
 
         collector.on('collect', async (i) => {
             if (i.user.id !== interaction.user.id) {
-                return i.reply({ content: '❌ ปุ่มนี้สำหรับผู้ที่เรียกดูคิวเท่านั้นครับ', flags: 64 });
+                return i.reply({ content: i18n.t(guildId, 'QUEUE_ONLY_INVOKER'), flags: 64 });
             }
 
             if (i.customId === 'queue_prev') {
@@ -105,7 +105,6 @@ module.exports = {
         });
 
         collector.on('end', () => {
-            // ลบปุ่มออกเมื่อหมดเวลา
             interaction.editReply({ components: [] }).catch(() => { });
         });
     }

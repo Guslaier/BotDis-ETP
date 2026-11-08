@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -6,23 +7,24 @@ module.exports = {
         description: 'Replay the previous track that just finished',
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player) {
-            embed.setDescription('❌ ไม่มีคิวเพลงครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_PLAYING_TRACK'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const hasPrev = !!(player.queue.previous || (player.previousTracks && player.previousTracks.length > 0));
         if (!hasPrev) {
-            embed.setDescription('❌ ไม่มีเพลงก่อนหน้านี้ในประวัติครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_PREVIOUS'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.playPrevious();
-        const targetTitle = player.queue.current?.title || player.queue.previous?.title || 'เพลงก่อนหน้า';
-        embed.setDescription(`⏮️ กำลังย้อนกลับไปเล่นเพลง: **${targetTitle}** ครับ ⚡`);
+        const targetTitle = player.queue.current?.title || player.queue.previous?.title || (i18n.isEn(guildId) ? 'Previous Track' : 'เพลงก่อนหน้า');
+        embed.setDescription(i18n.t(guildId, 'PREVIOUS_PLAYING', { title: targetTitle }));
         return interaction.reply({ embeds: [embed] });
     }
 };

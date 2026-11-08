@@ -68,7 +68,6 @@ module.exports = {
                     name: isEn ? '🎛️ Audio Tuning & Supporter Perks' : '🎛️ หมวดปรับแต่งเสียง & ผู้สนับสนุน (Audio & Supporter)',
                     value: isEn ? [
                         '`/gvolume` - Set playback volume (0 - 150%)',
-                        '`/gfilter` - Equalizer audio filters (BassBoost, Nightcore, Pop, etc.) [Supporter]',
                         '`/gseek` - Seek to time position (e.g. 1:30 or 90)',
                         '`/gforward` - Fast forward by seconds',
                         '`/gbackward` - Rewind by seconds',
@@ -76,7 +75,6 @@ module.exports = {
                         '`/gdonate` - Server Supporter portal & top-up perks (status, support, redeem)'
                     ].join('\n') : [
                         '`/gvolume` - ปรับระดับความดังของเสียง (0 - 150%)',
-                        '`/gfilter` - ปรับแต่งเสียง Equalizer (BassBoost, Nightcore, Pop ฯลฯ) [Supporter]',
                         '`/gseek` - กรอไปยังตำแหน่งเวลาที่ต้องการ (เช่น 1:30 หรือ 90)',
                         '`/gforward` - กรอเดินหน้าตามจำนวนวินาที',
                         '`/gbackward` - กรอย้อนหลังตามจำนวนวินาที',

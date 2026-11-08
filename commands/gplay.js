@@ -43,7 +43,7 @@ module.exports = {
         const donateUrl = `${host}/donate?guild=${guildId}&guildId=${guildId}&userId=${interaction.user.id}`;
         const donateRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('💖 สนับสนุนเซิร์ฟเวอร์ (Supporter Stream Lanes)')
+                .setLabel(i18n.t(guildId, 'DONATE_BTN_LABEL'))
                 .setStyle(ButtonStyle.Link)
                 .setURL(donateUrl)
         );
@@ -51,9 +51,15 @@ module.exports = {
         // 1. Slot Guard Check
         const slotCheck = subscriptionManager.checkStreamSlot(interaction.guild.id, kazagumo, client);
         if (!slotCheck.allowed) {
+            let msg = slotCheck.message;
+            if (slotCheck.reason === 'FREE_SLOTS_FULL') {
+                msg = i18n.t(guildId, 'SLOTS_FULL', { current: slotCheck.current, max: slotCheck.max });
+            } else if (slotCheck.reason === 'CLUSTER_FULL') {
+                msg = i18n.t(guildId, 'CLUSTER_FULL');
+            }
             embed.setColor('#FFD600')
-                .setTitle('⚠️ ช่องสัญญาณเซิร์ฟเวอร์เต็ม')
-                .setDescription(slotCheck.message);
+                .setTitle(i18n.t(guildId, 'SLOTS_FULL_TITLE'))
+                .setDescription(msg);
             return interaction.reply({ embeds: [embed], components: [donateRow] });
         }
 
@@ -76,7 +82,7 @@ module.exports = {
         // 2. Queue Limit Check
         if (player.queue.length >= tierConfig.maxQueue) {
             embed.setColor('#EF4444')
-                .setTitle('📋 Queue Limit Reached')
+                .setTitle(i18n.t(guildId, 'QUEUE_LIMIT_TITLE'))
                 .setDescription(i18n.t(guildId, 'QUEUE_LIMIT_FREE'));
             return interaction.followUp({ embeds: [embed], components: [donateRow] });
         }
@@ -88,7 +94,7 @@ module.exports = {
         });
 
         if (!result.tracks.length) {
-            embed.setDescription('❌ หาเพลงไม่เจอ! (ลองพิมพ์เฉพาะชื่อเพลงสั้นๆ ดูนะ 🥺)');
+            embed.setDescription(i18n.t(guildId, 'TRACK_NOT_FOUND'));
             return interaction.followUp({ embeds: [embed] });
         }
 
@@ -110,7 +116,7 @@ module.exports = {
 
             let msg = `📋 **${result.playlistName || 'Playlist'}**\n\n${i18n.t(guildId, 'PLAYLIST_ADDED')} (${addedTracks.length} tracks)`;
             if (skippedOver30Min > 0) {
-                msg += `\n*(Skipped ${skippedOver30Min} tracks > 30 mins for Free Tier)*`;
+                msg += `\n${i18n.t(guildId, 'PLAYLIST_SKIPPED_30MIN', { count: skippedOver30Min })}`;
             }
             embed.setDescription(msg);
             await interaction.followUp({ embeds: [embed] });
@@ -121,7 +127,7 @@ module.exports = {
             if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
                 const durationMin = Math.floor((track.duration || 0) / 60);
                 embed.setColor('#FFD600')
-                    .setTitle('⏱️ Track Exceeds 30 Minutes')
+                    .setTitle(i18n.t(guildId, 'SONG_TOO_LONG_TITLE'))
                     .setDescription(i18n.t(guildId, 'SONG_TOO_LONG', { duration: `${durationMin} min` }));
                 return interaction.followUp({ embeds: [embed], components: [donateRow] });
             }
@@ -143,7 +149,7 @@ module.exports = {
                 await player.play();
             } catch (error) {
                 console.error('[gplay] Play error:', error.message);
-                return interaction.followUp({ content: '❌ เกิดข้อผิดพลาดในการเริ่มเล่นเพลงครับ', flags: 64 });
+                return interaction.followUp({ content: i18n.t(guildId, 'PLAY_ERROR'), flags: 64 });
             }
         }
     }

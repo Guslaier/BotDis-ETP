@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const { createNowPlayingCard } = require('../src/helpers/musicCardHelper');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -7,17 +8,18 @@ module.exports = {
         description: 'Display current track player card and interactive controls',
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {
-            embed.setDescription('❌ ตอนนี้ไม่ได้เปิดเพลงอยู่ครับ');
+            embed.setDescription(i18n.t(guildId, 'NOW_PLAYING_NOT_PLAYING'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const track = player.queue.current;
         if (!track) {
-            embed.setDescription('❌ ไม่พบข้อมูลเพลงครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_TRACK_INFO'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 

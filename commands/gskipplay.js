@@ -44,7 +44,7 @@ module.exports = {
         });
 
         if (!result.tracks.length) {
-            embed.setDescription('❌ หาเพลงไม่เจอ! (ลองพิมพ์เฉพาะชื่อเพลงสั้นๆ ดูนะ 🥺)');
+            embed.setDescription(i18n.t(guildId, 'TRACK_NOT_FOUND'));
             return interaction.followUp({ embeds: [embed] });
         }
 
@@ -57,7 +57,7 @@ module.exports = {
             } else {
                 player.play();
             }
-            embed.setDescription(`⏭️ สับเพลงใหม่ทันใจ! ข้ามไปเล่นเพลย์ลิสต์ **${result.playlistName}** ให้แล้ว 🎶🟢`);
+            embed.setDescription(i18n.t(guildId, 'SKIPPLAY_PLAYLIST', { title: result.playlistName || 'Playlist' }));
             await interaction.followUp({ embeds: [embed] });
         } else {
             const track = result.tracks[0];
@@ -65,7 +65,7 @@ module.exports = {
             if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
                 const durationMin = Math.floor((track.duration || 0) / 60);
                 embed.setColor('#FFD600')
-                    .setTitle('⏱️ Track Exceeds 30 Minutes')
+                    .setTitle(i18n.t(guildId, 'SONG_TOO_LONG_TITLE'))
                     .setDescription(i18n.t(guildId, 'SONG_TOO_LONG', { duration: `${durationMin} min` }));
                 return interaction.followUp({ embeds: [embed] });
             }
@@ -78,7 +78,7 @@ module.exports = {
                 player.play();
             }
 
-            embed.setDescription(`⏭️ ข้ามเพลงเดิมแล้วเปิดเพลง **${track.title}** ให้ทันใจ! 🎧🟢`);
+            embed.setDescription(i18n.t(guildId, 'SKIPPLAY_TRACK', { title: track.title }));
             await interaction.followUp({ embeds: [embed] });
         }
     }

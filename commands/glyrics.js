@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const lyricsHelper = require('../src/helpers/lyricsHelper');
 const featureManager = require('../src/helpers/featureManager');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -14,7 +15,7 @@ module.exports = {
             const isSupporterOnly = access.mode === 'supporter_only';
             const blockEmbed = new EmbedBuilder()
                 .setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
-                .setTitle(isSupporterOnly ? '💎 ฟังก์ชันสำหรับผู้สนับสนุน (Supporter Only)' : '⛔ ฟังก์ชันปิดปรับปรุงชั่วคราว')
+                .setTitle(access.title || (isSupporterOnly ? i18n.t(guildId, 'FEATURE_SUPPORTER_TITLE') : i18n.t(guildId, 'FEATURE_MAINTENANCE_TITLE')))
                 .setDescription(access.reason);
             return interaction.reply({ embeds: [blockEmbed], flags: 64 });
         }
@@ -23,7 +24,7 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing || !player.queue.current) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_PLAYING_TRACK'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -34,7 +35,7 @@ module.exports = {
             const data = await lyricsHelper.getLyrics(track);
 
             if (!data || !data.lyrics) {
-                embed.setDescription(`❌ ขออภัยครับ หาเนื้อเพลงสำหรับ **${track.title}** ไม่เจอ`);
+                embed.setDescription(i18n.t(guildId, 'LYRICS_NOT_FOUND', { title: track.title }));
                 return interaction.followUp({ embeds: [embed] });
             }
 
@@ -43,15 +44,15 @@ module.exports = {
                 lyrics = lyrics.substring(0, 3995) + '...';
             }
 
-            embed.setTitle(`🎤 เนื้อเพลง: ${data.title || track.title}`)
+            embed.setTitle(i18n.t(guildId, 'LYRICS_TITLE', { title: data.title || track.title }))
                  .setDescription(lyrics)
-                 .setFooter({ text: `แหล่งที่มา: ${data.source}` });
+                 .setFooter({ text: i18n.t(guildId, 'LYRICS_SOURCE', { source: data.source }) });
 
             return interaction.followUp({ embeds: [embed] });
 
         } catch (error) {
             console.error('[LyricsCommand] Error:', error.message);
-            embed.setDescription('❌ เกิดข้อผิดพลาดในการค้นหาเนื้อเพลงครับ');
+            embed.setDescription(i18n.t(guildId, 'LYRICS_ERROR'));
             return interaction.followUp({ embeds: [embed] });
         }
     }

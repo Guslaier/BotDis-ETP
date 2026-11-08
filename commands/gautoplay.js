@@ -2,6 +2,7 @@ const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
 const subscriptionManager = require('../src/billing/subscriptionManager');
 const featureManager = require('../src/helpers/featureManager');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -26,7 +27,7 @@ module.exports = {
             }
             const isSupporterOnly = access.mode === 'supporter_only';
             embed.setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
-                .setTitle(isSupporterOnly ? '💎 ฟีเจอร์สำหรับผู้สนับสนุนเซิร์ฟเวอร์' : '⛔ ฟังก์ชันปิดปรับปรุงชั่วคราว')
+                .setTitle(access.title || (isSupporterOnly ? i18n.t(guildId, 'FEATURE_SUPPORTER_TITLE') : i18n.t(guildId, 'FEATURE_MAINTENANCE_TITLE')))
                 .setDescription(access.reason);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
@@ -50,8 +51,7 @@ module.exports = {
             newStatus = settingsManager.setGuildAutoplay(guildId, !current);
         }
 
-        const statusText = newStatus ? 'เปิดใช้งาน (Enabled) 🟢' : 'ปิดใช้งาน (Disabled) 🔴';
-        embed.setDescription(`🎲 **ระบบเล่นเพลงต่อเนื่อง (Autoplay):** ${statusText}\n\n${newStatus ? 'เมื่อเพลงในคิวหมด ดีเจจะเลือกเพลงที่คล้ายกันมาเล่นต่อให้อัตโนมัติครับ ปาร์ตี้ไม่มีสะดุดแน่นอน! (ระบบจำค่านี้ไว้ถาวร) ⚡' : 'เมื่อเพลงในคิวหมด บอทจะหยุดเล่นเพลงตามปกติครับ'}`);
+        embed.setDescription(i18n.t(guildId, newStatus ? 'AUTOPLAY_ENABLED' : 'AUTOPLAY_DISABLED'));
         return interaction.reply({ embeds: [embed] });
     }
 };

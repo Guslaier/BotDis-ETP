@@ -1,5 +1,6 @@
 const dbManager = require('../database/dbManager');
 const subscriptionManager = require('../billing/subscriptionManager');
+const i18n = require('./i18nHelper');
 
 const DEFAULT_FEATURES = {
     filter: {
@@ -86,10 +87,11 @@ class FeatureManager {
         }
 
         if (feat.mode === 'disabled') {
-            const fallbackMsg = `ฟังก์ชัน **${feat.name}** (${feat.command}) ปิดปรับปรุงชั่วคราวเพื่อรักษาเสถียรภาพระบบครับ`;
+            const fallbackMsg = i18n.t(guildId, 'FEATURE_MAINTENANCE_DESC', { name: feat.name, command: feat.command });
             return {
                 allowed: false,
                 mode: 'disabled',
+                title: i18n.t(guildId, 'FEATURE_MAINTENANCE_TITLE'),
                 reason: feat.customMessage ? feat.customMessage : fallbackMsg
             };
         }
@@ -97,10 +99,11 @@ class FeatureManager {
         if (feat.mode === 'supporter_only') {
             const isSupporter = subscriptionManager.isSupporter(guildId);
             if (!isSupporter) {
-                const fallbackMsg = `ฟังก์ชัน **${feat.name}** (${feat.command}) เปิดให้ใช้งานเฉพาะเซิร์ฟเวอร์ผู้สนับสนุน (Supporter VIP) เท่านั้นครับ\n\nพิมพ์ \`/gdonate\` เพื่อดูรายละเอียดการร่วมสนับสนุนเริ่มต้นเพียง 29 บาท/เดือน`;
+                const fallbackMsg = i18n.t(guildId, 'FEATURE_SUPPORTER_DESC', { name: feat.name, command: feat.command });
                 return {
                     allowed: false,
                     mode: 'supporter_only',
+                    title: i18n.t(guildId, 'FEATURE_SUPPORTER_TITLE'),
                     reason: feat.customMessage ? feat.customMessage : fallbackMsg
                 };
             }

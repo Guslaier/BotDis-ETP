@@ -1,5 +1,6 @@
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const { formatDuration } = require('../src/helpers/musicCardHelper');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,17 +14,18 @@ module.exports = {
         ),
 
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing || !player.queue.current) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_PLAYING_TRACK'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const track = player.queue.current;
         if (track.isStream) {
-            embed.setDescription('❌ ไม่สามารถกรอเพลงที่เป็น Live Stream สดได้ครับ');
+            embed.setDescription(i18n.t(guildId, 'CANNOT_SEEK_LIVE'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -33,13 +35,15 @@ module.exports = {
         const maxDuration = track.length || 0;
 
         if (maxDuration > 0 && newPos >= maxDuration) {
-            embed.setDescription(`❌ กรอเกินความยาวเพลงไม่ได้ครับ เพลงนี้ยาวแค่ \`${formatDuration(maxDuration)}\``);
+            embed.setDescription(i18n.t(guildId, 'SEEK_EXCEED_DURATION', { duration: formatDuration(maxDuration) }));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         await player.seek(newPos);
-        embed.setDescription(`⏩ เร่งสปีด! กรอเดินหน้าไป **${seconds} วินาที** (ตอนนี้อยู่ที่ \`${formatDuration(newPos)}\`) 🎧✨`);
+        embed.setDescription(i18n.t(guildId, 'SEEK_FORWARD_SUCCESS', {
+            seconds,
+            pos: formatDuration(newPos)
+        }));
         return interaction.reply({ embeds: [embed] });
     }
 };
-

@@ -40,7 +40,7 @@ module.exports = {
             }
             const isSupporterOnly = access.mode === 'supporter_only';
             embed.setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
-                .setTitle(isSupporterOnly ? '💎 ฟังก์ชันสำหรับผู้สนับสนุน (Supporter Only)' : '⛔ ฟังก์ชันปิดปรับปรุงชั่วคราว')
+                .setTitle(access.title || (isSupporterOnly ? i18n.t(guildId, 'FEATURE_SUPPORTER_TITLE') : i18n.t(guildId, 'FEATURE_MAINTENANCE_TITLE')))
                 .setDescription(access.reason);
             return interaction.reply({ embeds: [embed], flags: 64 });
         }

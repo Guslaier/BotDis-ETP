@@ -22,7 +22,7 @@ module.exports = {
             const isSupporterOnly = access.mode === 'supporter_only';
             const blockEmbed = new EmbedBuilder()
                 .setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
-                .setTitle(isSupporterOnly ? '💎 ฟังก์ชันสำหรับผู้สนับสนุน (Supporter Only)' : '⛔ ฟังก์ชันปิดปรับปรุงชั่วคราว')
+                .setTitle(access.title || (isSupporterOnly ? i18n.t(guildId, 'FEATURE_SUPPORTER_TITLE') : i18n.t(guildId, 'FEATURE_MAINTENANCE_TITLE')))
                 .setDescription(access.reason);
             return interaction.reply({ embeds: [blockEmbed], flags: 64 });
         }
@@ -32,7 +32,7 @@ module.exports = {
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         if (!player || !player.playing) {
-            embed.setDescription('❌ ไม่มีเพลงที่กำลังเล่นอยู่ครับ');
+            embed.setDescription(i18n.t(guildId, 'NO_PLAYING_TRACK'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
@@ -40,10 +40,8 @@ module.exports = {
         if (timeInput.includes(':')) {
             const parts = timeInput.split(':').map(Number);
             if (parts.length === 2) {
-                // MM:SS
                 timeMs = (parts[0] * 60 + parts[1]) * 1000;
             } else if (parts.length === 3) {
-                // HH:MM:SS
                 timeMs = (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
             }
         } else {
@@ -51,18 +49,18 @@ module.exports = {
         }
 
         if (isNaN(timeMs) || timeMs < 0) {
-            embed.setDescription('❌ รูปแบบเวลาไม่ถูกต้อง! ลองพิมพ์แบบ 01:30 หรือใส่เป็นตัวเลขวินาทีดูนะ 🧐');
+            embed.setDescription(i18n.t(guildId, 'SEEK_INVALID_TIME'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         if (player.queue.current.length > 0 && timeMs > player.queue.current.length) {
-            embed.setDescription(i18n.t(interaction.guild.id, 'SEEK_TOO_FAR'));
+            embed.setDescription(i18n.t(guildId, 'SEEK_TOO_FAR'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         await interaction.deferReply();
         await player.seek(timeMs);
-        embed.setDescription(`⏩ วาร์ปไปที่เวลา **${timeInput}** ให้เรียบร้อย! 🎶🟢`);
+        embed.setDescription(i18n.t(guildId, 'SEEK_SUCCESS', { time: timeInput }));
         return interaction.followUp({ embeds: [embed] });
     }
 };

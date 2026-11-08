@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const settingsManager = require('../src/helpers/settingsManager');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -16,21 +17,22 @@ module.exports = {
         ]
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
         const amount = interaction.options.getInteger('amount');
         if (amount === null) {
-            const currentVolume = player ? player.volume : settingsManager.getGuildVolume(interaction.guild.id);
-            embed.setDescription(`🔊 ระดับเสียงปัจจุบันของเซิร์ฟเวอร์นี้คือ **${currentVolume}%** ครับ\n*(พิมพ์ \`/gvolume <0-150>\` เพื่อเปลี่ยนและบันทึกค่า)*`);
+            const currentVolume = player ? player.volume : settingsManager.getGuildVolume(guildId);
+            embed.setDescription(i18n.t(guildId, 'VOLUME_CURRENT', { volume: currentVolume }));
             return interaction.reply({ embeds: [embed] });
         }
 
         let volume = amount;
         if (volume < 0) volume = 0;
-        if (volume > 150) volume = 150; // กันคนปรับเสียงดังเกินไปจนลำโพงแตก
+        if (volume > 150) volume = 150;
 
-        settingsManager.setGuildVolume(interaction.guild.id, volume);
+        settingsManager.setGuildVolume(guildId, volume);
 
         if (player) {
             player.setVolume(volume);
@@ -43,12 +45,10 @@ module.exports = {
             }
         }
 
-        if (volume > 100) {
-            embed.setDescription(`🔊 ปรับและบันทึกระดับเสียงเป็น **${volume}%** เรียบร้อยครับ ⚡`);
-        } else if (volume === 0) {
-            embed.setDescription(`🔇 ปิดเสียงเป็น **0%** (Muted) เรียบร้อยครับ`);
+        if (volume === 0) {
+            embed.setDescription(i18n.t(guildId, 'VOLUME_MUTED'));
         } else {
-            embed.setDescription(`🔊 ปรับและบันทึกระดับเสียงเป็น **${volume}%** เรียบร้อยแล้วครับ (ระบบจำค่านี้ไว้ใช้ตลอด) 🎧`);
+            embed.setDescription(i18n.t(guildId, 'VOLUME_SET', { volume }));
         }
 
         return interaction.reply({ embeds: [embed] });

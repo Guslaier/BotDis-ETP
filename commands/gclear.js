@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const i18n = require('../src/helpers/i18nHelper');
 
 module.exports = {
     data: {
@@ -6,16 +7,17 @@ module.exports = {
         description: 'Clear all upcoming tracks from the queue',
     },
     run: async (client, interaction, kazagumo) => {
-        const player = kazagumo.players.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const player = kazagumo.players.get(guildId);
         const embed = new EmbedBuilder().setColor('#FF69B4');
 
-        if (!player) {
-            embed.setDescription('❌ ตอนนี้ไม่มีคิวเพลงให้ล้างครับ สั่งเปิดเพลงได้เลย 🎶');
+        if (!player || player.queue.length === 0) {
+            embed.setDescription(i18n.t(guildId, 'NO_QUEUE'));
             return interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         player.queue.clear();
-        embed.setDescription('🧹 ล้างคิวเพลงที่รออยู่ทั้งหมดเรียบร้อยแล้วครับ ✨');
+        embed.setDescription(i18n.t(guildId, 'QUEUE_CLEARED'));
         return interaction.reply({ embeds: [embed] });
     }
 };
