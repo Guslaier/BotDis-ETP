@@ -240,7 +240,7 @@ export default function TopupView({ lang, onToast }) {
       {/* 1. HERO SOUNDSTAGE HEADER */}
       <section style={{
         textAlign: 'center',
-        padding: '36px 20px 28px',
+        padding: '8rem 20px',
         position: 'relative',
         overflow: 'hidden',
         marginBottom: 8
