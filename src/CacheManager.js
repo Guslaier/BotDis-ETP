@@ -270,7 +270,6 @@ class CacheManager {
         const socketTimeout = process.env.STREAM_SOCKET_TIMEOUT || '10';
 
         const args = [
-            '--no-cache-dir',
             '--no-playlist',
             '--no-warnings',
             '--no-progress',
@@ -280,7 +279,6 @@ class CacheManager {
             '--socket-timeout', socketTimeout,
             '--buffer-size', bufferSize,
             '--http-chunk-size', chunkSize,
-            '--js-runtimes', 'node',
             '-f', '251/bestaudio/best'
         ];
 
@@ -760,12 +758,13 @@ class CacheManager {
                 bitrate: String(bitrate)
             });
 
+            const remoteTimeoutMs = parseInt(process.env.REMOTE_NODE_TIMEOUT_MS || '30000', 10);
             const req = http.request({
                 hostname: node.host,
                 port: node.port || 2333,
                 path: `/api/node/stream?${queryParams.toString()}`,
                 method: 'GET',
-                timeout: 12000,
+                timeout: remoteTimeoutMs,
                 headers: {
                     'x-node-secret': process.env.NODE_AUTH_SECRET || ''
                 }
