@@ -511,35 +511,32 @@ class NodeRouter extends EventEmitter {
         };
         dbManager.save('nodesConfig');
 
-        // If remote worker, broadcast update live to worker node server
-        if (node.type === 'remote') {
+        // If remote worker and online, broadcast update live without blocking response
+        if (node.type === 'remote' && node.status === 'online') {
             try {
-                await new Promise((resolve) => {
-                    const payload = JSON.stringify({
-                        name: node.name,
-                        maxRooms: node.maxRooms,
-                        maxFreeRooms: node.maxFreeRooms
-                    });
-                    const req = http.request({
-                        hostname: node.host,
-                        port: node.port || 2333,
-                        path: '/api/node/config',
-                        method: 'POST',
-                        timeout: 4000,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Content-Length': Buffer.byteLength(payload),
-                            'x-node-secret': process.env.NODE_AUTH_SECRET || ''
-                        }
-                    }, (res) => {
-                        let d = '';
-                        res.on('data', c => d += c);
-                        res.on('end', () => resolve({ ok: res.statusCode === 200 }));
-                    });
-                    req.on('error', () => resolve({ ok: false }));
-                    req.write(payload);
-                    req.end();
+                const payload = JSON.stringify({
+                    name: node.name,
+                    maxRooms: node.maxRooms,
+                    maxFreeRooms: node.maxFreeRooms
                 });
+                const req = http.request({
+                    hostname: node.host,
+                    port: node.port || 2333,
+                    path: '/api/node/config',
+                    method: 'POST',
+                    timeout: 2000,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': Buffer.byteLength(payload),
+                        'x-node-secret': process.env.NODE_AUTH_SECRET || ''
+                    }
+                }, (res) => {
+                    res.resume();
+                });
+                req.on('timeout', () => req.destroy());
+                req.on('error', () => {});
+                req.write(payload);
+                req.end();
             } catch {}
         }
 
@@ -562,13 +559,16 @@ class NodeRouter extends EventEmitter {
         }
 
         if (node.type === 'remote') {
+            if (node.status === 'offline') {
+                return { success: false, error: 'Cannot toggle drain on offline node' };
+            }
             return new Promise((resolve) => {
                 const req = http.request({
                     hostname: node.host,
                     port: node.port || 2333,
                     path: '/api/node/drain',
                     method: 'POST',
-                    timeout: 4000,
+                    timeout: 3000,
                     headers: {
                         'x-node-secret': process.env.NODE_AUTH_SECRET || ''
                     }
@@ -584,6 +584,10 @@ class NodeRouter extends EventEmitter {
                             resolve({ success: false, error: 'Invalid response from remote node' });
                         }
                     });
+                });
+                req.on('timeout', () => {
+                    req.destroy();
+                    resolve({ success: false, error: 'Remote node request timed out' });
                 });
                 req.on('error', (err) => resolve({ success: false, error: err.message }));
                 req.end();

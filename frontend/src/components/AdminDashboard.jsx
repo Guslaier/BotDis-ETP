@@ -35,6 +35,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [nodeNameInput, setNodeNameInput] = useState('');
   const [nodeMaxRoomsInput, setNodeMaxRoomsInput] = useState(15);
   const [nodeMaxFreeRoomsInput, setNodeMaxFreeRoomsInput] = useState(15);
+  const [savingNodeConfig, setSavingNodeConfig] = useState(false);
 
   // Add Node Modal State
   const [addNodeModal, setAddNodeModal] = useState(false);
@@ -230,7 +231,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   };
 
   const handleSaveNodeConfig = async () => {
-    if (!editNodeModal) return;
+    if (!editNodeModal || savingNodeConfig) return;
     const maxRoomsNum = parseInt(nodeMaxRoomsInput, 10);
     if (isNaN(maxRoomsNum) || maxRoomsNum < 1) {
       onToast('warning', lang === 'th' ? 'กรุณาระบุจำนวนห้องที่ถูกต้อง' : 'Valid room count required');
@@ -241,6 +242,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       onToast('warning', lang === 'th' ? 'โควตาสายฟรีต้องอยู่ระหว่าง 0 ถึง Max Rooms' : 'Free slots must be between 0 and Max Rooms');
       return;
     }
+    setSavingNodeConfig(true);
     try {
       const res = await fetch(`/api/admin/nodes/${editNodeModal.id}/config`, {
         method: 'POST',
@@ -264,6 +266,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
       }
     } catch (err) {
       onToast('error', 'Error', err.message);
+    } finally {
+      setSavingNodeConfig(false);
     }
   };
 
@@ -2630,11 +2634,11 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               </div>
             )}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setEditNodeModal(null)} className="btn btn-sm">
+              <button onClick={() => setEditNodeModal(null)} disabled={savingNodeConfig} className="btn btn-sm">
                 {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
               </button>
-              <button onClick={handleSaveNodeConfig} className="btn btn-sm btn-primary">
-                {lang === 'th' ? 'บันทึก' : 'Save'}
+              <button onClick={handleSaveNodeConfig} disabled={savingNodeConfig} className="btn btn-sm btn-primary">
+                {savingNodeConfig ? (lang === 'th' ? 'กำลังบันทึก...' : 'Saving...') : (lang === 'th' ? 'บันทึก' : 'Save')}
               </button>
             </div>
           </div>
