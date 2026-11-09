@@ -4,7 +4,7 @@ import {
   IconClock, IconArrowRight, IconCopy, IconBolt, IconMusic, IconAward,
   IconFileText, IconX, IconCheck, IconHeadphones, IconLock,
   IconBulb, IconUsers, IconFlame, IconHelp, IconSearch, IconChevronDown, IconChevronUp,
-  IconQrcode, IconUpload, IconReceipt2
+  IconQrcode, IconUpload, IconReceipt2, IconClipboard, IconExternalLink
 } from '@tabler/icons-react';
 
 function IconTrueMoneyVoucher({ size = 18, stroke = 1.8, style = {}, className = '', ...props }) {
@@ -41,6 +41,8 @@ export default function TopupView({ lang, onToast }) {
   const [guildId, setGuildId] = useState('');
   const [userId, setUserId] = useState('');
   const [guildData, setGuildData] = useState(null);
+  const [guildError, setGuildError] = useState(null);
+  const [botInviteUrl, setBotInviteUrl] = useState('https://discord.com/oauth2/authorize?client_id=1525402020096249856&permissions=8&scope=bot%20applications.commands');
   const [loadingGuild, setLoadingGuild] = useState(false);
   const [formTab, setFormTab] = useState('voucher'); // 'voucher' | 'promo'
   const [showTosModal, setShowTosModal] = useState(false);
@@ -119,8 +121,12 @@ export default function TopupView({ lang, onToast }) {
       const data = await res.json();
       if (data.success) {
         setGuildData(data);
+        setGuildError(null);
+        if (data.inviteUrl) setBotInviteUrl(data.inviteUrl);
       } else {
         setGuildData(null);
+        setGuildError(data.error || 'NOT_FOUND');
+        if (data.inviteUrl) setBotInviteUrl(data.inviteUrl);
         onToast('error', lang === 'th' ? 'ไม่พบเซิร์ฟเวอร์' : 'Guild Not Found', data.error || (lang === 'th' ? 'กรุณาตรวจสอบว่าบอทอยู่ในเซิร์ฟเวอร์นี้' : 'Ensure bot is joined in server'));
       }
     } catch (err) {
@@ -378,20 +384,21 @@ export default function TopupView({ lang, onToast }) {
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 8,
-            padding: '4px 14px',
+            gap: 7,
+            padding: '5px 16px',
             borderRadius: 999,
-            background: 'rgba(0, 255, 135, 0.08)',
-            border: '1px solid rgba(0, 255, 135, 0.25)',
-            color: 'var(--slime-green)',
-            fontSize: 11.5,
-            fontWeight: 700,
+            background: 'rgba(0, 255, 135, 0.12)',
+            border: '1px solid rgba(0, 255, 135, 0.45)',
+            color: '#00FF88',
+            fontSize: 12,
+            fontWeight: 800,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            marginBottom: 16
+            marginBottom: 16,
+            boxShadow: '0 0 16px rgba(0, 255, 135, 0.15)'
           }}>
-            <IconBolt size={14} stroke={1.8} />
-            <span>{lang === 'th' ? 'GOOLIX สตรีมเสียงระดับ HQ' : 'GOOLIX High-Fidelity Audio Core'}</span>
+            <IconBolt size={14} stroke={2.2} />
+            <span>{lang === 'th' ? '✦ GOOLIX สตรีมเสียงระดับ HQ' : '✦ GOOLIX High-Fidelity Audio Core'}</span>
           </div>
 
           <h1 style={{
@@ -418,15 +425,15 @@ export default function TopupView({ lang, onToast }) {
           <p style={{
             maxWidth: 680,
             margin: '0 auto 18px',
-            color: '#E2E8F0',
+            color: '#F1F5F9',
             fontSize: 'clamp(14px, 2vw, 15.5px)',
             fontWeight: 500,
             lineHeight: 1.65,
             letterSpacing: '-0.01em'
           }}>
             {lang === 'th'
-              ? 'สมาชิกทุกคนในห้องเสียงฟังเสียงคุณภาพสูงทันที และฟังเพลงอย่างต่อเนื่องไม่จำกัด เพียงสนับสนุนค่า server'
-              : 'Instant high-quality audio for everyone in your voice channel with uninterrupted continuous listening, simply by supporting server costs.'}
+              ? 'สมาชิกทุกคนในห้องเสียงฟังเสียงคุณภาพสูงทันที ฟังเพลงคุณภาพสูงต่อเนื่องยาวนาน เพียงร่วมสนับสนุนค่าบริการเซิร์ฟเวอร์'
+              : 'Instant high-quality audio for everyone in your voice channel with continuous high-fidelity listening, simply by supporting server infrastructure.'}
           </p>
 
           {/* Understated Feature Strip */}
@@ -437,35 +444,35 @@ export default function TopupView({ lang, onToast }) {
             gap: 12,
             flexWrap: 'wrap',
             fontSize: 12,
-            color: 'var(--text-sub)',
-            padding: '6px 18px',
+            color: '#E2E8F0',
+            padding: '7px 20px',
             borderRadius: 999,
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(255, 255, 255, 0.07)'
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)'
           }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <IconHeadphones size={13} stroke={2} style={{ color: 'var(--slime-green)' }} />
-              <span style={{ fontWeight: 600, color: '#E2E8F0' }}>96 kbps HQ</span>
+              <IconHeadphones size={13} stroke={2} style={{ color: '#00FF88' }} />
+              <span style={{ fontWeight: 600, color: '#FFFFFF' }}>96 kbps HQ</span>
             </div>
-            <span style={{ color: 'rgba(255, 255, 255, 0.15)' }}>•</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.25)' }}>•</span>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <IconBolt size={13} stroke={2} style={{ color: 'var(--slime-green)' }} />
-              <span style={{ fontWeight: 600, color: '#E2E8F0' }}>Priority Fast Slot</span>
+              <IconBolt size={13} stroke={2} style={{ color: '#00FF88' }} />
+              <span style={{ fontWeight: 600, color: '#FFFFFF' }}>Priority Fast Slot</span>
             </div>
-            <span style={{ color: 'rgba(255, 255, 255, 0.15)' }}>•</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.25)' }}>•</span>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <IconClock size={13} stroke={2} style={{ color: 'var(--slime-green)' }} />
-              <span style={{ fontWeight: 600, color: '#E2E8F0' }}>Unlimited Duration</span>
+              <IconClock size={13} stroke={2} style={{ color: '#00FF88' }} />
+              <span style={{ fontWeight: 600, color: '#FFFFFF' }}>Extended Playback</span>
             </div>
-            <span style={{ color: 'rgba(255, 255, 255, 0.15)' }}>•</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.25)' }}>•</span>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <IconMusic size={13} stroke={2} style={{ color: 'var(--slime-green)' }} />
-              <span style={{ fontWeight: 600, color: '#E2E8F0' }}>50-Track Queue</span>
+              <IconMusic size={13} stroke={2} style={{ color: '#00FF88' }} />
+              <span style={{ fontWeight: 600, color: '#FFFFFF' }}>50-Track Queue</span>
             </div>
-            <span style={{ color: 'rgba(255, 255, 255, 0.15)' }}>•</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.25)' }}>•</span>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <IconSparkles size={13} stroke={2} style={{ color: 'var(--slime-green)' }} />
-              <span style={{ fontWeight: 600, color: '#E2E8F0' }}>Smart Autoplay</span>
+              <IconSparkles size={13} stroke={2} style={{ color: '#00FF88' }} />
+              <span style={{ fontWeight: 600, color: '#FFFFFF' }}>Smart Autoplay</span>
             </div>
           </div>
         </div>
@@ -573,13 +580,16 @@ export default function TopupView({ lang, onToast }) {
                 type="text"
                 placeholder={lang === 'th' ? 'เช่น 809106810929807361' : 'e.g. 809106810929807361'}
                 value={guildId}
-                onChange={(e) => setGuildId(e.target.value.trim())}
+                onChange={(e) => {
+                  setGuildId(e.target.value.trim());
+                  if (guildError) setGuildError(null);
+                }}
                 style={{
                   flex: 1,
                   padding: '10px 14px',
                   borderRadius: 10,
                   background: 'rgba(5, 7, 12, 0.75)',
-                  border: '1px solid var(--border-light)',
+                  border: '1px solid ' + (guildError ? 'rgba(239, 68, 68, 0.5)' : 'var(--border-light)'),
                   color: '#FFFFFF',
                   fontSize: 13,
                   fontFamily: 'var(--font-mono)',
@@ -610,7 +620,7 @@ export default function TopupView({ lang, onToast }) {
               </button>
             </form>
 
-            {/* Verified Guild Status Plate */}
+            {/* Verified Guild Status Plate or Error State */}
             {guildData?.guild ? (
               <div style={{
                 background: 'rgba(5, 7, 12, 0.85)',
@@ -705,6 +715,66 @@ export default function TopupView({ lang, onToast }) {
                     {guildData.guild.isSupporter ? 'SUPPORTER' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
                   </span>
                 </div>
+              </div>
+            ) : guildError ? (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: 14,
+                padding: '20px 18px',
+                textAlign: 'center',
+                color: '#FCA5A5',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 10
+              }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#EF4444'
+                }}>
+                  <IconAlertCircle size={24} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: '#FFFFFF', marginBottom: 4 }}>
+                    {lang === 'th' ? 'ไม่พบบอท GOOLIX ในเซิร์ฟเวอร์นี้' : 'GOOLIX Bot Not Found'}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.5, maxWidth: 360, margin: '0 auto' }}>
+                    {lang === 'th'
+                      ? 'ไม่พบบอทในเซิร์ฟเวอร์ ID นี้ กรุณาตรวจสอบ ID ให้ถูกต้อง หรือเชิญบอท GOOLIX เข้าเซิร์ฟเวอร์ก่อนเติมเงิน'
+                      : 'Bot is not in this server. Please check the Guild ID or invite GOOLIX to your server before top-up.'}
+                  </div>
+                </div>
+                <a
+                  href={botInviteUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    marginTop: 4,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    padding: '9px 18px',
+                    borderRadius: 10,
+                    background: '#5865F2',
+                    color: '#FFFFFF',
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 12px rgba(88, 101, 242, 0.4)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <IconExternalLink size={15} />
+                  <span>{lang === 'th' ? 'เชิญบอทเข้าเซิร์ฟเวอร์ (Invite Bot)' : 'Invite GOOLIX Bot'}</span>
+                </a>
               </div>
             ) : (
               <div style={{
@@ -835,7 +905,7 @@ export default function TopupView({ lang, onToast }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'ไม่จำกัดความยาวเพลง (เกิน 30 นาทีได้)' : 'No track length limit'}</span>
+                    <span>{lang === 'th' ? 'เล่นเพลงและคลิปขนาดยาวได้ (เกิน 30 นาที)' : 'Extended track playback (> 30 min)'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
@@ -1096,24 +1166,63 @@ export default function TopupView({ lang, onToast }) {
                   </button>
                 </div>
 
-                <input
-                  type="text"
-                  placeholder={isMaxStacked ? (lang === 'th' ? 'เซิร์ฟเวอร์มีวันสะสมครบ 90 วันแล้ว (ล็อกการร่วมสนับสนุน)' : 'Server reached 90-day max cap') : "https://gift.truemoney.com/campaign/?v=..."}
-                  value={voucher}
-                  onChange={(e) => setVoucher(e.target.value)}
-                  disabled={isMaxStacked}
-                  style={{
-                    width: '100%',
-                    padding: '11px 14px',
-                    borderRadius: 10,
-                    background: isMaxStacked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
-                    border: '1px solid ' + (isMaxStacked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
-                    color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
-                    fontSize: 12.5,
-                    cursor: isMaxStacked ? 'not-allowed' : 'text'
-                  }}
-                  required={!isMaxStacked}
-                />
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder={isMaxStacked ? (lang === 'th' ? 'เซิร์ฟเวอร์มีวันสะสมครบ 90 วันแล้ว (ล็อกการร่วมสนับสนุน)' : 'Server reached 90-day max cap') : "https://gift.truemoney.com/campaign/?v=..."}
+                    value={voucher}
+                    onChange={(e) => setVoucher(e.target.value)}
+                    disabled={isMaxStacked}
+                    style={{
+                      flex: 1,
+                      padding: '11px 14px',
+                      borderRadius: 10,
+                      background: isMaxStacked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
+                      border: '1px solid ' + (isMaxStacked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
+                      color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
+                      fontSize: 12.5,
+                      cursor: isMaxStacked ? 'not-allowed' : 'text'
+                    }}
+                    required={!isMaxStacked}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (isMaxStacked) return;
+                      try {
+                        const text = await navigator.clipboard.readText();
+                        if (text && text.trim()) {
+                          setVoucher(text.trim());
+                          onToast('info', lang === 'th' ? 'วางสำเร็จ' : 'Pasted', lang === 'th' ? 'วางลิงก์จากคลิปบอร์ดแล้ว' : 'Pasted from clipboard');
+                        } else {
+                          onToast('warning', lang === 'th' ? 'คลิปบอร์ดว่างเปล่า' : 'Empty Clipboard', lang === 'th' ? 'ไม่พบข้อความในคลิปบอร์ดครับ' : 'No text in clipboard');
+                        }
+                      } catch {
+                        onToast('warning', lang === 'th' ? 'ไม่สามารถเข้าถึงคลิปบอร์ด' : 'Permission Required', lang === 'th' ? 'กรุณากดวาง (Paste) ด้วยตนเองครับ' : 'Please paste manually');
+                      }
+                    }}
+                    disabled={isMaxStacked}
+                    title={lang === 'th' ? 'กดเพื่อวางลิงก์ซองจากคลิปบอร์ด' : 'Paste voucher link from clipboard'}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '11px 14px',
+                      borderRadius: 10,
+                      background: 'rgba(0, 255, 135, 0.1)',
+                      border: '1px solid rgba(0, 255, 135, 0.3)',
+                      color: 'var(--slime-green)',
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: isMaxStacked ? 'not-allowed' : 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <IconClipboard size={15} />
+                    <span>{lang === 'th' ? 'วางลิงก์' : 'Paste'}</span>
+                  </button>
+                </div>
 
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
                   {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" (ขั้นต่ำ 10 บาทขึ้นไป เช่น 10, 20, 29, 30 หรือ 60 บาท) ในแอป TrueMoney' : 'Set to equal amount, 1 recipient (min 10 THB, e.g. 10, 20, 29, 30 or 60 THB)'}
@@ -1331,7 +1440,7 @@ export default function TopupView({ lang, onToast }) {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <IconCircleCheck size={14} style={{ color: 'var(--slime-green)' }} />
-              <span>{lang === 'th' ? 'ระบบอัตโนมัติ 24 ชม.' : 'Auto 24/7'}</span>
+              <span>{lang === 'th' ? 'ระบบประมวลผลอัตโนมัติ' : 'Automated Verification'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <IconBolt size={14} style={{ color: 'var(--slime-green)' }} />

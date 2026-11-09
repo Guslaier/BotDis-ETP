@@ -328,8 +328,16 @@ class AdminServer {
             }
 
             const guild = this.client.guilds.cache.get(guildId);
+            const botClientId = this.client.user?.id || '1525402020096249856';
+            const botInviteUrl = `https://discord.com/oauth2/authorize?client_id=${botClientId}&permissions=8&scope=bot%20applications.commands`;
+
             if (!guild) {
-                return this._sendJson(res, 404, { success: false, error: 'Guild not found in bot cache' });
+                return this._sendJson(res, 404, {
+                    success: false,
+                    error: 'ไม่พบบอท GOOLIX ในเซิร์ฟเวอร์นี้ กรุณาเชิญบอทเข้าเซิร์ฟเวอร์ก่อนเติมเงินครับ',
+                    botClientId,
+                    inviteUrl: botInviteUrl
+                });
             }
 
             const sub = subscriptionManager.getGuildSubscription(guildId, guild.name);
@@ -375,6 +383,8 @@ class AdminServer {
                     paymentMode: config?.paymentMode || 'sandbox'
                 },
                 user: userObj,
+                botClientId,
+                inviteUrl: botInviteUrl,
                 referralConfig: {
                     enabled: config.referralEnabled !== false,
                     minTopup: config.referralMinTopup || 29,
