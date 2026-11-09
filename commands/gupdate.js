@@ -1,14 +1,23 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, MessageFlags } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder, MessageFlags } = require('discord.js');
+const ownerHelper = require('../src/helpers/ownerHelper');
 
 module.exports = {
-    data: {
-        name: 'gupdate',
-        description: 'Reload command modules and sync Slash Commands to Discord'
-    },
+    data: new SlashCommandBuilder()
+        .setName('gupdate')
+        .setDescription('Reload command modules and sync Slash Commands to Discord (Owner Only)')
+        .setDefaultMemberPermissions(0),
+
     run: async (client, interaction, kazagumo) => {
-        const embed = new EmbedBuilder().setColor('#FF69B4');
+        if (!ownerHelper.isOwner(interaction.user?.id)) {
+            return interaction.reply({
+                content: '❌ คำสั่งนี้สงวนสิทธิ์เฉพาะผู้พัฒนาบอท (Bot Owner Only) ครับ',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        const embed = new EmbedBuilder().setColor('#00FF88');
 
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -36,11 +45,12 @@ module.exports = {
                 await interaction.guild.commands.set(newCommandsData);
             }
 
-            embed.setDescription('✅ รีเฟรชคำสั่งเรียบร้อยแล้วครับ สมาชิกทุกคนสามารถใช้งานคำสั่งล่าสุดได้ทันที ⚡');
+            embed.setDescription('✅ รีเฟรชและซิงก์คำสั่งบอทเรียบร้อยแล้วครับ ⚡');
             return interaction.followUp({ embeds: [embed] });
         } catch (error) {
-            console.error(error);
-            embed.setDescription('❌ เกิดข้อผิดพลาดในการอัปเดตระบบ ลองตรวจสอบ Console อีกครั้งครับ');
+            console.error('[gupdate] Sync error:', error);
+            embed.setColor('#EF4444')
+                .setDescription(`❌ เกิดข้อผิดพลาดในการอัปเดตระบบ: \`${error.message}\``);
             return interaction.followUp({ embeds: [embed] });
         }
     }
