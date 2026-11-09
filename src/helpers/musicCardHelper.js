@@ -48,6 +48,7 @@ function createProgressBar(currentMs, totalMs, barLength = 15) {
 const subscriptionManager = require('../billing/subscriptionManager');
 const settingsManager = require('./settingsManager');
 const i18n = require('./i18nHelper');
+const featureManager = require('./featureManager');
 
 function createNowPlayingCard(player, track, options = {}) {
     const guildId = player.guildId;
@@ -132,48 +133,76 @@ function createNowPlayingCard(player, track, options = {}) {
 
     const hasPrev = !!(player.queue.previous || (player.previousTracks && player.previousTracks.length > 0));
 
-    // Row 1: Playback & Seek Controls (Previous, Rewind -10s, Play/Pause, Forward +10s, Skip)
-    const row1 = new ActionRowBuilder().addComponents(
+    const features = featureManager.getFeatures();
+    const seekFeature = features.seek;
+    const seekEnabled = seekFeature && seekFeature.mode !== 'disabled';
+    const seekAccess = featureManager.checkAccess('seek', guildId);
+
+    // Row 1: Playback Controls (Previous, Rewind -10s [if seek enabled], Play/Pause, Forward +10s [if seek enabled], Skip)
+    const row1Components = [
         new ButtonBuilder()
             .setCustomId('music_previous')
             .setEmoji('⏮️')
             .setStyle(ButtonStyle.Secondary)
-            .setDisabled(!hasPrev),
-        new ButtonBuilder()
-            .setCustomId('music_backward')
-            .setEmoji('⏪')
-            .setStyle(ButtonStyle.Secondary)
-            .setDisabled(isStream || isPreparing),
+            .setDisabled(!hasPrev)
+    ];
+
+    if (seekEnabled) {
+        row1Components.push(
+            new ButtonBuilder()
+                .setCustomId('music_backward')
+                .setEmoji('⏪')
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(!seekAccess.allowed || isStream || isPreparing)
+        );
+    }
+
+    row1Components.push(
         new ButtonBuilder()
             .setCustomId('music_pause_resume')
             .setEmoji(isPreparing ? '⏳' : (isPaused ? '▶️' : '⏸️'))
             .setStyle(isPaused ? ButtonStyle.Success : ButtonStyle.Primary)
-            .setDisabled(isPreparing),
-        new ButtonBuilder()
-            .setCustomId('music_forward')
-            .setEmoji('⏩')
-            .setStyle(ButtonStyle.Secondary)
-            .setDisabled(isStream || isPreparing),
+            .setDisabled(isPreparing)
+    );
+
+    if (seekEnabled) {
+        row1Components.push(
+            new ButtonBuilder()
+                .setCustomId('music_forward')
+                .setEmoji('⏩')
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(!seekAccess.allowed || isStream || isPreparing)
+        );
+    }
+
+    row1Components.push(
         new ButtonBuilder()
             .setCustomId('music_skip')
             .setEmoji('⏭️')
             .setStyle(ButtonStyle.Secondary)
     );
 
+    const row1 = new ActionRowBuilder().addComponents(row1Components);
+
     // Row 2: Library & Features (Shuffle, Loop, Queue, Lyrics, Favorites)
+    const shuffleDisabled = isPreparing || features.shuffle?.mode === 'disabled';
+    const loopDisabled = isPreparing || features.loop?.mode === 'disabled';
+    const lyricsDisabled = features.lyrics?.mode === 'disabled';
+    const favDisabled = features.favorite?.mode === 'disabled';
+
     const row2 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_shuffle')
             .setEmoji('🔀')
             .setLabel(i18n.t(guildId, 'BTN_SHUFFLE'))
             .setStyle(ButtonStyle.Secondary)
-            .setDisabled(isPreparing),
+            .setDisabled(shuffleDisabled),
         new ButtonBuilder()
             .setCustomId('music_loop')
             .setEmoji(player.loop === 'track' ? '🔂' : '🔁')
             .setLabel(i18n.t(guildId, 'BTN_LOOP'))
             .setStyle(player.loop !== 'none' ? ButtonStyle.Primary : ButtonStyle.Secondary)
-            .setDisabled(isPreparing),
+            .setDisabled(loopDisabled),
         new ButtonBuilder()
             .setCustomId('music_queue')
             .setEmoji('📋')
@@ -183,15 +212,21 @@ function createNowPlayingCard(player, track, options = {}) {
             .setCustomId('music_lyrics')
             .setEmoji('📄')
             .setLabel(i18n.t(guildId, 'BTN_LYRICS'))
-            .setStyle(ButtonStyle.Secondary),
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(lyricsDisabled),
         new ButtonBuilder()
             .setCustomId('music_favorite')
             .setEmoji('💖')
             .setLabel(i18n.t(guildId, 'BTN_FAVORITES'))
             .setStyle(ButtonStyle.Secondary)
+            .setDisabled(favDisabled)
     );
 
     // Row 3: Quick Controls inside container (Add Song, Playlist, Volume, Autoplay)
+    const playlistDisabled = features.playlist?.mode === 'disabled';
+    const volumeDisabled = isPreparing || features.volume?.mode === 'disabled';
+    const autoplayDisabled = features.autoplay?.mode === 'disabled';
+
     const row3 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_add_song')
@@ -202,18 +237,20 @@ function createNowPlayingCard(player, track, options = {}) {
             .setCustomId('music_add_playlist')
             .setEmoji('📑')
             .setLabel(i18n.t(guildId, 'BTN_PLAYLIST'))
-            .setStyle(ButtonStyle.Secondary),
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(playlistDisabled),
         new ButtonBuilder()
             .setCustomId('music_volume')
             .setEmoji('🔊')
             .setLabel(i18n.t(guildId, 'BTN_VOLUME'))
             .setStyle(ButtonStyle.Secondary)
-            .setDisabled(isPreparing),
+            .setDisabled(volumeDisabled),
         new ButtonBuilder()
             .setCustomId('music_autoplay')
             .setEmoji('📻')
             .setLabel(player.autoplay ? i18n.t(guildId, 'BTN_AUTOPLAY_ON') : i18n.t(guildId, 'BTN_AUTOPLAY_OFF'))
             .setStyle(player.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary)
+            .setDisabled(autoplayDisabled)
     );
 
     const notifDisabled = (player.disableNotifications !== undefined)

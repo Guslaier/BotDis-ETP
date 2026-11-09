@@ -3,6 +3,14 @@ const subscriptionManager = require('../billing/subscriptionManager');
 const i18n = require('./i18nHelper');
 
 const DEFAULT_FEATURES = {
+    seek: {
+        id: 'seek',
+        name: 'Playback Scrubbing & Seek',
+        command: '/gseek, /gforward, /gbackward',
+        description: 'Jump to specific track timestamp and fast-forward or rewind audio playback',
+        mode: 'disabled', // Disabled for cluster CPU savings & 0 broken pipe crashes
+        customMessage: 'ฟังก์ชันกรอเพลงปิดปรับปรุงชั่วคราวเพื่อเสถียรภาพสูงสุดของระบบ (Playback seek is disabled for cluster stability)'
+    },
     filter: {
         id: 'filter',
         name: 'Audio Equalizer & Filter',
@@ -19,6 +27,30 @@ const DEFAULT_FEATURES = {
         mode: 'supporter_only',
         customMessage: ''
     },
+    volume: {
+        id: 'volume',
+        name: 'Volume Adjustment',
+        command: '/gvolume',
+        description: 'Digital audio volume gain amplification and attenuation (0-150%)',
+        mode: 'all',
+        customMessage: ''
+    },
+    loop: {
+        id: 'loop',
+        name: 'Track & Queue Loop',
+        command: '/gloop',
+        description: 'Repeat single track or infinite cyclic playback for queue',
+        mode: 'all',
+        customMessage: ''
+    },
+    shuffle: {
+        id: 'shuffle',
+        name: 'Queue Shuffle',
+        command: '/gshuffle',
+        description: 'Randomize and permute order of queued tracks',
+        mode: 'all',
+        customMessage: ''
+    },
     lyrics: {
         id: 'lyrics',
         name: 'Lyrics Search',
@@ -27,11 +59,27 @@ const DEFAULT_FEATURES = {
         mode: 'all',
         customMessage: ''
     },
-    seek: {
-        id: 'seek',
-        name: 'Playback Scrubbing & Seek',
-        command: '/gseek, /gforward, /gbackward',
-        description: 'Jump to specific track timestamp and fast-forward or rewind audio playback',
+    playlist: {
+        id: 'playlist',
+        name: 'Playlist Loading',
+        command: '/gplaylist',
+        description: 'Batch enqueue YouTube/SoundCloud public music playlists into queue',
+        mode: 'all',
+        customMessage: ''
+    },
+    favorite: {
+        id: 'favorite',
+        name: 'Personal Favorites',
+        command: '/gfav',
+        description: 'User-saved custom song bookmarks and instant playlist recalls',
+        mode: 'all',
+        customMessage: ''
+    },
+    queue_control: {
+        id: 'queue_control',
+        name: 'Advanced Queue Operations',
+        command: '/gjump, /gmove, /gremove, /gclear',
+        description: 'Reorder, jump to song, delete track index, or purge current song queue',
         mode: 'all',
         customMessage: ''
     }

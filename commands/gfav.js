@@ -32,6 +32,17 @@ module.exports = {
 
     run: async (client, interaction, kazagumo) => {
         const guildId = interaction.guild.id;
+        const featureManager = require('../src/helpers/featureManager');
+        const access = featureManager.checkAccess('favorite', guildId);
+        if (!access.allowed) {
+            const isSupporterOnly = access.mode === 'supporter_only';
+            const blockEmbed = new EmbedBuilder()
+                .setColor(isSupporterOnly ? '#FF2E93' : '#EF4444')
+                .setTitle(access.title || (isSupporterOnly ? i18n.t(guildId, 'FEATURE_SUPPORTER_TITLE') : i18n.t(guildId, 'FEATURE_MAINTENANCE_TITLE')))
+                .setDescription(access.reason);
+            return interaction.reply({ embeds: [blockEmbed], flags: 64 });
+        }
+
         const sub = interaction.options.getSubcommand();
         const userId = interaction.user.id;
         const embed = new EmbedBuilder().setColor('#FF69B4');

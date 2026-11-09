@@ -11,6 +11,7 @@ const subscriptionManager = require('./src/billing/subscriptionManager');
 const settingsManager = require('./src/helpers/settingsManager');
 const i18n = require('./src/helpers/i18nHelper');
 const onboardingHelper = require('./src/helpers/onboardingHelper');
+const featureManager = require('./src/helpers/featureManager');
 
 const client = new Client({
     intents: [
@@ -364,6 +365,13 @@ client.on('interactionCreate', async interaction => {
 
         switch (customId) {
             case 'music_shuffle': {
+                const shuffleAccess = featureManager.checkAccess('shuffle', interaction.guildId);
+                if (!shuffleAccess.allowed) {
+                    return interaction.reply({
+                        content: shuffleAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 player.queue.shuffle();
                 return interaction.deferUpdate();
             }
@@ -386,6 +394,13 @@ client.on('interactionCreate', async interaction => {
                 return interaction.deferUpdate();
             }
             case 'music_backward': {
+                const seekAccess = featureManager.checkAccess('seek', interaction.guildId);
+                if (!seekAccess.allowed) {
+                    return interaction.reply({
+                        content: seekAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 const track = player.queue.current;
                 if (!track) return interaction.deferUpdate();
                 if (track.isStream) {
@@ -405,6 +420,13 @@ client.on('interactionCreate', async interaction => {
                 return;
             }
             case 'music_forward': {
+                const seekAccess = featureManager.checkAccess('seek', interaction.guildId);
+                if (!seekAccess.allowed) {
+                    return interaction.reply({
+                        content: seekAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 const track = player.queue.current;
                 if (!track) return interaction.deferUpdate();
                 if (track.isStream) {
@@ -448,6 +470,13 @@ client.on('interactionCreate', async interaction => {
                 return interaction.deferUpdate();
             }
             case 'music_loop': {
+                const loopAccess = featureManager.checkAccess('loop', interaction.guildId);
+                if (!loopAccess.allowed) {
+                    return interaction.reply({
+                        content: loopAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 player.cycleLoop();
                 try {
                     const cardData = createNowPlayingCard(player, player.queue.current);
@@ -457,8 +486,8 @@ client.on('interactionCreate', async interaction => {
                 }
             }
             case 'music_autoplay': {
-                const isSupporter = subscriptionManager.isSupporter(player.guildId);
-                if (!isSupporter) {
+                const autoplayAccess = featureManager.checkAccess('autoplay', player.guildId);
+                if (!autoplayAccess.allowed) {
                     player.autoplay = false;
                     const settingsManager = require('./src/helpers/settingsManager');
                     settingsManager.setGuildAutoplay(player.guildId, false);
@@ -469,7 +498,7 @@ client.on('interactionCreate', async interaction => {
                         } catch {}
                     }
                     return interaction.reply({
-                        content: i18n.t(player.guildId, 'AUTOPLAY_SUPPORTER_ONLY'),
+                        content: autoplayAccess.reason,
                         flags: MessageFlags.Ephemeral
                     });
                 }
@@ -507,6 +536,13 @@ client.on('interactionCreate', async interaction => {
             }
             case 'music_lyrics': {
                 const guildId = interaction.guildId;
+                const lyricsAccess = featureManager.checkAccess('lyrics', guildId);
+                if (!lyricsAccess.allowed) {
+                    return interaction.reply({
+                        content: lyricsAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
                 const track = player.queue.current;
                 const lyricsHelper = require('./src/helpers/lyricsHelper');
@@ -532,6 +568,13 @@ client.on('interactionCreate', async interaction => {
             }
             case 'music_favorite': {
                 const guildId = interaction.guildId;
+                const favAccess = featureManager.checkAccess('favorite', guildId);
+                if (!favAccess.allowed) {
+                    return interaction.reply({
+                        content: favAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 const track = player.queue.current;
                 const added = favoriteManager.addFavorite(interaction.user.id, track);
                 if (added) {
@@ -548,6 +591,13 @@ client.on('interactionCreate', async interaction => {
             }
             case 'music_volume': {
                 const guildId = interaction.guildId;
+                const volAccess = featureManager.checkAccess('volume', guildId);
+                if (!volAccess.allowed) {
+                    return interaction.reply({
+                        content: volAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 const row = new ActionRowBuilder().addComponents(
                     new ButtonBuilder().setCustomId('vol_30').setLabel('30%').setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder().setCustomId('vol_60').setLabel('60%').setStyle(ButtonStyle.Secondary),
@@ -625,6 +675,13 @@ client.on('interactionCreate', async interaction => {
             }
             case 'music_add_playlist': {
                 const guildId = interaction.guildId;
+                const plAccess = featureManager.checkAccess('playlist', guildId);
+                if (!plAccess.allowed) {
+                    return interaction.reply({
+                        content: plAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 try {
                     const modal = new ModalBuilder()
                         .setCustomId('modal_add_playlist')
@@ -651,6 +708,13 @@ client.on('interactionCreate', async interaction => {
             case 'vol_60':
             case 'vol_100':
             case 'vol_130': {
+                const volAccess = featureManager.checkAccess('volume', interaction.guildId);
+                if (!volAccess.allowed) {
+                    return interaction.reply({
+                        content: volAccess.reason,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 const volNum = parseInt(customId.replace('vol_', ''), 10);
                 player.setVolume(volNum);
                 if (player.nowPlayingMessage) {
@@ -701,6 +765,13 @@ client.on('interactionCreate', async interaction => {
             }
 
             await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+            if (modalId === 'modal_add_playlist') {
+                const plAccess = featureManager.checkAccess('playlist', guildId);
+                if (!plAccess.allowed) {
+                    return interaction.followUp({ content: plAccess.reason, flags: MessageFlags.Ephemeral });
+                }
+            }
 
             const query = modalId === 'modal_add_song'
                 ? interaction.fields.getTextInputValue('song_query')

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from './Modal';
-import { IconShield, IconServer, IconDatabase, IconWifi, IconActivity, IconCpu, IconRotateClockwise, IconTrash, IconPlayerPlay, IconPlayerStop, IconPlayerSkipForward, IconSearch, IconPlus, IconBan, IconCircleCheck, IconAlertTriangle, IconSettings, IconRefresh, IconPower, IconRadio, IconAdjustments, IconExternalLink, IconUsers, IconGlobe, IconMapPin, IconCloud, IconDeviceFloppy, IconGift, IconChevronLeft, IconChevronRight, IconCalendar, IconMinus, IconArrowRight, IconEye, IconEdit, IconShare, IconToggleLeft, IconToggleRight, IconCheck, IconX, IconSparkles, IconClock } from '@tabler/icons-react';
+import { IconShield, IconServer, IconDatabase, IconWifi, IconActivity, IconCpu, IconRotateClockwise, IconTrash, IconPlayerPlay, IconPlayerStop, IconPlayerSkipForward, IconSearch, IconPlus, IconBan, IconCircleCheck, IconAlertTriangle, IconSettings, IconRefresh, IconPower, IconRadio, IconAdjustments, IconExternalLink, IconUsers, IconGlobe, IconMapPin, IconCloud, IconDeviceFloppy, IconGift, IconChevronLeft, IconChevronRight, IconCalendar, IconMinus, IconArrowRight, IconEye, IconEdit, IconShare, IconToggleLeft, IconToggleRight, IconCheck, IconX, IconSparkles, IconClock, IconVolume, IconRepeat, IconHeart, IconList, IconArrowsShuffle } from '@tabler/icons-react';
 
 export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const [loading, setLoading] = useState(false);
@@ -88,10 +88,16 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
 
   // Feature Flags State
   const [featureFlags, setFeatureFlags] = useState({
+    seek: { id: 'seek', name: 'Playback Scrubbing & Seek', command: '/gseek, /gforward, /gbackward', description: 'Jump to specific track timestamp and fast-forward or rewind audio playback', mode: 'disabled', customMessage: '' },
     filter: { id: 'filter', name: 'Audio Equalizer & Filter', command: '/gfilter', description: 'DSP audio equalizer presets and acoustic tone processing (Bass Boost, Nightcore, etc.)', mode: 'supporter_only', customMessage: '' },
     autoplay: { id: 'autoplay', name: 'Autoplay Engine', command: '/gautoplay', description: 'Autonomous continuous smart track queueing when playlist reaches end', mode: 'supporter_only', customMessage: '' },
+    volume: { id: 'volume', name: 'Volume Adjustment', command: '/gvolume', description: 'Digital audio volume gain amplification and attenuation (0-150%)', mode: 'all', customMessage: '' },
+    loop: { id: 'loop', name: 'Track & Queue Loop', command: '/gloop', description: 'Repeat single track or infinite cyclic playback for queue', mode: 'all', customMessage: '' },
+    shuffle: { id: 'shuffle', name: 'Queue Shuffle', command: '/gshuffle', description: 'Randomize and permute order of queued tracks', mode: 'all', customMessage: '' },
     lyrics: { id: 'lyrics', name: 'Lyrics Search', command: '/glyrics', description: 'Online synchronized and plain text song lyrics retrieval', mode: 'all', customMessage: '' },
-    seek: { id: 'seek', name: 'Playback Scrubbing & Seek', command: '/gseek, /gforward, /gbackward', description: 'Jump to specific track timestamp and fast-forward or rewind audio playback', mode: 'all', customMessage: '' }
+    playlist: { id: 'playlist', name: 'Playlist Loading', command: '/gplaylist', description: 'Batch enqueue YouTube/SoundCloud public music playlists into queue', mode: 'all', customMessage: '' },
+    favorite: { id: 'favorite', name: 'Personal Favorites', command: '/gfav', description: 'User-saved custom song bookmarks and instant playlist recalls', mode: 'all', customMessage: '' },
+    queue_control: { id: 'queue_control', name: 'Advanced Queue Operations', command: '/gjump, /gmove, /gremove, /gclear', description: 'Reorder, jump to song, delete track index, or purge current song queue', mode: 'all', customMessage: '' }
   });
   const [savingFeatures, setSavingFeatures] = useState(false);
   const hasInitializedFeaturesRef = useRef(false);
@@ -2729,10 +2735,16 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {key === 'seek' && <IconPlayerSkipForward size={16} style={{ color: '#F59E0B' }} />}
                         {key === 'filter' && <IconAdjustments size={16} style={{ color: '#00D2FF' }} />}
                         {key === 'autoplay' && <IconRotateClockwise size={16} style={{ color: '#FF2E93' }} />}
+                        {key === 'volume' && <IconVolume size={16} style={{ color: '#38BDF8' }} />}
+                        {key === 'loop' && <IconRepeat size={16} style={{ color: '#A855F7' }} />}
+                        {key === 'shuffle' && <IconArrowsShuffle size={16} style={{ color: '#EC4899' }} />}
                         {key === 'lyrics' && <IconSearch size={16} style={{ color: '#10B981' }} />}
-                        {key === 'seek' && <IconPlayerSkipForward size={16} style={{ color: '#F59E0B' }} />}
+                        {key === 'playlist' && <IconList size={16} style={{ color: '#FBBF24' }} />}
+                        {key === 'favorite' && <IconHeart size={16} style={{ color: '#F43F5E' }} />}
+                        {key === 'queue_control' && <IconActivity size={16} style={{ color: '#6366F1' }} />}
                         <span style={{ fontWeight: 700, fontSize: 14 }}>{feat.name}</span>
                         <code style={{ fontSize: 11, background: 'rgba(255, 255, 255, 0.08)', padding: '2px 6px', borderRadius: 4, color: 'var(--accent-blue)' }}>
                           {feat.command}
