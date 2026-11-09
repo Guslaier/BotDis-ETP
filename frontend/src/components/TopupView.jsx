@@ -1286,7 +1286,7 @@ export default function TopupView({ lang, onToast }) {
                     <div style={{ display: 'flex', gap: 8 }}>
                       <input
                         type="text"
-                        placeholder={lang === 'th' ? 'เช่น REF-27641D หรือ VIPPLUS' : 'e.g. REF-27641D'}
+                        placeholder={lang === 'th' ? 'เช่น REF-27641D' : 'e.g. REF-27641D'}
                         value={referralCode}
                         onChange={(e) => {
                           const val = e.target.value.toUpperCase();
@@ -1407,7 +1407,7 @@ export default function TopupView({ lang, onToast }) {
                     <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
                   ) : (
                     <>
-                      <IconSparkles size={16} />
+                      <IconTrueMoneyVoucher size={20} style={{ borderRadius: 3 }} />
                       <span>{lang === 'th' ? 'ยืนยันการร่วมสมทบทุนค่าเซิร์ฟเวอร์' : 'Confirm Infrastructure Contribution'}</span>
                     </>
                   )}
