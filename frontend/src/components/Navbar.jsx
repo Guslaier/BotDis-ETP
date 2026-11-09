@@ -58,7 +58,7 @@ export default function Navbar({ mode, lang, setLang, isAdminLoggedIn, onLogout 
             }}>
               {isAdmin ? 'GOOLIX MASTER' : 'GOOLIX'}
             </h1>
-            <span className={isAdmin ? 'btn-sm btn-pink' : 'slime-badge'} style={{
+            <span className="btn-sm btn-pink" style={{
               fontSize: 10,
               padding: '2px 8px',
               borderRadius: 20,
