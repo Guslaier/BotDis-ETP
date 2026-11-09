@@ -358,6 +358,11 @@ class AdminServer {
 
             const config = subscriptionManager.getConfig();
             const voiceChannelName = guild.members?.me?.voice?.channel?.name || null;
+            const remainingDays = (sub.plan === 'SUPPORTER' && sub.expiresAt > Date.now())
+                ? Math.ceil((sub.expiresAt - Date.now()) / (24 * 3600 * 1000))
+                : 0;
+            const isAdvanceLocked = remainingDays > 60;
+
             return this._sendJson(res, 200, {
                 success: true,
                 guild: {
@@ -367,8 +372,14 @@ class AdminServer {
                     memberCount: guild.memberCount,
                     isSupporter: subscriptionManager.isSupporter(guildId),
                     expiresAt: sub.expiresAt,
-                    isMaxStacked: Boolean(sub.plan === 'SUPPORTER' && sub.expiresAt > Date.now() && Math.ceil((sub.expiresAt - Date.now()) / (24 * 3600 * 1000)) >= 90),
+                    remainingDays,
+                    isAdvanceLocked,
+                    isMaxStacked: isAdvanceLocked,
                     maxAccumulatedDays: 90,
+                    maxAdvanceDays: 60,
+                    advanceLockMessage: isAdvanceLocked
+                        ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
+                        : null,
                     balanceBaht: sub.balanceBaht || 0,
                     neededBaht: Math.max(0, (config?.price30Days || 29) - (sub.balanceBaht || 0)),
                     lastDepositAt: sub.lastDepositAt || null,

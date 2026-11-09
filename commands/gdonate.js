@@ -106,6 +106,15 @@ module.exports = {
         const cleanInput = inputCode.trim();
 
         if (cleanInput.startsWith('https://gift.truemoney.com')) {
+            const topupCheck = subscriptionManager.canAcceptTopup(guildId);
+            if (!topupCheck.allowed) {
+                const embed = new EmbedBuilder()
+                    .setColor('#F59E0B')
+                    .setTitle('🔒 จำกัดการเติมล่วงหน้า (Advance Lock)')
+                    .setDescription(topupCheck.error);
+                return interaction.followUp({ embeds: [embed] });
+            }
+
             const isSandbox = (config.paymentMode === 'sandbox');
             const redeemResult = await truemoneyGateway.redeemVoucher(cleanInput, {
                 ip: 'discord-client',

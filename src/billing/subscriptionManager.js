@@ -62,22 +62,21 @@ class SubscriptionManager extends EventEmitter {
     canAcceptTopup(guildId) {
         if (!guildId) return { allowed: false, error: 'กรุณาระบุรหัสเซิร์ฟเวอร์ครับ' };
         const sub = this.getGuildSubscription(guildId);
-        if (!sub) return { allowed: true, remainingDays: 0, maxDays: 90 };
+        if (!sub) return { allowed: true, remainingDays: 0, maxDays: 60 };
         const now = Date.now();
         if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
             const remainingDays = Math.ceil((sub.expiresAt - now) / (24 * 3600 * 1000));
-            const MAX_ACCUMULATED_DAYS = 90;
-            if (remainingDays >= MAX_ACCUMULATED_DAYS) {
+            if (remainingDays > 60) {
                 return {
                     allowed: false,
                     remainingDays,
-                    maxDays: MAX_ACCUMULATED_DAYS,
-                    error: `เซิร์ฟเวอร์นี้มีวันใช้งานสะสมครบโควตาสูงสุดแล้ว (${remainingDays}/${MAX_ACCUMULATED_DAYS} วัน) กรุณารอให้วันใช้งานเหลือน้อยกว่า ${MAX_ACCUMULATED_DAYS} วันก่อนเติมเพิ่มครับ`
+                    maxDays: 60,
+                    error: `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
                 };
             }
-            return { allowed: true, remainingDays, maxDays: MAX_ACCUMULATED_DAYS };
+            return { allowed: true, remainingDays, maxDays: 60 };
         }
-        return { allowed: true, remainingDays: 0, maxDays: 90 };
+        return { allowed: true, remainingDays: 0, maxDays: 60 };
     }
 
     _generateReferralCode(guildId) {

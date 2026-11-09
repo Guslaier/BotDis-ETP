@@ -78,11 +78,12 @@ export default function TopupView({ lang, onToast }) {
     }
   };
 
-  const isMaxStacked = Boolean(
-    guildData?.guild?.isSupporter && 
-    guildData?.guild?.expiresAt && 
-    ((guildData.guild.expiresAt - Date.now()) >= 90 * 24 * 3600 * 1000)
-  );
+  const remainingDays = (guildData?.guild?.isSupporter && guildData?.guild?.expiresAt && guildData.guild.expiresAt > Date.now())
+    ? Math.ceil((guildData.guild.expiresAt - Date.now()) / (24 * 3600 * 1000))
+    : (guildData?.guild?.remainingDays || 0);
+
+  const isAdvanceLocked = Boolean(remainingDays > 60 || guildData?.guild?.isAdvanceLocked);
+  const isMaxStacked = isAdvanceLocked;
 
   const formatCountdown = (targetMs, l) => {
     if (!targetMs) return null;
@@ -182,8 +183,14 @@ export default function TopupView({ lang, onToast }) {
 
   const handleVerifySlip = async (e) => {
     if (e) e.preventDefault();
-    if (isMaxStacked) {
-      onToast('warning', lang === 'th' ? 'วันใช้งานสะสมเต็มเพดาน' : 'Max Cap Reached', lang === 'th' ? 'เซิร์ฟเวอร์นี้มีวันสะสมครบ 90 วันแล้ว กรุณารอให้วันลดลงก่อนเติมเพิ่มครับ' : 'Server reached 90-day cap');
+    if (isAdvanceLocked) {
+      onToast(
+        'warning',
+        lang === 'th' ? 'จำกัดการเติมล่วงหน้า' : 'Advance Top-up Locked',
+        lang === 'th'
+          ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
+          : `This server has more than 60 days remaining (${remainingDays} days left). You will be able to top up when remaining days are below 60 days.`
+      );
       return;
     }
     if (!guildId.trim()) {
@@ -225,8 +232,14 @@ export default function TopupView({ lang, onToast }) {
 
   const handleTopup = async (e) => {
     if (e) e.preventDefault();
-    if (isMaxStacked) {
-      onToast('warning', lang === 'th' ? 'วันใช้งานสะสมเต็มเพดาน' : 'Max Cap Reached', lang === 'th' ? 'เซิร์ฟเวอร์นี้มีวันสะสมครบ 90 วันแล้ว กรุณารอให้วันลดลงก่อนเติมเพิ่มครับ' : 'Server reached 90-day cap');
+    if (isAdvanceLocked) {
+      onToast(
+        'warning',
+        lang === 'th' ? 'จำกัดการเติมล่วงหน้า' : 'Advance Top-up Locked',
+        lang === 'th'
+          ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
+          : `This server has more than 60 days remaining (${remainingDays} days left). You will be able to top up when remaining days are below 60 days.`
+      );
       return;
     }
     if (!guildId.trim()) {
@@ -1113,6 +1126,11 @@ export default function TopupView({ lang, onToast }) {
                       <span>{lang === 'th' ? '• ครบ 29 บ. ปลดล็อก 30 วันทันที' : '• 29 THB unlocks 30 days'}</span>
                       <span>{lang === 'th' ? '• เศษเงินยกยอดสะสมรอบหน้า' : '• Excess carried forward'}</span>
                       <span>{lang === 'th' ? '• ยอดสะสมมีอายุ 60 วัน' : '• Pot expires in 60 days'}</span>
+                      <span style={{ width: '100%', color: '#94A3B8', marginTop: 2 }}>
+                        {lang === 'th'
+                          ? '• สะสมวันใช้งานได้สูงสุด 90 วัน (เติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน)'
+                          : '• Max 90 days total (top-up unlocks when < 60 days remain)'}
+                      </span>
                     </div>
                   </div>
                 );
@@ -1139,6 +1157,35 @@ export default function TopupView({ lang, onToast }) {
                     : 'Infrastructure donations are allocated immediately and are non-refundable under any circumstances.'}
                 </div>
               </div>
+
+              {/* Advance Lock Alert (When remainingDays > 60) */}
+              {isAdvanceLocked && (
+                <div style={{
+                  marginBottom: 14,
+                  padding: '12px 15px',
+                  borderRadius: 12,
+                  background: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  fontSize: 12.5,
+                  lineHeight: 1.5,
+                  color: '#FDE68A',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10
+                }}>
+                  <IconLock size={18} style={{ color: '#FBBF24', flexShrink: 0, marginTop: 1 }} />
+                  <div>
+                    <div style={{ fontWeight: 800, color: '#FBBF24', marginBottom: 2 }}>
+                      {lang === 'th' ? 'จำกัดการเติมล่วงหน้า (Advance Lock)' : 'Advance Top-up Locked'}
+                    </div>
+                    <div>
+                      {lang === 'th'
+                        ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
+                        : `This server has more than 60 days remaining (${remainingDays} days left). You will be able to top up when remaining days are below 60 days.`}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Voucher URL Input */}
               <div style={{ marginBottom: 14 }}>
@@ -1169,21 +1216,21 @@ export default function TopupView({ lang, onToast }) {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
                     type="text"
-                    placeholder={isMaxStacked ? (lang === 'th' ? 'เซิร์ฟเวอร์มีวันสะสมครบ 90 วันแล้ว (ล็อกการร่วมสนับสนุน)' : 'Server reached 90-day max cap') : "https://gift.truemoney.com/campaign/?v=..."}
+                    placeholder={isAdvanceLocked ? (lang === 'th' ? `เซิร์ฟเวอร์มีวันคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน)` : `Remaining days > 60 days (${remainingDays}d left)`) : "https://gift.truemoney.com/campaign/?v=..."}
                     value={voucher}
                     onChange={(e) => setVoucher(e.target.value)}
-                    disabled={isMaxStacked}
+                    disabled={isAdvanceLocked}
                     style={{
                       flex: 1,
                       padding: '11px 14px',
                       borderRadius: 10,
-                      background: isMaxStacked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
-                      border: '1px solid ' + (isMaxStacked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
-                      color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
+                      background: isAdvanceLocked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
+                      border: '1px solid ' + (isAdvanceLocked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
+                      color: isAdvanceLocked ? 'var(--text-dim)' : '#FFFFFF',
                       fontSize: 12.5,
-                      cursor: isMaxStacked ? 'not-allowed' : 'text'
+                      cursor: isAdvanceLocked ? 'not-allowed' : 'text'
                     }}
-                    required={!isMaxStacked}
+                    required={!isAdvanceLocked}
                   />
                   <button
                     type="button"
@@ -1361,10 +1408,10 @@ export default function TopupView({ lang, onToast }) {
                     borderColor: isMaxStacked ? 'rgba(255, 255, 255, 0.15)' : undefined
                   }}
                 >
-                  {isMaxStacked ? (
+                  {isAdvanceLocked ? (
                     <>
                       <IconLock size={16} />
-                      <span>{lang === 'th' ? 'วันใช้งานสะสมเต็มโควตาแล้ว (สูงสุด 90 วัน)' : 'Max 90-Day Cap Reached'}</span>
+                      <span>{lang === 'th' ? `วันคงเหลือเกิน 60 วัน (เหลือ ${remainingDays} วัน)` : `Locked: ${remainingDays} Days Left`}</span>
                     </>
                   ) : submittingTopup ? (
                     <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
