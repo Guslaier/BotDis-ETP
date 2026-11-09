@@ -228,6 +228,19 @@ client.on('clientReady', async () => {
     try {
         await client.application.commands.set(commandsData);
         console.log('✅ Successfully reloaded application (/) commands.');
+
+        // Clean up lingering duplicate guild-level commands from previous gupdate calls
+        for (const guild of client.guilds.cache.values()) {
+            try {
+                const guildCmds = await guild.commands.fetch();
+                if (guildCmds && guildCmds.size > 0) {
+                    await guild.commands.set([]);
+                    console.log(`[Commands] Purged ${guildCmds.size} duplicate guild-level commands from: ${guild.name} (${guild.id})`);
+                }
+            } catch (err) {
+                // Ignore missing permissions in specific guilds
+            }
+        }
     } catch (error) {
         console.error(error);
     }

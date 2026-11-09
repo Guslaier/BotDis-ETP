@@ -39,19 +39,15 @@ module.exports = {
                 }
             }
 
-            const isBotOwner = ownerHelper.isOwner(interaction.user?.id);
-            if (isBotOwner) {
-                await client.application.commands.set(newCommandsData);
-            }
+            // Clear any lingering duplicate guild-level commands to prevent double entries in Discord
             if (interaction.guild) {
-                await interaction.guild.commands.set(newCommandsData);
+                await interaction.guild.commands.set([]).catch(() => {});
             }
 
-            const targetDesc = isBotOwner 
-                ? '✅ รีเฟรชและซิงก์คำสั่งบอททั่วโลก (Global & Guild) เรียบร้อยแล้วครับ ⚡'
-                : '✅ รีเฟรชและซิงก์คำสั่งบอทสำหรับเซิร์ฟเวอร์นี้เรียบร้อยแล้วครับ ⚡';
+            // Sync single clean Global commands
+            await client.application.commands.set(newCommandsData);
 
-            embed.setDescription(targetDesc);
+            embed.setDescription('✅ รีเฟรชและล้างคำสั่งที่ซ้ำซ้อนเรียบร้อยแล้วครับ ⚡');
             return interaction.followUp({ embeds: [embed] });
         } catch (error) {
             console.error('[gupdate] Sync error:', error);
