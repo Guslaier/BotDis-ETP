@@ -54,6 +54,11 @@ module.exports = {
                         value: isSupporter ? `<t:${Math.floor(sub.expiresAt / 1000)}:R>\n(<t:${Math.floor(sub.expiresAt / 1000)}:d>)` : 'ไม่มี (ใช้งานโหมดฟรี)',
                         inline: true
                     },
+                    ...(sub.balanceBaht > 0 ? [{
+                        name: '🏺 หลอดสะสมเศษซอง',
+                        value: `สะสมแล้ว **${sub.balanceBaht} / 29 บาท** (ขาดอีก **${Math.max(0, 29 - sub.balanceBaht)} บาท** เพื่อปลดล็อก 30 วัน)`,
+                        inline: true
+                    }] : []),
                     {
                         name: '🎁 รหัสชวนเพื่อนประจำเซิร์ฟเวอร์',
                         value: (() => {
@@ -133,10 +138,20 @@ module.exports = {
                 bonusText = '\n⚠️ **หมายเหตุ:** รหัสชวนเพื่อนไม่ถูกคิดโบนัสเนื่องจากโปรโมชั่นหมดเขตหรือปิดรับสิทธิ์แล้วครับ';
             }
 
-            embed.setColor('#00E676')
-                .setTitle('🎉 ขอบพระคุณสำหรับการร่วมสนับสนุน!')
-                .setDescription(`ระบบได้รับยอดสนับสนุน **${redeemResult.amount} บาท** เรียบร้อยแล้วครับ!\nปลดล็อก Supporter Perks ให้เซิร์ฟเวอร์ **${guildName}** เพิ่ม **+${proc.addedDays} วัน**${bonusText}`)
-                .setFooter({ text: 'ขอบคุณที่ร่วมเป็นกำลังสำคัญในการซัพพอร์ต GOOLIX นะ! 🟢⚡' });
+            if (proc.cyclesUnlocked > 0) {
+                const remText = proc.currentBalance > 0
+                    ? `\n💰 **คงเหลือเศษสะสม:** **${proc.currentBalance} บาท** (เก็บไว้ในหลอดสะสมสำหรับรอบหน้า)`
+                    : '';
+                embed.setColor('#00E676')
+                    .setTitle('🎉 ขอบพระคุณสำหรับการร่วมสนับสนุน!')
+                    .setDescription(`ระบบได้รับยอดสนับสนุน **${redeemResult.amount} บาท** เรียบร้อยแล้วครับ!\nปลดล็อก Supporter Perks ให้เซิร์ฟเวอร์ **${guildName}** เพิ่ม **+${proc.addedDays} วัน**${remText}${bonusText}`)
+                    .setFooter({ text: 'ขอบคุณที่ร่วมเป็นกำลังสำคัญในการซัพพอร์ต GOOLIX นะ! 🟢⚡' });
+            } else {
+                embed.setColor('#38BDF8')
+                    .setTitle('📥 ได้รับยอดสะสมเรียบร้อยแล้ว!')
+                    .setDescription(`ระบบได้รับยอด **${redeemResult.amount} บาท** เข้าสู่หลอดสะสมของเซิร์ฟเวอร์ **${guildName}** เรียบร้อยแล้วครับ!\n\n📊 **สถานะหลอดสะสม:** สะสมแล้ว **${proc.currentBalance} / 29 บาท** (ขาดอีก **${proc.neededBaht} บาท** เพื่อปลดล็อก 30 วัน)\n\n*(ยอดสะสมมีอายุ 60 วันนับจากการเติมล่าสุด)*`)
+                    .setFooter({ text: 'หยอดเพิ่มให้ครบ 29 บาท เพื่อปลดล็อก Supporter 30 วันทันที!' });
+            }
 
             return interaction.followUp({ embeds: [embed] });
         }

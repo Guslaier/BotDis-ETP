@@ -104,6 +104,8 @@ class SubscriptionManager extends EventEmitter {
                 referralCount: 0,
                 referralBonusMonths: 0,
                 cumulativePaidBaht: 0,
+                balanceBaht: 0,
+                lastDepositAt: null,
                 audioFilter: 'off',
                 warned3Days: false,
                 updatedAt: Date.now()
@@ -112,6 +114,14 @@ class SubscriptionManager extends EventEmitter {
         } else if (!sub.referralCode) {
             sub.referralCode = this._generateReferralCode(guildId);
             dbManager.set('subscriptions', guildId, sub);
+        }
+
+        if (sub.balanceBaht > 0 && sub.lastDepositAt) {
+            const POT_INACTIVITY_LIMIT_MS = 60 * 24 * 3600 * 1000;
+            if (Date.now() - sub.lastDepositAt > POT_INACTIVITY_LIMIT_MS) {
+                sub.balanceBaht = 0;
+                dbManager.set('subscriptions', guildId, sub);
+            }
         }
 
         if (guildName && sub.guildName !== guildName) {
@@ -298,40 +308,45 @@ class SubscriptionManager extends EventEmitter {
         const referralExpiresAt = config.referralExpiresAt || null;
 
         const sub = this.getGuildSubscription(guildId, guildName);
-        let addedDays = 0;
-        if (amountBaht >= 30) {
-            // 30 THB = 30 days (1.00 THB/day - best value)
-            addedDays = Math.floor(amountBaht);
-        } else if (amountBaht >= 20) {
-            // 20 THB = 15 days (~1.33 THB/day)
-            addedDays = 15 + Math.floor((amountBaht - 20) * 1.5);
-        } else if (amountBaht >= 10) {
-            // 10 THB = 7 days (~1.42 THB/day)
-            addedDays = 7 + Math.floor((amountBaht - 10) * 0.8);
-        } else {
-            addedDays = Math.max(1, Math.floor(amountBaht * 0.7));
+        const now = Date.now();
+
+        // Check pot inactivity (60 days)
+        const POT_INACTIVITY_LIMIT_MS = 60 * 24 * 3600 * 1000;
+        if (sub.balanceBaht > 0 && sub.lastDepositAt && (now - sub.lastDepositAt > POT_INACTIVITY_LIMIT_MS)) {
+            sub.balanceBaht = 0;
         }
+
+        const previousBalance = sub.balanceBaht || 0;
+        const totalAvailable = previousBalance + amountBaht;
+        const PRICE_PER_CYCLE = price30Days;
+        const cyclesUnlocked = Math.floor(totalAvailable / PRICE_PER_CYCLE);
+        const remainingBalance = totalAvailable % PRICE_PER_CYCLE;
+        const addedDays = cyclesUnlocked * 30;
         const addedMs = addedDays * 24 * 3600 * 1000;
 
-        const now = Date.now();
-        if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
-            sub.expiresAt += addedMs;
-        } else {
-            sub.expiresAt = now + addedMs;
-        }
-
-        // Lock maximum accumulated subscription ceiling to 90 days (3 months / 3 billing cycles)
-        const MAX_ACCUMULATED_DAYS = 90;
-        const maxDurationMs = MAX_ACCUMULATED_DAYS * 24 * 3600 * 1000;
-        if (sub.expiresAt > now + maxDurationMs) {
-            sub.expiresAt = now + maxDurationMs;
-        }
-
-        sub.plan = 'SUPPORTER';
-        sub.source = isSandbox ? 'SANDBOX_DONATION' : 'DONATION';
+        sub.balanceBaht = remainingBalance;
+        sub.lastDepositAt = now;
         sub.cumulativePaidBaht = (sub.cumulativePaidBaht || 0) + amountBaht;
-        sub.warned3Days = false;
         sub.updatedAt = now;
+
+        if (cyclesUnlocked > 0) {
+            if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
+                sub.expiresAt += addedMs;
+            } else {
+                sub.expiresAt = now + addedMs;
+            }
+
+            // Lock maximum accumulated subscription ceiling to 90 days (3 months / 3 billing cycles)
+            const MAX_ACCUMULATED_DAYS = 90;
+            const maxDurationMs = MAX_ACCUMULATED_DAYS * 24 * 3600 * 1000;
+            if (sub.expiresAt > now + maxDurationMs) {
+                sub.expiresAt = now + maxDurationMs;
+            }
+
+            sub.plan = 'SUPPORTER';
+            sub.source = isSandbox ? 'SANDBOX_DONATION' : 'DONATION';
+            sub.warned3Days = false;
+        }
 
         let referralBonusAwarded = false;
         let referrerGuildName = '';
@@ -401,6 +416,8 @@ class SubscriptionManager extends EventEmitter {
             userId,
             amountBaht,
             addedDays,
+            cyclesUnlocked,
+            currentBalance: remainingBalance,
             voucherCode,
             referralCode: cleanRef || null,
             referralBonusAwarded,
@@ -414,7 +431,12 @@ class SubscriptionManager extends EventEmitter {
             guildId,
             sub,
             transaction,
+            amountBaht,
             addedDays,
+            cyclesUnlocked,
+            currentBalance: remainingBalance,
+            neededBaht: Math.max(0, PRICE_PER_CYCLE - remainingBalance),
+            previousBalance,
             isSeasonActive: Boolean(isSeasonActive),
             referralBonusAwarded,
             addedBonusDays: referralBonusAwarded ? (referralRewardDays || 7) : 0,
@@ -425,7 +447,12 @@ class SubscriptionManager extends EventEmitter {
             success: true,
             sub,
             transaction,
+            amountBaht,
             addedDays,
+            cyclesUnlocked,
+            currentBalance: remainingBalance,
+            neededBaht: Math.max(0, PRICE_PER_CYCLE - remainingBalance),
+            previousBalance,
             isSeasonActive: Boolean(isSeasonActive),
             referralBonusAwarded,
             addedBonusDays: referralBonusAwarded ? (referralRewardDays || 7) : 0,

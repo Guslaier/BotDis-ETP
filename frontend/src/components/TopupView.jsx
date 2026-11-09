@@ -246,7 +246,26 @@ export default function TopupView({ lang, onToast }) {
       });
       const data = await res.json();
       if (data.success) {
-        onToast('success', lang === 'th' ? 'ร่วมสนับสนุนสำเร็จ!' : 'Support Successful!', lang === 'th' ? `ปลดล็อกวันผู้สนับสนุน +${data.addedDays} วัน (ยอด ${data.amount} บาท)` : `Added +${data.addedDays} Supporter days (${data.amount} THB)`);
+        if (data.cyclesUnlocked > 0) {
+          const remText = data.currentBalance > 0
+            ? (lang === 'th' ? ` (คงเหลือเศษสะสม ${data.currentBalance} บาทรอบหน้า)` : ` (${data.currentBalance} THB carried forward)`)
+            : '';
+          onToast(
+            'success',
+            lang === 'th' ? 'ปลดล็อกสถานะสำเร็จ!' : 'Supporter Unlocked!',
+            lang === 'th'
+              ? `ปลดล็อกวันผู้สนับสนุน +${data.addedDays} วัน (ยอด ${data.amount} บาท)${remText}`
+              : `Added +${data.addedDays} Supporter days (${data.amount} THB)${remText}`
+          );
+        } else {
+          onToast(
+            'info',
+            lang === 'th' ? 'สะสมยอดสำเร็จ!' : 'Deposit Accumulated!',
+            lang === 'th'
+              ? `สะสมแล้ว ${data.currentBalance}/29 บาท (ขาดอีก ${data.neededBaht} บาท เพื่อปลดล็อก 30 วัน)`
+              : `Progress: ${data.currentBalance}/29 THB (needs ${data.neededBaht} THB more for 30 days)`
+          );
+        }
         setVoucher('');
         verifyGuild(guildId, userId);
       } else {
@@ -899,7 +918,7 @@ export default function TopupView({ lang, onToast }) {
               }}
             >
               <IconTrueMoneyVoucher size={16} stroke={1.8} />
-              <span>{lang === 'th' ? 'ซอง TrueMoney (10 / 20 / 30 บาท)' : 'TrueMoney Voucher'}</span>
+              <span>{lang === 'th' ? 'ซอง TrueMoney (สะสม 29 บาท/เดือน)' : 'TrueMoney Voucher (29 THB/Mo)'}</span>
             </button>
 
             <button
@@ -932,61 +951,102 @@ export default function TopupView({ lang, onToast }) {
           {formTab === 'voucher' ? (
             <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               
-              {/* Package Tiers 10 / 20 / 30 Baht */}
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 8 }}>
-                  {lang === 'th' ? 'อัตราการรับสิทธิ์ตามยอดเงินในซอง:' : 'Supporter Days per Voucher Amount:'}
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {/* Supporter Accumulation Pot (หลอดสะสมเศษซอง 29 บาท/เดือน) */}
+              {(() => {
+                const potBalance = guildData?.guild?.balanceBaht || 0;
+                const potNeeded = Math.max(0, 29 - potBalance);
+                const potPercent = Math.min(100, Math.round((potBalance / 29) * 100));
+                return (
                   <div style={{
-                    padding: '10px 8px',
-                    borderRadius: 10,
+                    marginBottom: 14,
+                    padding: '13px 15px',
+                    borderRadius: 12,
                     background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontWeight: 800, fontSize: 13.5, color: '#FFFFFF' }}>10 บาท</div>
-                    <div style={{ fontSize: 11, color: 'var(--slime-green)', fontWeight: 700, marginTop: 2 }}>7 วัน</div>
-                    <div style={{ fontSize: 9.5, color: 'var(--text-dim)', marginTop: 2 }}>Weekend / Test</div>
-                  </div>
-
-                  <div style={{
-                    padding: '10px 8px',
-                    borderRadius: 10,
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontWeight: 800, fontSize: 13.5, color: '#FFFFFF' }}>20 บาท</div>
-                    <div style={{ fontSize: 11, color: 'var(--slime-green)', fontWeight: 700, marginTop: 2 }}>15 วัน</div>
-                    <div style={{ fontSize: 9.5, color: 'var(--text-dim)', marginTop: 2 }}>Bi-Weekly</div>
-                  </div>
-
-                  <div style={{
-                    padding: '10px 8px',
-                    borderRadius: 10,
-                    background: 'rgba(0, 255, 135, 0.07)',
-                    border: '1px solid rgba(0, 255, 135, 0.35)',
-                    textAlign: 'center',
+                    border: '1px solid ' + (potBalance > 0 ? 'rgba(0, 255, 135, 0.3)' : 'rgba(255, 255, 255, 0.08)'),
                     position: 'relative'
                   }}>
-                    <span style={{
-                      position: 'absolute',
-                      top: -7,
-                      right: 6,
-                      fontSize: 8.5,
-                      fontWeight: 800,
-                      background: 'var(--slime-green)',
-                      color: '#05070B',
-                      padding: '1px 5px',
-                      borderRadius: 4
-                    }}>คุ้มสุด</span>
-                    <div style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--slime-green)' }}>30 บาท</div>
-                    <div style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 700, marginTop: 2 }}>30 วัน</div>
-                    <div style={{ fontSize: 9.5, color: 'var(--text-dim)', marginTop: 2 }}>1.00 ฿/วัน</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <IconFlame size={15} style={{ color: 'var(--slime-green)' }} />
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: '#FFFFFF' }}>
+                          {lang === 'th' ? 'หลอดสะสมยอดสนับสนุน (29 บาท = 30 วัน)' : 'Supporter Accumulation Pot (29 THB = 30 Days)'}
+                        </span>
+                      </div>
+                      <div style={{
+                        fontSize: 11.5,
+                        fontWeight: 800,
+                        color: potBalance > 0 ? 'var(--slime-green)' : 'var(--text-dim)',
+                        background: potBalance > 0 ? 'rgba(0, 255, 135, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                        border: '1px solid ' + (potBalance > 0 ? 'rgba(0, 255, 135, 0.3)' : 'rgba(255, 255, 255, 0.08)')
+                      }}>
+                        {potBalance} / 29 {lang === 'th' ? 'บาท' : 'THB'}
+                      </div>
+                    </div>
+
+                    {/* Progress Bar Track */}
+                    <div style={{
+                      height: 9,
+                      width: '100%',
+                      borderRadius: 999,
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      overflow: 'hidden',
+                      position: 'relative'
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${potPercent}%`,
+                        background: 'linear-gradient(90deg, #00FF87, #60EFFF)',
+                        borderRadius: 999,
+                        transition: 'width 0.4s ease',
+                        boxShadow: potBalance > 0 ? '0 0 10px rgba(0, 255, 135, 0.5)' : 'none'
+                      }} />
+                    </div>
+
+                    {/* Status Pill / Caption */}
+                    <div style={{
+                      fontSize: 11.5,
+                      marginTop: 8,
+                      color: potBalance > 0 ? '#E2E8F0' : 'var(--text-dim)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8
+                    }}>
+                      <span>
+                        {guildData?.guild ? (
+                          potBalance > 0
+                            ? (lang === 'th' ? `สะสมแล้ว ${potBalance}/29 บาท (ขาดอีก ${potNeeded} บาท เพื่อปลดล็อก 30 วัน)` : `Progress: ${potBalance}/29 THB (needs ${potNeeded} THB more)`)
+                            : (lang === 'th' ? 'สะสม 0/29 บาท (เติมซองขั้นต่ำ 10 บาทเพื่อเริ่มสะสม หรือส่ง 29-30 บาทเพื่อปลดล็อกทันที)' : '0/29 THB (send 10+ THB to start or 29-30 THB to unlock)')
+                        ) : (
+                          lang === 'th' ? 'กรอก Guild ID ด้านบนเพื่อดูหลอดสะสมของเซิร์ฟเวอร์' : 'Enter Guild ID above to view server pot'
+                        )}
+                      </span>
+                      <span style={{ fontWeight: 700, color: 'var(--slime-green)', fontSize: 11 }}>
+                        {potPercent}%
+                      </span>
+                    </div>
+
+                    {/* Micro-rules note */}
+                    <div style={{
+                      fontSize: 10,
+                      color: 'var(--text-dim)',
+                      marginTop: 8,
+                      paddingTop: 8,
+                      borderTop: '1px dashed rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 10
+                    }}>
+                      <span>{lang === 'th' ? '• รับซองขั้นต่ำ 10 บาท/ซอง' : '• Min voucher: 10 THB'}</span>
+                      <span>{lang === 'th' ? '• ครบ 29 บ. ปลดล็อก 30 วันทันที' : '• 29 THB unlocks 30 days'}</span>
+                      <span>{lang === 'th' ? '• เศษเงินยกยอดสะสมรอบหน้า' : '• Excess carried forward'}</span>
+                      <span>{lang === 'th' ? '• ยอดสะสมมีอายุ 60 วัน' : '• Pot expires in 60 days'}</span>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Non-refundable Policy Warning Alert */}
               <div style={{
@@ -1032,7 +1092,7 @@ export default function TopupView({ lang, onToast }) {
                     }}
                   >
                     <IconHelp size={13} />
-                    <span>{lang === 'th' ? 'วิธีสร้างซอง 10, 20, 30 บาท' : 'How to create voucher?'}</span>
+                    <span>{lang === 'th' ? 'วิธีสร้างซองของขวัญ' : 'How to create voucher?'}</span>
                   </button>
                 </div>
 
@@ -1056,7 +1116,7 @@ export default function TopupView({ lang, onToast }) {
                 />
 
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" (ยอด 10, 20 หรือ 30 บาท) ในแอป TrueMoney' : 'Set to equal amount, 1 recipient (10, 20 or 30 THB)'}
+                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" (ขั้นต่ำ 10 บาทขึ้นไป เช่น 10, 20, 29, 30 หรือ 60 บาท) ในแอป TrueMoney' : 'Set to equal amount, 1 recipient (min 10 THB, e.g. 10, 20, 29, 30 or 60 THB)'}
                 </div>
               </div>
 
@@ -1337,15 +1397,15 @@ export default function TopupView({ lang, onToast }) {
           {[
             {
               id: 'donation',
-              title: lang === 'th' ? '1. ลักษณะการสนับสนุน (Infrastructure Donation)' : '1. Infrastructure Donation Policy',
-              preview: lang === 'th' ? 'ยอดเงินสนับสนุน (10, 20 หรือ 30 บาท) เป็นการร่วมสมทบทุนค่าใช้จ่ายด้านเซิร์ฟเวอร์เพื่อบำรุงรักษาระบบ' : 'Voluntary infrastructure donation (10, 20 or 30 THB) to maintain GOOLIX operations.',
-              content: lang === 'th' ? 'ยอดเงินสนับสนุน (10, 20 หรือ 30 บาท) เป็นการร่วมสมทบทุนค่าใช้จ่ายด้านเซิร์ฟเวอร์และโครงสร้างพื้นฐาน (Infrastructure Donation) เพื่อบำรุงรักษาระบบ GOOLIX โดยผู้สนับสนุนจะได้รับสิทธิ์การใช้งานช่องสัญญาณพิเศษ (Priority Slot) และสถานะ SUPPORTER เพื่อเป็นการขอบคุณ' : 'Donation amounts (10, 20 or 30 THB) represent voluntary server infrastructure contributions to sustain GOOLIX audio cluster operations. Supporters receive Priority Slot access and SUPPORTER status as gratitude.'
+              title: lang === 'th' ? '1. โมเดลการสนับสนุนและหลอดสะสมยอด (29 THB / 30 Days Pot)' : '1. 29 THB / 30 Days Supporter Pot Model',
+              preview: lang === 'th' ? 'ระบบสะสมยอด 29 บาท = 30 วัน (รับซอง TrueMoney ขั้นต่ำ 10 บาท สะสมครบ 29 บาท ปลดล็อกทันที)' : 'Accumulation pot: 29 THB = 30 Supporter days. Accepts TrueMoney vouchers (min 10 THB); unlocks every 29 THB reached.',
+              content: lang === 'th' ? 'ระบบกำหนดอัตราการสนับสนุนเซิร์ฟเวอร์ที่ 29 บาท ต่อระยะเวลา 30 วัน (สถานะ SUPPORTER) โดยรับผ่านลิงก์ซองของขวัญ TrueMoney (ขั้นต่ำ 10 บาท/ซอง) ผู้สนับสนุนสามารถส่งซองสะสมยอดได้เรื่อยๆ เมื่อยอดรวมแตะ 29 บาท ระบบจะเปิดสถานะ SUPPORTER 30 วันให้อัตโนมัติทันที และหากมีเงินเศษเกิน (เช่น ส่ง 30 บาท หรือ 60 บาท) ระบบจะเก็บเศษที่เหลือ (1 หรือ 2 บาท) ไว้ในหลอดสะสมสำหรับรอบถัดไป' : 'Server support operates on a fixed 29 THB / 30 days SUPPORTER threshold. Top-up via TrueMoney gift vouchers (minimum 10 THB per voucher). Progress accumulates in the server pot; every 29 THB unlocks 30 days immediately. Any excess (e.g. from 30 THB or 60 THB vouchers) is safely carried forward into the next billing cycle.'
             },
             {
               id: 'nonrefundable',
-              title: lang === 'th' ? '2. นโยบายการไม่คืนเงิน (Non-refundable Policy)' : '2. Non-refundable Policy',
-              preview: lang === 'th' ? 'เนื่องจากเงินสมทบทุนถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี' : 'Allocated to server resources immediately; strictly non-refundable under all circumstances.',
-              content: lang === 'th' ? 'เนื่องจากเงินสมทบทุนจะถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี รวมถึงกรณีที่ระบบจำเป็นต้องยุติหรือระงับการให้บริการชั่วคราว/ถาวร อันเนื่องมาจากการเปลี่ยนแปลงนโยบายหรือข้อจำกัดทางเทคนิคของแพลตฟอร์มภายนอก (เช่น Discord หรือ YouTube) ผู้ใช้งานรับทราบและยอมรับเงื่อนไขนี้ก่อนยืนยันการส่งการสนับสนุน' : 'Since contributions are immediately provisioned toward upstream audio nodes and server hosting, all donations are strictly non-refundable under any circumstances, including temporary or permanent service cessations arising from upstream platform policy shifts.'
+              title: lang === 'th' ? '2. อายุของยอดสะสมและนโยบายไม่คืนเงิน (Pot Validity & Non-refundable)' : '2. Pot Validity & Non-refundable Policy',
+              preview: lang === 'th' ? 'ยอดสะสมที่ยังไม่ครบ 29 บาท มีอายุ 60 วันนับจากการเติมล่าสุด และขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี' : 'Unfinished pots expire after 60 days of inactivity. All contributions are strictly non-refundable.',
+              content: lang === 'th' ? 'ยอดเงินสะสมที่ยังไม่ครบ 29 บาท จะมีอายุ 60 วันนับจากวันที่เติมเงินครั้งล่าสุด หากไม่มีการเติมต่อภายในระยะเวลาดังกล่าว ยอดค้างสะสมจะถูกตัดเข้ากองทุนบำรุงรักษาโครงสร้างพื้นฐานเซิร์ฟเวอร์ และเนื่องจากเงินสมทบทุนจะถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี รวมถึงกรณีที่ระบบจำเป็นต้องยุติหรือระงับการให้บริการชั่วคราว/ถาวร อันเนื่องมาจากการเปลี่ยนแปลงนโยบายหรือข้อจำกัดทางเทคนิคของแพลตฟอร์มภายนอก (เช่น Discord หรือ YouTube)' : 'Pending balances below 29 THB expire 60 days after the latest deposit and are transferred to the infrastructure maintenance fund if left inactive. Furthermore, because donations are immediately allocated toward upstream node operations, all contributions are non-refundable under any circumstances, including temporary or permanent service cessations arising from upstream platform policy shifts.'
             },
             {
               id: 'support',
@@ -1452,7 +1512,7 @@ export default function TopupView({ lang, onToast }) {
             }}>
               <div style={{ fontWeight: 800, fontSize: 15, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <IconTrueMoneyVoucher size={18} stroke={2} />
-                <span>{lang === 'th' ? 'วิธีสร้างซองของขวัญ 10, 20 หรือ 30 บาท' : 'How to Create 10, 20, or 30 THB Voucher'}</span>
+                <span>{lang === 'th' ? 'วิธีสร้างซองของขวัญ TrueMoney' : 'How to Create TrueMoney Voucher'}</span>
               </div>
               <button
                 type="button"
@@ -1481,9 +1541,9 @@ export default function TopupView({ lang, onToast }) {
                 <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0, 255, 135, 0.15)', color: 'var(--slime-green)', fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>3</div>
                 <div>
                   {lang === 'th' ? 'กรอกยอดเงิน ' : 'Enter amount '}
-                  <strong style={{ color: 'var(--slime-green)' }}>10, 20 หรือ 30 {lang === 'th' ? 'บาท' : 'THB'}</strong>
+                  <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? 'ขั้นต่ำ 10 บาทขึ้นไป' : 'min 10 THB'}</strong>
                   <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                    {lang === 'th' ? '(10 บาท = 7 วัน | 20 บาท = 15 วัน | 30 บาท = 30 วัน)' : '(10 THB = 7d | 20 THB = 15d | 30 THB = 30d)'}
+                    {lang === 'th' ? '(เช่น 10, 20, 29, 30 หรือ 60 บาท — ระบบจะสะสมในหลอด เมื่อครบ 29 บาท ปลดล็อก 30 วันทันที เศษเงินที่เกินจะยกยอดสะสมต่อไป)' : '(e.g. 10, 20, 29, 30 or 60 THB — accumulates into pot; unlocks 30 days every 29 THB reached)'}
                   </div>
                 </div>
               </div>
@@ -1607,14 +1667,14 @@ export default function TopupView({ lang, onToast }) {
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
                   {lang === 'th'
-                    ? '1. ลักษณะการสนับสนุน (Infrastructure Donation)'
-                    : '1. Infrastructure Donation Policy'}
+                    ? '1. โมเดลการสนับสนุนและหลอดสะสมยอด (29 THB / 30 Days Supporter Pot Model)'
+                    : '1. 29 THB / 30 Days Supporter Pot Model'}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
                   <div>
                     {lang === 'th'
-                      ? 'ยอดเงินสนับสนุน (10, 20 หรือ 30 บาท) เป็นการร่วมสมทบทุนค่าใช้จ่ายด้านเซิร์ฟเวอร์และโครงสร้างพื้นฐาน (Infrastructure Donation) เพื่อบำรุงรักษาระบบ GOOLIX โดยผู้สนับสนุนจะได้รับสิทธิ์การใช้งานช่องสัญญาณพิเศษ (Priority Slot) และสถานะ SUPPORTER เพื่อเป็นการขอบคุณ'
-                      : 'Donation amounts (10, 20 or 30 THB) represent voluntary server infrastructure contributions to sustain GOOLIX audio cluster operations. Supporters receive Priority Slot access and SUPPORTER status as gratitude.'}
+                      ? 'ระบบกำหนดอัตราการสนับสนุนเซิร์ฟเวอร์ที่ 29 บาท ต่อระยะเวลา 30 วัน (สถานะ SUPPORTER) โดยรับผ่านลิงก์ซองของขวัญ TrueMoney (ขั้นต่ำ 10 บาท/ซอง) ผู้สนับสนุนสามารถส่งซองสะสมยอดได้เรื่อยๆ เมื่อยอดรวมแตะ 29 บาท ระบบจะเปิดสถานะ SUPPORTER 30 วันให้อัตโนมัติทันที และหากมีเงินเศษเกิน (เช่น ส่ง 30 บาท หรือ 60 บาท) ระบบจะเก็บเศษที่เหลือ (1 หรือ 2 บาท) ไว้ในหลอดสะสมสำหรับรอบถัดไป'
+                      : 'Server support operates on a fixed 29 THB / 30 days SUPPORTER threshold. Top-up via TrueMoney gift vouchers (minimum 10 THB per voucher). Progress accumulates in the server pot; every 29 THB unlocks 30 days immediately. Any excess (e.g. from 30 THB or 60 THB vouchers) is safely carried forward into the next billing cycle.'}
                   </div>
                 </div>
               </div>
@@ -1623,14 +1683,14 @@ export default function TopupView({ lang, onToast }) {
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
                   {lang === 'th'
-                    ? '2. นโยบายการไม่คืนเงิน (Non-refundable Policy)'
-                    : '2. Non-refundable Policy'}
+                    ? '2. อายุของยอดสะสมและนโยบายไม่คืนเงิน (Pot Validity & Non-refundable Policy)'
+                    : '2. Pot Validity & Non-refundable Policy'}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
                   <div>
                     {lang === 'th'
-                      ? 'เนื่องจากเงินสมทบทุนจะถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี รวมถึงกรณีที่ระบบจำเป็นต้องยุติหรือระงับการให้บริการชั่วคราว/ถาวร อันเนื่องมาจากการเปลี่ยนแปลงนโยบายหรือข้อจำกัดทางเทคนิคของแพลตฟอร์มภายนอก (เช่น Discord หรือ YouTube) ผู้ใช้งานรับทราบและยอมรับเงื่อนไขนี้ก่อนยืนยันการส่งการสนับสนุน'
-                      : 'Since contributions are immediately provisioned toward upstream audio nodes and server hosting, all donations are strictly non-refundable under any circumstances, including temporary or permanent service cessations arising from upstream platform policy shifts.'}
+                      ? 'ยอดเงินสะสมที่ยังไม่ครบ 29 บาท จะมีอายุ 60 วันนับจากวันที่เติมเงินครั้งล่าสุด หากไม่มีการเติมต่อภายในระยะเวลาดังกล่าว ยอดค้างสะสมจะถูกตัดเข้ากองทุนบำรุงรักษาโครงสร้างพื้นฐานเซิร์ฟเวอร์ และเนื่องจากเงินสมทบทุนจะถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี รวมถึงกรณีที่ระบบจำเป็นต้องยุติหรือระงับการให้บริการชั่วคราว/ถาวร อันเนื่องมาจากการเปลี่ยนแปลงนโยบายหรือข้อจำกัดทางเทคนิคของแพลตฟอร์มภายนอก (เช่น Discord หรือ YouTube)'
+                      : 'Pending balances below 29 THB expire 60 days after the latest deposit and are transferred to the infrastructure maintenance fund if left inactive. Furthermore, because donations are immediately allocated toward upstream node operations, all contributions are non-refundable under any circumstances, including temporary or permanent service cessations arising from upstream platform policy shifts.'}
                   </div>
                 </div>
               </div>
