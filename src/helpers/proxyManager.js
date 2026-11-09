@@ -38,23 +38,22 @@ class ProxyManager {
             }
         }
 
-        const serviceFile = '/etc/systemd/system/protonvpn-isolated.service';
-        if (!fs.existsSync(serviceFile)) return;
+        const serviceName = fs.existsSync('/etc/wireguard/wg0.conf') ? 'wg-quick@wg0' : 'protonvpn-isolated';
 
-        execFile('systemctl', ['is-active', '--quiet', 'protonvpn-isolated'], (err) => {
+        execFile('systemctl', ['is-active', '--quiet', serviceName], (err) => {
             const isActive = !err;
             if (this.vpnEnabled && !isActive) {
-                console.log('[ProxyManager] [VPN] Starting protonvpn-isolated service...');
-                execFile('systemctl', ['start', 'protonvpn-isolated'], () => {});
+                console.log(`[ProxyManager] [VPN] Starting ${serviceName} service...`);
+                execFile('systemctl', ['start', serviceName], () => {});
             } else if (!this.vpnEnabled && isActive) {
-                console.log('[ProxyManager] [VPN] Stopping protonvpn-isolated service (disabled via ENABLE_VPN=false)...');
-                execFile('systemctl', ['stop', 'protonvpn-isolated'], () => {});
+                console.log(`[ProxyManager] [VPN] Stopping ${serviceName} service (disabled via ENABLE_VPN=false)...`);
+                execFile('systemctl', ['stop', serviceName], () => {});
             }
         });
     }
 
     /**
-     * Resolves active VPN client IPv4 address if tun interface is up.
+     * Resolves active VPN client IPv4 address if tun/wg interface is up.
      */
     getVpnSourceIp() {
         if (!this.vpnEnabled) return null;
@@ -63,7 +62,7 @@ class ProxyManager {
         try {
             const ifaces = os.networkInterfaces();
             for (const name of Object.keys(ifaces)) {
-                if (/^tun\d+$/i.test(name)) {
+                if (/^(tun|wg)\d+$/i.test(name)) {
                     const ipv4 = ifaces[name].find(x => x.family === 'IPv4' || x.family === 4);
                     if (ipv4 && ipv4.address) return ipv4.address;
                 }
@@ -126,11 +125,11 @@ class ProxyManager {
         try {
             if (fs.existsSync('/root/vpn/current_config.txt')) {
                 const raw = fs.readFileSync('/root/vpn/current_config.txt', 'utf8').trim();
-                const m = raw.match(/^(sg-free-\d+)/i);
+                const m = raw.match(/^(?:wg-)?(sg-free-\d+)/i);
                 if (m) {
                     return m[1].toUpperCase();
                 }
-                return raw.replace('.protonvpn.udp.ovpn', '');
+                return raw.replace('.protonvpn.udp.ovpn', '').replace(/^wg-/, '').replace(/\.conf$/, '');
             }
         } catch {}
         return 'SG-Default';
@@ -150,9 +149,11 @@ class ProxyManager {
                 const hasRule = (stdout || '').includes('lookup 100') || (stdout || '').includes('table 100');
                 if (!hasRule) {
                     console.warn(`[ProxyManager:SelfHealing] Missing Linux policy route rule for ${vpnIp}! Auto-restoring...`);
+                    const ifaces = os.networkInterfaces();
+                    const vpnDev = Object.keys(ifaces).find(k => /^(wg|tun)\d+$/i.test(k)) || 'wg0';
                     execFile('ip', ['rule', 'add', 'from', vpnIp, 'table', '100'], () => {
-                        execFile('ip', ['route', 'replace', 'default', 'dev', 'tun0', 'table', '100'], () => {
-                            console.log('[ProxyManager:SelfHealing] Successfully restored policy routing table 100.');
+                        execFile('ip', ['route', 'replace', 'default', 'dev', vpnDev, 'table', '100'], () => {
+                            console.log(`[ProxyManager:SelfHealing] Successfully restored policy routing table 100 on ${vpnDev}.`);
                             resolve(true);
                         });
                     });
