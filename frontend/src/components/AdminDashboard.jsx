@@ -1370,10 +1370,22 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                         {isOffline ? '(Offline)' : `Rooms (${Math.round(((selectedNode.activeRooms || 0) / Math.max(1, selectedNode.maxRooms || 4)) * 100)}%)`}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', gap: 12, fontSize: 11.5, color: 'var(--text-sub)', margin: '2px 0 6px' }}>
-                      <span>Free: <strong style={{ color: 'var(--slime-green)' }}>{selectedNode.activeFreeRooms || 0}/{selectedNode.maxFreeRooms ?? selectedNode.maxRooms ?? 4}</strong></span>
-                      <span>VIP: <strong style={{ color: 'var(--cyber-pink)' }}>{selectedNode.activeSupporterRooms || 0}/{Math.max(0, (selectedNode.maxRooms || 4) - (selectedNode.maxFreeRooms ?? selectedNode.maxRooms ?? 4))}</strong></span>
-                    </div>
+                    {(() => {
+                      const totalCap = selectedNode.maxRooms || (selectedNode.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15);
+                      const freeCap = selectedNode.maxFreeRooms !== undefined ? selectedNode.maxFreeRooms : totalCap;
+                      const reservedVip = Math.max(0, totalCap - freeCap);
+
+                      return (
+                        <div style={{ display: 'flex', gap: 10, fontSize: 11.5, color: 'var(--text-sub)', margin: '2px 0 6px', flexWrap: 'wrap' }}>
+                          <span>Free: <strong style={{ color: 'var(--slime-green)' }}>{selectedNode.activeFreeRooms || 0}/{freeCap}</strong></span>
+                          <span>VIP: <strong style={{ color: 'var(--cyber-pink)' }}>{selectedNode.activeSupporterRooms || 0}/{totalCap}</strong>
+                            <span style={{ fontSize: 10.5, color: reservedVip > 0 ? 'var(--cyber-pink)' : 'var(--text-dim)', marginLeft: 4 }}>
+                              ({reservedVip > 0 ? `${lang === 'th' ? 'สำรอง' : 'Lock'} ${reservedVip}` : (lang === 'th' ? 'แชร์รวม' : 'Shared')})
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    })()}
                     <div style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
                       Stream Guard: <strong style={{ color: isOffline ? 'var(--text-dim)' : 'var(--accent-yellow)' }}>
                         {isOffline ? '-' : `${selectedNode.activeSpawns || 0} / ${selectedNode.maxSpawns || (isRemote ? 2 : 1)} Spawns (Queue: ${selectedNode.queuedSpawns || 0})`}
@@ -1509,7 +1521,12 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                             <span style={{ color: 'var(--slime-green)' }}>{n.activeRooms ?? 0}</span> / {n.maxRooms ?? (n.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15)}
                           </div>
                           <div style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 500 }}>
-                            F: {n.activeFreeRooms ?? 0}/{n.maxFreeRooms ?? n.maxRooms} • VIP: {n.activeSupporterRooms ?? 0}/{Math.max(0, (n.maxRooms || 0) - (n.maxFreeRooms ?? n.maxRooms))}
+                            {(() => {
+                              const tCap = n.maxRooms ?? (n.id === 'local-0' ? (data?.config?.maxTotalStreams ?? 4) : 15);
+                              const fCap = n.maxFreeRooms ?? n.maxRooms ?? tCap;
+                              const resVip = Math.max(0, tCap - fCap);
+                              return `F: ${n.activeFreeRooms ?? 0}/${fCap} • VIP: ${n.activeSupporterRooms ?? 0}/${tCap}${resVip > 0 ? ` (Lock ${resVip})` : ''}`;
+                            })()}
                           </div>
                         </td>
                         <td style={{ fontSize: 11.5 }}>
