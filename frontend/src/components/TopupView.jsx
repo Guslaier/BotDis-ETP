@@ -1148,21 +1148,27 @@ export default function TopupView({ lang, onToast }) {
                   <span style={{ color: '#5865F2', fontWeight: 800 }}>Discord</span>
                   <span>{lang === 'th' ? 'พบปัญหาทางเทคนิคหรือสถานะไม่อัปเดต?' : 'Technical issues?'}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowTosModal(true)}
+                <a
+                  href="https://discord.com/users/640276519603929103"
+                  target="_blank"
+                  rel="noreferrer"
                   style={{
                     color: '#5865F2',
                     fontWeight: 700,
-                    background: 'none',
-                    border: 'none',
+                    textDecoration: 'none',
                     fontSize: 11,
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
+                    background: 'rgba(88, 101, 242, 0.15)',
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(88, 101, 242, 0.3)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4
                   }}
                 >
-                  {lang === 'th' ? 'ติดต่อทีมงาน' : 'Contact Support'}
-                </button>
+                  <span>{lang === 'th' ? 'ติดต่อทีมงาน (DM)' : 'Contact Support'}</span>
+                  <IconArrowRight size={11} />
+                </a>
               </div>
 
               {/* Confirm Support Button */}
@@ -1639,8 +1645,31 @@ export default function TopupView({ lang, onToast }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
                   <div>
                     {lang === 'th'
-                      ? 'หากส่งการสนับสนุนแล้วสถานะไม่ปรับเป็น SUPPORTER อัตโนมัติ หรือพบปัญหาการใช้งาน สามารถนำลิงก์ซองและ Guild ID มาติดต่อทีมงานได้ที่ช่องทาง Discord Support เพื่อให้ทีมงานตรวจสอบและเปิดสิทธิ์ให้โดยตรง'
-                      : 'If supporter perks do not activate automatically upon voucher redemption or technical glitches occur, please contact our support team on Discord with your voucher link and Guild ID for direct manual activation.'}
+                      ? 'หากส่งการสนับสนุนแล้วสถานะไม่ปรับเป็น SUPPORTER อัตโนมัติ หรือพบปัญหาการใช้งาน สามารถนำลิงก์ซองและ Guild ID มาติดต่อทีมงานได้ที่ช่องทาง Discord Support เพื่อให้ทีมงานตรวจสอบและเปิดสิทธิ์ให้โดยตรง:'
+                      : 'If supporter perks do not activate automatically upon voucher redemption or technical glitches occur, please contact our support team on Discord with your voucher link and Guild ID for direct manual activation:'}
+                  </div>
+                  <div style={{ marginTop: 4 }}>
+                    <a
+                      href="https://discord.com/users/640276519603929103"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        color: '#5865F2',
+                        background: 'rgba(88, 101, 242, 0.12)',
+                        border: '1px solid rgba(88, 101, 242, 0.3)',
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      <span>Discord: Guslaier (ID: 640276519603929103)</span>
+                      <IconArrowRight size={12} />
+                    </a>
                   </div>
                 </div>
               </div>
