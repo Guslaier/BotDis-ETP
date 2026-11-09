@@ -659,143 +659,32 @@ export default function TopupView({ lang, onToast }) {
                   </div>
                 </div>
 
-                {/* Status & Expiry 2-Column Stat Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: 10
-                }}>
-                  {/* Status Pill Plate */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '11px 14px',
-                    borderRadius: 10,
-                    background: guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
-                  }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-sub)', whiteSpace: 'nowrap' }}>
-                      {lang === 'th' ? 'สถานะ:' : 'Status:'}
-                    </span>
-                    <span style={{
-                      fontWeight: 800,
-                      fontSize: 12,
-                      letterSpacing: '0.04em',
-                      color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-dim)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {guildData.guild.isSupporter ? <IconShieldCheck size={14} /> : null}
-                      {guildData.guild.isSupporter ? 'SUPPORTER' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
-                    </span>
-                  </div>
-
-                  {/* Expiry Details */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '11px 14px',
-                    borderRadius: 10,
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--border-subtle)'
-                  }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <IconClock size={13} style={{ color: 'var(--cyan-freq)' }} />
-                      {lang === 'th' ? 'วันใช้งานคงเหลือ:' : 'Remaining Time:'}
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#FFF' }}>
-                        {formatExpiry(guildData.guild.expiresAt)}
-                      </span>
-                      {isMaxStacked && (
-                        <span style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          color: 'var(--amber-warn)',
-                          background: 'rgba(245, 158, 11, 0.1)',
-                          border: '1px solid rgba(245, 158, 11, 0.3)',
-                          padding: '1px 6px',
-                          borderRadius: 4
-                        }}>
-                          {lang === 'th' ? 'เต็มเพดาน' : 'Max Cap'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Compact Referral Snippet Strip */}
-                {guildData.guild.referralCode && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    background: 'rgba(255, 255, 255, 0.025)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    fontSize: 11.5,
-                    color: 'var(--text-sub)'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden' }}>
-                      <span style={{ color: 'var(--text-dim)', fontSize: 11, whiteSpace: 'nowrap' }}>
-                        {lang === 'th' ? 'รหัสชวนเพื่อน:' : 'Guild Ref:'}
-                      </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
-                        {guildData.guild.referralCode}
-                      </span>
-                      <span style={{ fontSize: 10.5, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
-                        ({lang === 'th' ? 'ชวนแล้ว' : 'Invited'} {guildData.guild.referralCount || 0}/{guildData?.referralConfig?.maxInvites ?? guildData.guild.maxReferralMonths ?? 6})
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={copyReferralLink}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--slime-green)',
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        padding: '2px 6px',
-                        borderRadius: 4,
-                        whiteSpace: 'nowrap'
-                      }}
-                      title={lang === 'th' ? 'คัดลอกลิงก์ชวนเพื่อน' : 'Copy referral link'}
-                    >
-                      <IconCopy size={12} />
-                      <span>{lang === 'th' ? 'คัดลอก' : 'Copy'}</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Bottom Status Info Strip */}
+                {/* Status Pill Plate */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  paddingTop: 11,
-                  marginTop: 2,
-                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-                  fontSize: 11.5,
-                  color: 'var(--text-sub)'
+                  padding: '12px 16px',
+                  borderRadius: 10,
+                  background: guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid ' + (guildData.guild.isSupporter ? 'rgba(0, 255, 135, 0.28)' : 'var(--border-subtle)')
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <IconHeadphones size={14} style={{ color: 'var(--slime-green)' }} />
-                    <span>{lang === 'th' ? 'สถานะบอท: พร้อมสตรีมเสียง HQ' : 'Bot Engine: Ready for HQ Audio'}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--slime-green)', fontSize: 11, fontWeight: 700 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--slime-green)' }} />
-                    <span>{lang === 'th' ? 'ระบบออนไลน์' : 'Online'}</span>
-                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--text-sub)', whiteSpace: 'nowrap' }}>
+                    {lang === 'th' ? 'สถานะ:' : 'Status:'}
+                  </span>
+                  <span style={{
+                    fontWeight: 800,
+                    fontSize: 13,
+                    letterSpacing: '0.04em',
+                    color: guildData.guild.isSupporter ? 'var(--slime-green)' : 'var(--text-dim)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {guildData.guild.isSupporter ? <IconShieldCheck size={16} /> : null}
+                    {guildData.guild.isSupporter ? 'SUPPORTER' : (lang === 'th' ? 'ทั่วไป (STANDARD)' : 'STANDARD')}
+                  </span>
                 </div>
               </div>
             ) : (
