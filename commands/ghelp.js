@@ -91,8 +91,7 @@ module.exports = {
                         '`/gnowplaying` - View interactive now-playing dashboard card',
                         '`/gcleancard` - Clean up lingering music cards in text channel',
                         '`/glyrics` - Search and display song lyrics',
-                        '`/gstats` - Real-time cluster stats, RAM, Uptime, and Audio Engine',
-                        '`/gproxy` - Egress network status, VPN failover & testing',
+                        '`/gstats` - View bot statistics, active servers, listeners, and uptime',
                         '`/gping` - Check Discord API latency and bot ping',
                         '`/ghelp` - Open this manual'
                     ].join('\n') : [
@@ -101,8 +100,7 @@ module.exports = {
                         '`/gnowplaying` - ดูการ์ดเพลงและแผงปุ่มควบคุม Now Playing',
                         '`/gcleancard` - กวาดล้างการ์ดเพลงเก่าหรือการ์ดที่ค้างอยู่ในห้องแชท',
                         '`/glyrics` - ค้นหาและดูเนื้อเพลง',
-                        '`/gstats` - ดูสถิติระบบ, RAM, Uptime, Audio Engine และสถานะ VPN',
-                        '`/gproxy` - เช็คและจัดการระบบเครือข่าย VPN / Smart Proxy',
+                        '`/gstats` - ดูสถิติการใช้งานบอท เซิร์ฟเวอร์ทั้งหมด และเวลาทำงานต่อเนื่อง',
                         '`/gping` - ตรวจสอบความหน่วงและปิงของบอท',
                         '`/ghelp` - เปิดหน้าต่างคู่มือนี้'
                     ].join('\n'),

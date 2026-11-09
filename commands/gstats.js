@@ -1,60 +1,85 @@
-const { EmbedBuilder, SlashCommandBuilder, version: djsVersion } = require('discord.js');
-const os = require('os');
+const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
+const settingsManager = require('../src/helpers/settingsManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gstats')
-        .setDescription('View bot telemetry, cluster nodes, and system health'),
+        .setDescription('View bot statistics, active servers, listeners, and uptime'),
 
     run: async (client, interaction, kazagumo) => {
-        const mem = process.memoryUsage();
-        const rssMB = (mem.rss / 1024 / 1024).toFixed(1);
-        const heapUsedMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
-        const totalMemGB = (os.totalmem() / 1024 / 1024 / 1024).toFixed(1);
+        const guildId = interaction.guild?.id;
+        const isEn = settingsManager.getGuildLanguage(guildId) === 'en';
 
         const totalSeconds = Math.floor(process.uptime());
         const days = Math.floor(totalSeconds / (3600 * 24));
         const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        const uptimeStr = `${days}d ${hours}h ${minutes}m ${seconds}s`;
 
-        const activePlayers = kazagumo?.players?.size || 0;
+        const uptimeStr = isEn
+            ? `${days}d ${hours}h ${minutes}m ${seconds}s`
+            : `${days} วัน ${hours} ชม. ${minutes} นาที ${seconds} วิ`;
+
         const totalGuilds = client.guilds.cache.size;
+        const activePlayers = kazagumo?.players?.size || 0;
 
-        const proxyManager = require('../src/helpers/proxyManager');
-        const youtubeCircuit = require('../src/helpers/youtubeCircuit');
-        const subscriptionManager = require('../src/billing/subscriptionManager');
-        const proxyStatus = proxyManager.getStatus();
-        const circuitStatus = youtubeCircuit.getStatus();
-        const slotStats = subscriptionManager.getLiveStreamStats(kazagumo, client);
-        const slotConfig = subscriptionManager.getConfig();
-
-        let proxyBadge = '⚪ Direct (Bypass Mode)';
-        if (proxyStatus.isVpn) {
-            proxyBadge = `🟢 ProtonVPN ${proxyStatus.serverName ? `(${proxyStatus.serverName})` : ''} [${proxyStatus.vpnIp}]`;
-        } else if (proxyStatus.configured) {
-            proxyBadge = proxyStatus.isOnline 
-                ? `🟢 Smart Pool (${proxyStatus.activeCount} Live | 🚫 ${proxyStatus.blacklistCount || 0} Blocked | ${proxyStatus.bestLatency})` 
-                : '🔴 Pool Exhausted (Retrying)';
+        // Calculate total non-bot listeners across all playing voice channels
+        let totalListeners = 0;
+        if (kazagumo?.players) {
+            for (const player of kazagumo.players.values()) {
+                if (player.voiceId) {
+                    const voiceChannel = client.channels.cache.get(player.voiceId);
+                    if (voiceChannel && voiceChannel.members) {
+                        totalListeners += voiceChannel.members.filter(m => !m.user.bot).size;
+                    }
+                }
+            }
         }
 
+        const wsPing = client.ws?.ping ?? 0;
+
         const embed = new EmbedBuilder()
-            .setColor('#FF69B4')
-            .setTitle('📊 ข้อมูลสถิติและสถานะระบบ GOOLIX')
+            .setColor('#00FF88')
+            .setTitle(isEn ? '📊 GOOLIX System Statistics' : '📊 ข้อมูลสถิติการใช้งาน GOOLIX')
+            .setDescription(isEn
+                ? 'High-performance audio companion powering Discord communities with pristine sound.'
+                : 'บอทเพลงคุณภาพสูง ขับเคลื่อนเสียงระดับ HQ สำหรับคอมมูนิตี้ Discord ทุกเซิร์ฟเวอร์')
             .addFields(
-                { name: '⏱️ Uptime', value: `\`${uptimeStr}\``, inline: true },
-                { name: '🧠 RAM (RSS / Heap)', value: `\`${rssMB} MB / ${heapUsedMB} MB\``, inline: true },
-                { name: '🛡️ Proxy Egress', value: `\`${proxyBadge}\``, inline: true },
-                { name: '⚡ นกแดง Circuit', value: `\`${circuitStatus.status}\``, inline: true },
-                { name: '🎧 Active Slots', value: `\`${slotStats.total}/${slotConfig.maxTotalStreams || 12} (ฟรี ${slotStats.free}/${slotConfig.maxFreeStreams || 6})\``, inline: true },
-                { name: '🏰 Servers', value: `\`${totalGuilds} เซิร์ฟเวอร์\``, inline: true },
-                { name: '⚙️ Node.js / D.js', value: `\`${process.version} / v${djsVersion}\``, inline: true },
-                { name: '⚡ Audio Engine', value: '`Ultra-Light Direct OggOpus`', inline: true }
+                {
+                    name: isEn ? '🏰 Total Servers' : '🏰 เซิร์ฟเวอร์ทั้งหมด',
+                    value: isEn ? `\`${totalGuilds.toLocaleString()} Servers\`` : `\`${totalGuilds.toLocaleString()} เซิร์ฟเวอร์\``,
+                    inline: true
+                },
+                {
+                    name: isEn ? '🎶 Active Rooms' : '🎶 ห้องที่กำลังเล่นเพลง',
+                    value: isEn ? `\`${activePlayers.toLocaleString()} Rooms\`` : `\`${activePlayers.toLocaleString()} ห้อง\``,
+                    inline: true
+                },
+                {
+                    name: isEn ? '👥 Total Listeners' : '👥 ผู้ฟังทั้งหมด',
+                    value: isEn ? `\`${totalListeners.toLocaleString()} Members\`` : `\`${totalListeners.toLocaleString()} คน\``,
+                    inline: true
+                },
+                {
+                    name: isEn ? '⏱️ Uptime' : '⏱️ เวลาทำงานต่อเนื่อง',
+                    value: `\`${uptimeStr}\``,
+                    inline: true
+                },
+                {
+                    name: isEn ? '⚡ Gateway Ping' : '⚡ ค่าความหน่วง (Latency)',
+                    value: `\`${wsPing}ms\``,
+                    inline: true
+                },
+                {
+                    name: isEn ? '🎧 Audio Quality' : '🎧 คุณภาพเสียง',
+                    value: '`Opus 96k HQ (Direct)`',
+                    inline: true
+                }
             )
-            .setFooter({ text: 'ทำงานเบาสบาย กินแรมน้อย ไม่เปลืองทรัพยากรเครื่องครับ ⚡' });
+            .setFooter({
+                text: 'GOOLIX High-Fidelity Audio Engine 🟢'
+            });
 
         return interaction.reply({ embeds: [embed] });
     }
 };
-
