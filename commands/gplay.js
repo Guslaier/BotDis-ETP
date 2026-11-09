@@ -104,8 +104,8 @@ module.exports = {
             for (const track of result.tracks) {
                 if (player.queue.length + addedTracks.length >= tierConfig.maxQueue) break;
 
-                // 30-minute limit check for free tier
-                if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+                // Song duration limit check for free tier (default 10 min / 600s)
+                if (!tierConfig.isSupporter && (track.duration > (tierConfig.maxSongDuration || 600) || track.isStream)) {
                     skippedOver30Min++;
                     continue;
                 }
@@ -122,8 +122,8 @@ module.exports = {
         } else {
             const track = result.tracks[0];
 
-            // 3. 30-minute limit check for single song
-            if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+            // 3. Duration limit check for single song (10 min / 600s)
+            if (!tierConfig.isSupporter && (track.duration > (tierConfig.maxSongDuration || 600) || track.isStream)) {
                 const durationMin = Math.floor((track.duration || 0) / 60);
                 embed.setColor('#FFD600')
                     .setTitle(i18n.t(guildId, 'SONG_TOO_LONG_TITLE'))

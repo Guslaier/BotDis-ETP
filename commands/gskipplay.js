@@ -62,7 +62,7 @@ module.exports = {
         } else {
             const track = result.tracks[0];
             const tierConfig = subscriptionManager.getTierConfig(guildId);
-            if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+            if (!tierConfig.isSupporter && (track.duration > (tierConfig.maxSongDuration || 600) || track.isStream)) {
                 const durationMin = Math.floor((track.duration || 0) / 60);
                 embed.setColor('#FFD600')
                     .setTitle(i18n.t(guildId, 'SONG_TOO_LONG_TITLE'))

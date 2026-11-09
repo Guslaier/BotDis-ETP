@@ -155,9 +155,9 @@ class SubscriptionManager extends EventEmitter {
             expiresAt: sub ? sub.expiresAt : 0,
             referralCode: sub ? sub.referralCode : '',
             audioFilter: (supporter && sub) ? (sub.audioFilter || 'off') : 'off',
-            maxQueue: supporter ? 50 : 10,
+            maxQueue: supporter ? 100 : 15,
             maxPlaylistTracks: supporter ? 25 : 5,
-            maxSongDuration: supporter ? Infinity : 1800, // 30 minutes for free
+            maxSongDuration: supporter ? Infinity : 600, // 10 minutes for free
             bitrate: supporter ? '96k' : '64k',
             allowAutoplay: supporter,
             allowFilter: supporter

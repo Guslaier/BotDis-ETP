@@ -842,13 +842,27 @@ export default function TopupView({ lang, onToast }) {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 11, fontSize: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#CBD5E1' }}>
-                    <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'คุณภาพเสียงมาตรฐาน 64 kbps' : 'Standard 64 kbps audio'}</span>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    background: 'rgba(0, 255, 135, 0.08)',
+                    border: '1px solid rgba(0, 255, 135, 0.25)',
+                    padding: '7px 10px',
+                    borderRadius: 8
+                  }}>
+                    <IconCheck size={16} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'ถอดรหัสตรงจากลิงก์ 100% (เพลงตรงปก ไม่สลับเวอร์ชัน)' : '100% Direct Link Decoding (Exact track match)'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#CBD5E1' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'คิวเพลงสูงสุด 10 เพลง' : 'Max 10 songs in queue'}</span>
+                    <span>{lang === 'th' ? 'คิว 15 เพลง' : '15 songs in queue'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#CBD5E1' }}>
+                    <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
+                    <span>{lang === 'th' ? 'คุณภาพเสียงมาตรฐาน 64 kbps' : 'Standard 64 kbps audio'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#CBD5E1' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
@@ -856,7 +870,7 @@ export default function TopupView({ lang, onToast }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#94A3B8' }}>
                     <IconX size={15} style={{ color: '#F87171', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'จำกัดความยาว 30 นาที/เพลง' : 'Track capped at 30 mins'}</span>
+                    <span>{lang === 'th' ? 'จำกัดความยาวคลิป/เพลงสูงสุด 10 นาที/เพลง' : 'Track capped at 10 mins'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#94A3B8' }}>
                     <IconX size={15} style={{ color: '#F87171', flexShrink: 0 }} />
@@ -909,11 +923,11 @@ export default function TopupView({ lang, onToast }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'เล่นเพลงและคลิปขนาดยาวได้ (เกิน 30 นาที)' : 'Extended track playback (> 30 min)'}</span>
+                    <span>{lang === 'th' ? 'เล่นเพลงและคลิปขนาดยาวได้ (เกิน 10 นาที)' : 'Extended track playback (> 10 min)'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'ขยายคิวเพลงสูงสุด 50 เพลง' : 'Expand queue to 50 songs'}</span>
+                    <span>{lang === 'th' ? 'คิว 100 เพลง' : 'Expand queue to 100 songs'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />

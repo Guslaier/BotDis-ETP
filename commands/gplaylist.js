@@ -93,7 +93,7 @@ module.exports = {
             if (addedTracks.length >= maxPlaylistAllowed) break;
             if (player.queue.length + addedTracks.length >= tierConfig.maxQueue) break;
 
-            if (!tierConfig.isSupporter && (track.duration > 1800 || track.isStream)) {
+            if (!tierConfig.isSupporter && (track.duration > (tierConfig.maxSongDuration || 600) || track.isStream)) {
                 skippedOver30Min++;
                 continue;
             }

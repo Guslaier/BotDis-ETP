@@ -144,8 +144,14 @@ class Player {
                     try { this.seek(this.position); } catch {}
                 }
             }
-            if (this.queue && this.queue.length > 10) {
-                this.queue.splice(10);
+            const maxFreeQ = 15;
+            if (this.queue && this.queue.length > maxFreeQ) {
+                this.queue.splice(maxFreeQ);
+            }
+        } else {
+            const maxSuppQ = 100;
+            if (this.queue && this.queue.length > maxSuppQ) {
+                this.queue.splice(maxSuppQ);
             }
         }
         return isSupp;
@@ -263,8 +269,8 @@ class Player {
             const referenceTrack = finishedTrack || this.queue.previous;
             if (this.queue.length > 0) {
                 let nextTrack = this.queue.shift();
-                while (nextTrack && !isSupp && (nextTrack.duration > 1800 || nextTrack.isStream)) {
-                    console.log(`[Player] Skipping over-30min track "${nextTrack.title}" for Free tier.`);
+                while (nextTrack && !isSupp && (nextTrack.duration > 600 || nextTrack.isStream)) {
+                    console.log(`[Player] Skipping over-10min track "${nextTrack.title}" for Free tier.`);
                     nextTrack = this.queue.shift();
                 }
                 if (nextTrack) {
@@ -493,8 +499,8 @@ class Player {
         let nextTrack = null;
         while (this.queue.length > 0) {
             const candidate = this.queue.shift();
-            if (!isSupp && (candidate.duration > 1800 || candidate.isStream)) {
-                console.log(`[Player] Skipping over-30min track "${candidate.title}" for Free tier.`);
+            if (!isSupp && (candidate.duration > 600 || candidate.isStream)) {
+                console.log(`[Player] Skipping over-10min track "${candidate.title}" for Free tier.`);
                 continue;
             }
             nextTrack = candidate;
