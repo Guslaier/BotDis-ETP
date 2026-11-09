@@ -1,18 +1,18 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, SlashCommandBuilder, MessageFlags } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder, MessageFlags, PermissionFlagsBits } = require('discord.js');
 const ownerHelper = require('../src/helpers/ownerHelper');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('gupdate')
-        .setDescription('Reload command modules and sync Slash Commands to Discord (Owner Only)')
-        .setDefaultMemberPermissions(0),
+        .setDescription('Reload command modules and sync Slash Commands to Discord (Server Owner / Bot Owner)')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     run: async (client, interaction, kazagumo) => {
-        if (!ownerHelper.isOwner(interaction.user?.id)) {
+        if (!ownerHelper.canUpdateCommands(interaction)) {
             return interaction.reply({
-                content: '❌ คำสั่งนี้สงวนสิทธิ์เฉพาะผู้พัฒนาบอท (Bot Owner Only) ครับ',
+                content: '❌ คำสั่งนี้สงวนสิทธิ์เฉพาะเจ้าของเซิร์ฟเวอร์ (Server Owner) หรือผู้พัฒนาบอท (Bot Owner) ครับ',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -39,13 +39,19 @@ module.exports = {
                 }
             }
 
-            // อัปเดต Slash Commands ไปยัง Discord (Global + Guild ปัจจุบัน เพื่อความไวระดับ 0 วิ)
-            await client.application.commands.set(newCommandsData);
+            const isBotOwner = ownerHelper.isOwner(interaction.user?.id);
+            if (isBotOwner) {
+                await client.application.commands.set(newCommandsData);
+            }
             if (interaction.guild) {
                 await interaction.guild.commands.set(newCommandsData);
             }
 
-            embed.setDescription('✅ รีเฟรชและซิงก์คำสั่งบอทเรียบร้อยแล้วครับ ⚡');
+            const targetDesc = isBotOwner 
+                ? '✅ รีเฟรชและซิงก์คำสั่งบอททั่วโลก (Global & Guild) เรียบร้อยแล้วครับ ⚡'
+                : '✅ รีเฟรชและซิงก์คำสั่งบอทสำหรับเซิร์ฟเวอร์นี้เรียบร้อยแล้วครับ ⚡';
+
+            embed.setDescription(targetDesc);
             return interaction.followUp({ embeds: [embed] });
         } catch (error) {
             console.error('[gupdate] Sync error:', error);
