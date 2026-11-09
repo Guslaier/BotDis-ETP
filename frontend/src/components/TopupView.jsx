@@ -3,7 +3,8 @@ import {
   IconSparkles, IconCircleCheck, IconAlertCircle, IconGift, IconServer, IconShieldCheck, 
   IconClock, IconArrowRight, IconCopy, IconBolt, IconMusic, IconAward,
   IconFileText, IconX, IconCheck, IconHeadphones, IconLock,
-  IconBulb, IconUsers, IconFlame, IconHelp, IconSearch, IconChevronDown, IconChevronUp
+  IconBulb, IconUsers, IconFlame, IconHelp, IconSearch, IconChevronDown, IconChevronUp,
+  IconQrcode, IconUpload, IconReceipt2
 } from '@tabler/icons-react';
 
 function IconTrueMoneyVoucher({ size = 18, stroke = 1.8, style = {}, className = '', ...props }) {
@@ -41,18 +42,39 @@ export default function TopupView({ lang, onToast }) {
   const [userId, setUserId] = useState('');
   const [guildData, setGuildData] = useState(null);
   const [loadingGuild, setLoadingGuild] = useState(false);
-  const [formTab, setFormTab] = useState('voucher'); // 'voucher' | 'promo'
+  const [formTab, setFormTab] = useState('promptpay'); // 'promptpay' | 'voucher' | 'promo'
   const [showTosModal, setShowTosModal] = useState(false);
   const [showVoucherGuideModal, setShowVoucherGuideModal] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
 
-  // Forms
+  // Forms & PromptPay SlipOK
   const [voucher, setVoucher] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [referrerName, setReferrerName] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [submittingTopup, setSubmittingTopup] = useState(false);
   const [submittingPromo, setSubmittingPromo] = useState(false);
+
+  const [promptpayData, setPromptpayData] = useState(null);
+  const [loadingQr, setLoadingQr] = useState(false);
+  const [slipFile, setSlipFile] = useState(null);
+  const [slipPreview, setSlipPreview] = useState('');
+  const [submittingSlip, setSubmittingSlip] = useState(false);
+
+  const fetchPromptPayQr = async (amount = 29) => {
+    setLoadingQr(true);
+    try {
+      const res = await fetch(`/api/public/promptpay-qr?amount=${amount}`);
+      const data = await res.json();
+      if (data.success) {
+        setPromptpayData(data);
+      }
+    } catch (err) {
+      console.error('Failed to load PromptPay QR:', err);
+    } finally {
+      setLoadingQr(false);
+    }
+  };
 
   const isMaxStacked = Boolean(
     guildData?.guild?.isSupporter && 
@@ -86,6 +108,7 @@ export default function TopupView({ lang, onToast }) {
     if (g) {
       verifyGuild(g, u);
     }
+    fetchPromptPayQr(29);
   }, []);
 
   const verifyGuild = async (targetGuildId = guildId, targetUserId = userId) => {
@@ -134,6 +157,64 @@ export default function TopupView({ lang, onToast }) {
       return;
     }
     verifyReferral(referralCode);
+  };
+
+  const handleSlipChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      onToast('warning', lang === 'th' ? 'กรุณาเลือกไฟล์รูปภาพ' : 'Image files only', lang === 'th' ? 'รองรับ JPG, PNG' : 'JPG or PNG supported');
+      return;
+    }
+    setSlipFile(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSlipPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleVerifySlip = async (e) => {
+    if (e) e.preventDefault();
+    if (isMaxStacked) {
+      onToast('warning', lang === 'th' ? 'วันใช้งานสะสมเต็มเพดาน' : 'Max Cap Reached', lang === 'th' ? 'เซิร์ฟเวอร์นี้มีวันสะสมครบ 90 วันแล้ว กรุณารอให้วันลดลงก่อนเติมเพิ่มครับ' : 'Server reached 90-day cap');
+      return;
+    }
+    if (!guildId.trim()) {
+      onToast('warning', lang === 'th' ? 'กรุณาระบุ Guild ID' : 'Missing Guild ID', lang === 'th' ? 'เลือกหรือกรอกไอดีเซิร์ฟเวอร์ก่อนครับ' : 'Provide Guild ID first');
+      return;
+    }
+    if (!slipPreview) {
+      onToast('warning', lang === 'th' ? 'กรุณาแนบรูปสลิป' : 'Missing Slip Image', lang === 'th' ? 'กรุณาเลือกรูปสลิปธนาคารที่มี QR Code ชัดเจนครับ' : 'Attach payslip image with QR');
+      return;
+    }
+
+    setSubmittingSlip(true);
+    try {
+      const res = await fetch('/api/public/verify-slip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guildId: guildId.trim(),
+          userId: userId.trim(),
+          slipImage: slipPreview,
+          referralCode: referralCode.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onToast('success', lang === 'th' ? 'ตรวจสอบสลิปสำเร็จ!' : 'Slip Verified!', lang === 'th' ? `ปลดล็อกผู้สนับสนุน +${data.addedDays} วัน (ยอด ${data.amount} บาท โดย ${data.senderName})` : `Added +${data.addedDays} Supporter days (${data.amount} THB)`);
+        setSlipFile(null);
+        setSlipPreview('');
+        verifyGuild(guildId, userId);
+      } else {
+        onToast('error', lang === 'th' ? 'ตรวจสอบสลิปไม่สำเร็จ' : 'Verification Failed', data.error || 'Invalid slip');
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    } finally {
+      setSubmittingSlip(false);
+    }
   };
 
   const handleTopup = async (e) => {
@@ -897,7 +978,7 @@ export default function TopupView({ lang, onToast }) {
             {lang === 'th' ? 'เลือกช่องทางชำระเงินและระบุข้อมูลเพื่อเปิดใช้งานสิทธิ์' : 'Select payment method and complete contribution'}
           </p>
 
-          {/* Segmented Form Tabs: TrueMoney Voucher | Promo Drop */}
+          {/* Segmented Form Tabs: PromptPay QR | TrueMoney Voucher | Promo Drop */}
           <div style={{
             display: 'flex',
             gap: 6,
@@ -907,6 +988,31 @@ export default function TopupView({ lang, onToast }) {
             border: '1px solid var(--border-subtle)',
             marginBottom: 20
           }}>
+            <button
+              type="button"
+              onClick={() => setFormTab('promptpay')}
+              style={{
+                flex: 1,
+                padding: '9px 12px',
+                borderRadius: 8,
+                border: formTab === 'promptpay' ? '1px solid rgba(0, 255, 135, 0.35)' : '1px solid transparent',
+                background: formTab === 'promptpay' ? 'rgba(0, 255, 135, 0.12)' : 'transparent',
+                color: formTab === 'promptpay' ? 'var(--slime-green)' : 'var(--text-sub)',
+                fontWeight: formTab === 'promptpay' ? 700 : 500,
+                fontSize: 12,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 7,
+                boxShadow: formTab === 'promptpay' ? '0 2px 8px rgba(0, 255, 135, 0.2)' : 'none'
+              }}
+            >
+              <IconQrcode size={16} stroke={1.8} />
+              <span>{lang === 'th' ? 'สแกน PromptPay' : 'PromptPay QR'}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setFormTab('voucher')}
@@ -959,7 +1065,249 @@ export default function TopupView({ lang, onToast }) {
           </div>
 
           {/* Form Content */}
-          {formTab === 'voucher' ? (
+          {formTab === 'promptpay' ? (
+            <form onSubmit={handleVerifySlip} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              
+              {/* PromptPay QR Display Card */}
+              <div style={{
+                background: 'rgba(5, 7, 12, 0.75)',
+                border: '1px solid rgba(0, 255, 135, 0.25)',
+                borderRadius: 14,
+                padding: '16px',
+                marginBottom: 16,
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  marginBottom: 10
+                }}>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: '#05070B',
+                    background: 'var(--slime-green)',
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    letterSpacing: '0.04em'
+                  }}>
+                    THAI QR PAYMENT
+                  </span>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    padding: '2px 8px',
+                    borderRadius: 4
+                  }}>
+                    PromptPay
+                  </span>
+                </div>
+
+                {promptpayData?.qrDataUrl ? (
+                  <div style={{ display: 'inline-block', padding: '10px', background: '#FFFFFF', borderRadius: 12, boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)' }}>
+                    <img
+                      src={promptpayData.qrDataUrl}
+                      alt="PromptPay QR Code"
+                      style={{ width: 175, height: 175, display: 'block', borderRadius: 4 }}
+                    />
+                  </div>
+                ) : (
+                  <div style={{ padding: '36px 0', color: 'var(--text-dim)', fontSize: 12 }}>
+                    {loadingQr ? (lang === 'th' ? 'กำลังสร้าง QR Code...' : 'Generating QR Code...') : (lang === 'th' ? 'ไม่สามารถโหลด QR Code ได้' : 'Could not load QR')}
+                  </div>
+                )}
+
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF' }}>
+                    {promptpayData?.accountName || (lang === 'th' ? 'บัญชีผู้รับเงิน' : 'PromptPay Beneficiary')}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                    PromptPay: {promptpayData?.accountMasked || '140-********* -xxx'}
+                  </div>
+                  <div style={{
+                    display: 'inline-block',
+                    marginTop: 6,
+                    fontSize: 14,
+                    fontWeight: 800,
+                    color: 'var(--slime-green)',
+                    background: 'rgba(0, 255, 135, 0.08)',
+                    padding: '3px 12px',
+                    borderRadius: 999,
+                    border: '1px solid rgba(0, 255, 135, 0.3)'
+                  }}>
+                    ฿ {Number(promptpayData?.amount || priceRate).toFixed(2)} {lang === 'th' ? 'บาท' : 'THB'}
+                  </div>
+                </div>
+
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 8 }}>
+                  {lang === 'th' ? 'สแกนด้วยแอปธนาคารใดก็ได้ (K PLUS, SCB, Krungthai ฯลฯ)' : 'Scan with any Thai Mobile Banking app'}
+                </div>
+              </div>
+
+              {/* Upload Payslip Section */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'แนบรูปภาพสลิปโอนเงิน (Payslip Image)' : 'Upload Payslip Image'} <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+
+                {slipPreview ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 14px',
+                    borderRadius: 12,
+                    background: 'rgba(0, 255, 135, 0.06)',
+                    border: '1px solid rgba(0, 255, 135, 0.3)'
+                  }}>
+                    <img
+                      src={slipPreview}
+                      alt="Slip Preview"
+                      style={{ width: 48, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid rgba(255, 255, 255, 0.2)' }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <IconReceipt2 size={14} style={{ color: 'var(--slime-green)' }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {slipFile?.name || 'slip.jpg'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                        {lang === 'th' ? 'พร้อมตรวจสอบผ่าน SlipOK API' : 'Ready for auto verification'}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlipFile(null); setSlipPreview(''); }}
+                      className="btn btn-sm btn-secondary"
+                      style={{ padding: '4px 10px', fontSize: 11 }}
+                    >
+                      {lang === 'th' ? 'เปลี่ยนรูป' : 'Change'}
+                    </button>
+                  </div>
+                ) : (
+                  <label style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    padding: '18px 14px',
+                    borderRadius: 12,
+                    border: '1.5px dashed var(--border-light)',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    cursor: isMaxStacked ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jfif"
+                      onChange={handleSlipChange}
+                      disabled={isMaxStacked}
+                      style={{ display: 'none' }}
+                    />
+                    <IconUpload size={22} style={{ color: 'var(--slime-green)' }} />
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: '#FFF' }}>
+                      {lang === 'th' ? 'คลิกเพื่อแนบรูปสลิปธนาคาร' : 'Click to upload payslip image'}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                      {lang === 'th' ? 'รองรับ JPG, PNG (ระบบจะอ่าน QR Code บนสลิปอัตโนมัติ)' : 'Supports JPG, PNG (Reads mini QR automatically)'}
+                    </div>
+                  </label>
+                )}
+              </div>
+
+              {/* Referral Code Input */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
+                  {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    placeholder={lang === 'th' ? 'เช่น REF-27641D' : 'e.g. REF-27641D'}
+                    value={referralCode}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      setReferralCode(val);
+                      if (!val) setReferrerName('');
+                    }}
+                    disabled={isMaxStacked}
+                    style={{
+                      flex: 1,
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      background: isMaxStacked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
+                      border: '1px solid ' + (isMaxStacked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
+                      color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
+                      fontSize: 12.5,
+                      fontFamily: 'var(--font-mono)',
+                      letterSpacing: '0.04em',
+                      cursor: isMaxStacked ? 'not-allowed' : 'text'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyReferral}
+                    disabled={isMaxStacked}
+                    style={{
+                      padding: '0 16px',
+                      borderRadius: 10,
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                      color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
+                      fontWeight: 600,
+                      fontSize: 12.5,
+                      cursor: isMaxStacked ? 'not-allowed' : 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {lang === 'th' ? 'ใช้โค้ด' : 'Apply'}
+                  </button>
+                </div>
+                {referrerName && (
+                  <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+                    <IconCircleCheck size={13} />
+                    <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName}` : `Referrer: ${referrerName}`}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Submit Slip Button */}
+              <button
+                type="submit"
+                disabled={submittingSlip || !slipPreview || isMaxStacked}
+                className="btn btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '13px 18px',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  marginTop: 'auto'
+                }}
+              >
+                {submittingSlip ? (
+                  <>
+                    <IconBolt size={16} className="spin" />
+                    <span>{lang === 'th' ? 'กำลังตรวจสอบสลิปกับระบบธนาคาร...' : 'Verifying Slip...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <IconShieldCheck size={16} />
+                    <span>{lang === 'th' ? `ตรวจสอบสลิปและปลดล็อกทันที (${priceRate} บาท)` : `Verify Slip & Activate (${priceRate} THB)`}</span>
+                  </>
+                )}
+              </button>
+            </form>
+          ) : formTab === 'voucher' ? (
             <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               
               {/* Voucher URL Input */}

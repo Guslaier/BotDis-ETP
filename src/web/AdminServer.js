@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const authManager = require('../auth/authManager');
 const subscriptionManager = require('../billing/subscriptionManager');
 const truemoneyGateway = require('../billing/truemoneyGateway');
+const slipokGateway = require('../billing/slipokGateway');
 const dbManager = require('../database/dbManager');
 const nodeRouter = require('../cluster/NodeRouter');
 const proxyManager = require('../helpers/proxyManager');
@@ -420,6 +421,71 @@ class AdminServer {
             return this._sendJson(res, 200, {
                 success: true,
                 referrerGuildName: referrer.guildName
+            });
+        }
+
+        if (pathname === '/api/public/promptpay-qr' && req.method === 'GET') {
+            const parsedUrl = url.parse(req.url, true);
+            const amount = parseFloat(parsedUrl.query.amount) || 29;
+            const qrResult = await slipokGateway.getPromptPayQR(amount);
+            return this._sendJson(res, 200, qrResult);
+        }
+
+        if (pathname === '/api/public/verify-slip' && req.method === 'POST') {
+            const body = await this._parseBody(req);
+            const { guildId, userId, slipImage, referralCode } = body;
+
+            if (!guildId || !slipImage) {
+                return this._sendJson(res, 400, { success: false, error: 'ข้อมูลไม่ครบถ้วน กรุณาแนบรูปสลิปครับ' });
+            }
+
+            const cd = slipokGateway.checkCooldown(ip, guildId);
+            if (cd.limited) {
+                return this._sendJson(res, 429, { success: false, error: `กรุณารอสักครู่ (${cd.retryAfter} วินาที) ก่อนตรวจสอบสลิปอีกครั้งครับ` });
+            }
+
+            const topupCheck = subscriptionManager.canAcceptTopup(guildId);
+            if (!topupCheck.allowed) {
+                return this._sendJson(res, 400, { success: false, error: topupCheck.error });
+            }
+
+            const guild = this.client.guilds.cache.get(guildId);
+            const guildName = guild ? guild.name : 'Unknown Guild';
+            const config = subscriptionManager.getConfig();
+            const expectedAmount = config.price30Days || 29;
+
+            const slipResult = await slipokGateway.verifySlip(slipImage, { amount: expectedAmount });
+            if (!slipResult.success) {
+                return this._sendJson(res, 400, { success: false, error: slipResult.error, code: slipResult.code });
+            }
+
+            // Check duplicate transaction ref in database
+            const transRefKey = `SLIP_${slipResult.transRef}`;
+            const transactions = dbManager.get('transactions') || {};
+            const isDuplicate = Object.values(transactions).some(t => t.voucherCode === transRefKey);
+            if (isDuplicate) {
+                return this._sendJson(res, 400, { success: false, error: 'สลิปนี้ถูกใช้งานในระบบไปแล้วครับ' });
+            }
+
+            const processResult = subscriptionManager.processDonationSuccess({
+                guildId,
+                guildName,
+                userId: userId || 'unknown',
+                amountBaht: slipResult.amount,
+                voucherCode: transRefKey,
+                referralCode,
+                isSandbox: false
+            });
+
+            return this._sendJson(res, 200, {
+                success: true,
+                amount: slipResult.amount,
+                addedDays: processResult.addedDays,
+                senderName: slipResult.senderName,
+                transRef: slipResult.transRef,
+                referralBonusAwarded: processResult.referralBonusAwarded,
+                referrerGuildName: processResult.referrerGuildName,
+                sub: processResult.sub
             });
         }
 
