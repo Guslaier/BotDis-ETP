@@ -1,53 +1,23 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const subscriptionManager = require('../src/billing/subscriptionManager');
 const truemoneyGateway = require('../src/billing/truemoneyGateway');
 
 module.exports = {
-    data: {
-        name: 'gdonate',
-        description: 'Server supporter perks, membership status, and donation',
-        options: [
-            {
-                name: 'status',
-                type: 1, // SUB_COMMAND
-                description: 'Check server supporter status and referral code'
-            },
-            {
-                name: 'support',
-                type: 1, // SUB_COMMAND
-                description: 'Support server via TrueMoney Wallet gift voucher',
-                options: [
-                    {
-                        name: 'voucher',
-                        type: 3, // STRING
-                        description: 'TrueMoney Wallet voucher link or code',
-                        required: true
-                    },
-                    {
-                        name: 'referral',
-                        type: 3, // STRING
-                        description: 'Referral code (REF-XXXXXX) to extend bonus days',
-                        required: false
-                    }
-                ]
-            },
-            {
-                name: 'redeem',
-                type: 1, // SUB_COMMAND
-                description: 'Redeem Early-Bird campaign code or gift key',
-                options: [
-                    {
-                        name: 'code',
-                        type: 3, // STRING
-                        description: 'Redemption code (e.g. GOOLIX-DROP1)',
-                        required: true
-                    }
-                ]
-            }
-        ]
-    },
+    data: new SlashCommandBuilder()
+        .setName('gdonate')
+        .setDescription('Server supporter status, perks, and donation portal')
+        .addStringOption(option =>
+            option.setName('code')
+                .setDescription('Campaign code or TrueMoney gift voucher link (Optional)')
+                .setRequired(false)
+        )
+        .addStringOption(option =>
+            option.setName('referral')
+                .setDescription('Referral code REF-XXXXXX for bonus days (Optional)')
+                .setRequired(false)
+        ),
+
     run: async (client, interaction, kazagumo) => {
-        const subCommand = interaction.options.getSubcommand() || 'status';
         const guildId = interaction.guildId || interaction.guild?.id;
         const guildName = interaction.guild?.name || 'Unknown Guild';
         const userId = interaction.user.id;
@@ -59,7 +29,11 @@ module.exports = {
         const host = subscriptionManager.getPublicWebUrl();
         const donateUrl = `${host}/donate?guild=${guildId}&guildId=${guildId}&userId=${userId}`;
 
-        if (subCommand === 'status') {
+        const inputCode = interaction.options.getString('code');
+        const referral = interaction.options.getString('referral');
+
+        // If no code is provided, show server supporter status card with direct portal link
+        if (!inputCode) {
             const botName = client.user?.username || 'GOOLIX';
             const embed = new EmbedBuilder()
                 .setTitle('💖 สถานะผู้สนับสนุนเซิร์ฟเวอร์ (Server Supporter)')
@@ -122,47 +96,13 @@ module.exports = {
             return interaction.reply({ embeds: [embed], components: [row] });
         }
 
-        if (subCommand === 'redeem') {
-            await interaction.deferReply();
-            const code = interaction.options.getString('code');
-            const result = subscriptionManager.redeemCode(guildId, guildName, userId, code);
+        // If code is provided, process either TrueMoney voucher or campaign redemption code
+        await interaction.deferReply();
+        const cleanInput = inputCode.trim();
 
-            const embed = new EmbedBuilder();
-            if (result.success) {
-                embed.setColor('#00E676')
-                    .setTitle('🎉 ปลดล็อกสิทธิ์สำเร็จ!')
-                    .setDescription(`เซิร์ฟเวอร์ **${guildName}** ได้รับสิทธิ์ผู้สนับสนุนจากรอบ **${result.campaignName}** เพิ่ม **+${result.addedDays} วัน** เรียบร้อยแล้วครับ!\n\n(สิทธิ์ในรอบนี้คงเหลือ: ${result.remainingClaims} เซิร์ฟเวอร์)`);
-            } else {
-                embed.setColor('#EF4444')
-                    .setTitle('❌ ใช้โค้ดไม่สำเร็จ')
-                    .setDescription(result.error || 'รหัสโค้ดไม่ถูกต้องหรือสิทธิ์เต็มแล้วครับ');
-            }
-            return interaction.followUp({ embeds: [embed] });
-        }
-
-        if (subCommand === 'support') {
-            await interaction.deferReply();
-            const voucher = interaction.options.getString('voucher');
-            const referral = interaction.options.getString('referral');
-
-            const cleanVoucher = (voucher || '').trim();
-            if (!cleanVoucher.startsWith('https://gift.truemoney.com')) {
-                const result = subscriptionManager.redeemCode(guildId, guildName, userId, cleanVoucher);
-                const embed = new EmbedBuilder();
-                if (result.success) {
-                    embed.setColor('#00E676')
-                        .setTitle('🎉 ปลดล็อกสิทธิ์สำเร็จ!')
-                        .setDescription(`เซิร์ฟเวอร์ **${guildName}** ได้รับสิทธิ์ผู้สนับสนุนจากรอบ **${result.campaignName}** เพิ่ม **+${result.addedDays} วัน** เรียบร้อยแล้วครับ!\n\n(สิทธิ์ในรอบนี้คงเหลือ: ${result.remainingClaims} เซิร์ฟเวอร์)`);
-                } else {
-                    embed.setColor('#EF4444')
-                        .setTitle('❌ ใช้โค้ดไม่สำเร็จ')
-                        .setDescription(result.error || 'รหัสโค้ดไม่ถูกต้องหรือสิทธิ์เต็มแล้วครับ');
-                }
-                return interaction.followUp({ embeds: [embed] });
-            }
-
+        if (cleanInput.startsWith('https://gift.truemoney.com')) {
             const isSandbox = (config.paymentMode === 'sandbox');
-            const redeemResult = await truemoneyGateway.redeemVoucher(cleanVoucher, {
+            const redeemResult = await truemoneyGateway.redeemVoucher(cleanInput, {
                 ip: 'discord-client',
                 guildId,
                 isSandbox
@@ -200,5 +140,19 @@ module.exports = {
 
             return interaction.followUp({ embeds: [embed] });
         }
+
+        // Campaign Code or Gift Key
+        const result = subscriptionManager.redeemCode(guildId, guildName, userId, cleanInput);
+        const embed = new EmbedBuilder();
+        if (result.success) {
+            embed.setColor('#00E676')
+                .setTitle('🎉 ปลดล็อกสิทธิ์สำเร็จ!')
+                .setDescription(`เซิร์ฟเวอร์ **${guildName}** ได้รับสิทธิ์ผู้สนับสนุนจากรอบ **${result.campaignName}** เพิ่ม **+${result.addedDays} วัน** เรียบร้อยแล้วครับ!\n\n(สิทธิ์ในรอบนี้คงเหลือ: ${result.remainingClaims} เซิร์ฟเวอร์)`);
+        } else {
+            embed.setColor('#EF4444')
+                .setTitle('❌ ใช้โค้ดไม่สำเร็จ')
+                .setDescription(result.error || 'รหัสโค้ดไม่ถูกต้องหรือสิทธิ์เต็มแล้วครับ');
+        }
+        return interaction.followUp({ embeds: [embed] });
     }
 };

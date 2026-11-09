@@ -72,14 +72,14 @@ module.exports = {
                         '`/gforward` - Fast forward by seconds',
                         '`/gbackward` - Rewind by seconds',
                         '`/gautoplay` - Toggle intelligent continuous autoplay [Supporter]',
-                        '`/gdonate` - Server Supporter portal & top-up perks (status, support, redeem)'
+                        '`/gdonate` - Server Supporter status, perks & donation portal'
                     ].join('\n') : [
                         '`/gvolume` - ปรับระดับความดังของเสียง (0 - 150%)',
                         '`/gseek` - กรอไปยังตำแหน่งเวลาที่ต้องการ (เช่น 1:30 หรือ 90)',
                         '`/gforward` - กรอเดินหน้าตามจำนวนวินาที',
                         '`/gbackward` - กรอย้อนหลังตามจำนวนวินาที',
                         '`/gautoplay` - เปิด/ปิดระบบเล่นเพลงต่อเนื่องอัตโนมัติเมื่อคิวหมด [Supporter]',
-                        '`/gdonate` - สนับสนุนค่าเซิร์ฟเวอร์ & รับของขวัญตอบแทน (status, support, redeem)'
+                        '`/gdonate` - ตรวจสอบสถานะ Supporter หรือเปิดหน้าเว็บสนับสนุน / กรอกโค้ด'
                     ].join('\n'),
                     inline: false
                 },
