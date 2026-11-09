@@ -42,7 +42,7 @@ export default function TopupView({ lang, onToast }) {
   const [userId, setUserId] = useState('');
   const [guildData, setGuildData] = useState(null);
   const [loadingGuild, setLoadingGuild] = useState(false);
-  const [formTab, setFormTab] = useState('promptpay'); // 'promptpay' | 'voucher' | 'promo'
+  const [formTab, setFormTab] = useState('voucher'); // 'voucher' | 'promo'
   const [showTosModal, setShowTosModal] = useState(false);
   const [showVoucherGuideModal, setShowVoucherGuideModal] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
@@ -846,7 +846,7 @@ export default function TopupView({ lang, onToast }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div className="terminal-badge">2</div>
               <h2 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
-                {lang === 'th' ? 'ทำรายการสนับสนุน (Checkout Terminal)' : 'Checkout Terminal'}
+                {lang === 'th' ? 'ร่วมสมทบทุนค่าเซิร์ฟเวอร์ (Infrastructure Donation)' : 'Infrastructure Donation'}
               </h2>
             </div>
             <span style={{
@@ -864,44 +864,19 @@ export default function TopupView({ lang, onToast }) {
           </div>
 
           <p style={{ fontSize: 12, color: 'var(--text-dim)', margin: '0 0 16px 0' }}>
-            {lang === 'th' ? 'เลือกช่องทางชำระเงินและระบุข้อมูลเพื่อเปิดใช้งานสิทธิ์' : 'Select payment method and complete contribution'}
+            {lang === 'th' ? 'ร่วมสมทบทุนค่าใช้จ่ายด้านเซิร์ฟเวอร์เพื่อรับสิทธิ์ Priority Slot และสถานะ SUPPORTER (ไม่คืนเงินทุกกรณี)' : 'Contribute to server costs for Priority Slot & SUPPORTER status (Non-refundable)'}
           </p>
 
-          {/* Segmented Form Tabs: PromptPay QR | TrueMoney Voucher | Promo Drop */}
+          {/* Segmented Form Tabs: TrueMoney Voucher | Promo Drop */}
           <div style={{
             display: 'flex',
-            gap: 6,
+            gap: 8,
             background: 'rgba(255, 255, 255, 0.04)',
             padding: 3,
             borderRadius: 10,
             border: '1px solid var(--border-subtle)',
-            marginBottom: 20
+            marginBottom: 18
           }}>
-            <button
-              type="button"
-              onClick={() => setFormTab('promptpay')}
-              style={{
-                flex: 1,
-                padding: '9px 12px',
-                borderRadius: 8,
-                border: formTab === 'promptpay' ? '1px solid rgba(0, 255, 135, 0.35)' : '1px solid transparent',
-                background: formTab === 'promptpay' ? 'rgba(0, 255, 135, 0.12)' : 'transparent',
-                color: formTab === 'promptpay' ? 'var(--slime-green)' : 'var(--text-sub)',
-                fontWeight: formTab === 'promptpay' ? 700 : 500,
-                fontSize: 12,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 7,
-                boxShadow: formTab === 'promptpay' ? '0 2px 8px rgba(0, 255, 135, 0.2)' : 'none'
-              }}
-            >
-              <IconQrcode size={16} stroke={1.8} />
-              <span>{lang === 'th' ? 'สแกน PromptPay' : 'PromptPay QR'}</span>
-            </button>
-
             <button
               type="button"
               onClick={() => setFormTab('voucher')}
@@ -909,22 +884,22 @@ export default function TopupView({ lang, onToast }) {
                 flex: 1,
                 padding: '9px 12px',
                 borderRadius: 8,
-                border: formTab === 'voucher' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
-                background: formTab === 'voucher' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: formTab === 'voucher' ? '#FFF' : 'var(--text-sub)',
-                fontWeight: formTab === 'voucher' ? 600 : 500,
-                fontSize: 12,
+                border: formTab === 'voucher' ? '1px solid rgba(0, 255, 135, 0.35)' : '1px solid transparent',
+                background: formTab === 'voucher' ? 'rgba(0, 255, 135, 0.12)' : 'transparent',
+                color: formTab === 'voucher' ? 'var(--slime-green)' : 'var(--text-sub)',
+                fontWeight: formTab === 'voucher' ? 700 : 500,
+                fontSize: 12.5,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 7,
-                boxShadow: formTab === 'voucher' ? '0 2px 6px rgba(0, 0, 0, 0.35)' : 'none'
+                boxShadow: formTab === 'voucher' ? '0 2px 8px rgba(0, 255, 135, 0.2)' : 'none'
               }}
             >
               <IconTrueMoneyVoucher size={16} stroke={1.8} />
-              <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney'}</span>
+              <span>{lang === 'th' ? 'ซอง TrueMoney (10 / 20 / 30 บาท)' : 'TrueMoney Voucher'}</span>
             </button>
 
             <button
@@ -938,7 +913,7 @@ export default function TopupView({ lang, onToast }) {
                 background: formTab === 'promo' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
                 color: formTab === 'promo' ? '#FFF' : 'var(--text-sub)',
                 fontWeight: formTab === 'promo' ? 600 : 500,
-                fontSize: 12,
+                fontSize: 12.5,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 display: 'flex',
@@ -949,258 +924,94 @@ export default function TopupView({ lang, onToast }) {
               }}
             >
               <IconGift size={14} />
-              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Drop)' : 'Promo Drop'}</span>
+              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Promo Drop)' : 'Promo Drop'}</span>
             </button>
           </div>
 
           {/* Form Content */}
-          {formTab === 'promptpay' ? (
-            <form onSubmit={handleVerifySlip} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              
-              {/* PromptPay QR Display Card */}
-              <div style={{
-                background: 'rgba(5, 7, 12, 0.75)',
-                border: '1px solid rgba(0, 255, 135, 0.25)',
-                borderRadius: 14,
-                padding: '16px',
-                marginBottom: 16,
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  marginBottom: 10
-                }}>
-                  <span style={{
-                    fontSize: 11,
-                    fontWeight: 800,
-                    color: '#05070B',
-                    background: 'var(--slime-green)',
-                    padding: '2px 8px',
-                    borderRadius: 4,
-                    letterSpacing: '0.04em'
-                  }}>
-                    THAI QR PAYMENT
-                  </span>
-                  <span style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: '#FFFFFF',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    padding: '2px 8px',
-                    borderRadius: 4
-                  }}>
-                    PromptPay
-                  </span>
-                </div>
-
-                {promptpayData?.qrDataUrl ? (
-                  <div style={{ display: 'inline-block', padding: '10px', background: '#FFFFFF', borderRadius: 12, boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)' }}>
-                    <img
-                      src={promptpayData.qrDataUrl}
-                      alt="PromptPay QR Code"
-                      style={{ width: 175, height: 175, display: 'block', borderRadius: 4 }}
-                    />
-                  </div>
-                ) : (
-                  <div style={{ padding: '36px 0', color: 'var(--text-dim)', fontSize: 12 }}>
-                    {loadingQr ? (lang === 'th' ? 'กำลังสร้าง QR Code...' : 'Generating QR Code...') : (lang === 'th' ? 'ไม่สามารถโหลด QR Code ได้' : 'Could not load QR')}
-                  </div>
-                )}
-
-                <div style={{ marginTop: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF' }}>
-                    {promptpayData?.accountName || (lang === 'th' ? 'บัญชีผู้รับเงิน' : 'PromptPay Beneficiary')}
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-                    PromptPay: {promptpayData?.accountMasked || '140-********* -xxx'}
-                  </div>
-                  <div style={{
-                    display: 'inline-block',
-                    marginTop: 6,
-                    fontSize: 14,
-                    fontWeight: 800,
-                    color: 'var(--slime-green)',
-                    background: 'rgba(0, 255, 135, 0.08)',
-                    padding: '3px 12px',
-                    borderRadius: 999,
-                    border: '1px solid rgba(0, 255, 135, 0.3)'
-                  }}>
-                    ฿ {Number(promptpayData?.amount || priceRate).toFixed(2)} {lang === 'th' ? 'บาท' : 'THB'}
-                  </div>
-                </div>
-
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 8 }}>
-                  {lang === 'th' ? 'สแกนด้วยแอปธนาคารใดก็ได้ (K PLUS, SCB, Krungthai ฯลฯ)' : 'Scan with any Thai Mobile Banking app'}
-                </div>
-              </div>
-
-              {/* Upload Payslip Section */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'แนบรูปภาพสลิปโอนเงิน (Payslip Image)' : 'Upload Payslip Image'} <span style={{ color: '#EF4444' }}>*</span>
-                </label>
-
-                {slipPreview ? (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '10px 14px',
-                    borderRadius: 12,
-                    background: 'rgba(0, 255, 135, 0.06)',
-                    border: '1px solid rgba(0, 255, 135, 0.3)'
-                  }}>
-                    <img
-                      src={slipPreview}
-                      alt="Slip Preview"
-                      style={{ width: 48, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid rgba(255, 255, 255, 0.2)' }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <IconReceipt2 size={14} style={{ color: 'var(--slime-green)' }} />
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {slipFile?.name || 'slip.jpg'}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                        {lang === 'th' ? 'พร้อมตรวจสอบผ่าน SlipOK API' : 'Ready for auto verification'}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSlipFile(null); setSlipPreview(''); }}
-                      className="btn btn-sm btn-secondary"
-                      style={{ padding: '4px 10px', fontSize: 11 }}
-                    >
-                      {lang === 'th' ? 'เปลี่ยนรูป' : 'Change'}
-                    </button>
-                  </div>
-                ) : (
-                  <label style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    padding: '18px 14px',
-                    borderRadius: 12,
-                    border: '1.5px dashed var(--border-light)',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    cursor: isMaxStacked ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/jfif"
-                      onChange={handleSlipChange}
-                      disabled={isMaxStacked}
-                      style={{ display: 'none' }}
-                    />
-                    <IconUpload size={22} style={{ color: 'var(--slime-green)' }} />
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: '#FFF' }}>
-                      {lang === 'th' ? 'คลิกเพื่อแนบรูปสลิปธนาคาร' : 'Click to upload payslip image'}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                      {lang === 'th' ? 'รองรับ JPG, PNG (ระบบจะอ่าน QR Code บนสลิปอัตโนมัติ)' : 'Supports JPG, PNG (Reads mini QR automatically)'}
-                    </div>
-                  </label>
-                )}
-              </div>
-
-              {/* Referral Code Input */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
-                </label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="text"
-                    placeholder={lang === 'th' ? 'เช่น REF-27641D' : 'e.g. REF-27641D'}
-                    value={referralCode}
-                    onChange={(e) => {
-                      const val = e.target.value.toUpperCase();
-                      setReferralCode(val);
-                      if (!val) setReferrerName('');
-                    }}
-                    disabled={isMaxStacked}
-                    style={{
-                      flex: 1,
-                      padding: '10px 14px',
-                      borderRadius: 10,
-                      background: isMaxStacked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
-                      border: '1px solid ' + (isMaxStacked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
-                      color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
-                      fontSize: 12.5,
-                      fontFamily: 'var(--font-mono)',
-                      letterSpacing: '0.04em',
-                      cursor: isMaxStacked ? 'not-allowed' : 'text'
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyReferral}
-                    disabled={isMaxStacked}
-                    style={{
-                      padding: '0 16px',
-                      borderRadius: 10,
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.16)',
-                      color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
-                      fontWeight: 600,
-                      fontSize: 12.5,
-                      cursor: isMaxStacked ? 'not-allowed' : 'pointer',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {lang === 'th' ? 'ใช้โค้ด' : 'Apply'}
-                  </button>
-                </div>
-                {referrerName && (
-                  <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-                    <IconCircleCheck size={13} />
-                    <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName}` : `Referrer: ${referrerName}`}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Submit Slip Button */}
-              <button
-                type="submit"
-                disabled={submittingSlip || !slipPreview || isMaxStacked}
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '13px 18px',
-                  fontSize: 13.5,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  marginTop: 'auto'
-                }}
-              >
-                {submittingSlip ? (
-                  <>
-                    <IconBolt size={16} className="spin" />
-                    <span>{lang === 'th' ? 'กำลังตรวจสอบสลิปกับระบบธนาคาร...' : 'Verifying Slip...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <IconShieldCheck size={16} />
-                    <span>{lang === 'th' ? `ตรวจสอบสลิปและปลดล็อกทันที (${priceRate} บาท)` : `Verify Slip & Activate (${priceRate} THB)`}</span>
-                  </>
-                )}
-              </button>
-            </form>
-          ) : formTab === 'voucher' ? (
+          {formTab === 'voucher' ? (
             <form onSubmit={handleTopup} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               
+              {/* Package Tiers 10 / 20 / 30 Baht */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 8 }}>
+                  {lang === 'th' ? 'อัตราการรับสิทธิ์ตามยอดเงินในซอง:' : 'Supporter Days per Voucher Amount:'}
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  <div style={{
+                    padding: '10px 8px',
+                    borderRadius: 10,
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontWeight: 800, fontSize: 13.5, color: '#FFFFFF' }}>10 บาท</div>
+                    <div style={{ fontSize: 11, color: 'var(--slime-green)', fontWeight: 700, marginTop: 2 }}>7 วัน</div>
+                    <div style={{ fontSize: 9.5, color: 'var(--text-dim)', marginTop: 2 }}>Weekend / Test</div>
+                  </div>
+
+                  <div style={{
+                    padding: '10px 8px',
+                    borderRadius: 10,
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontWeight: 800, fontSize: 13.5, color: '#FFFFFF' }}>20 บาท</div>
+                    <div style={{ fontSize: 11, color: 'var(--slime-green)', fontWeight: 700, marginTop: 2 }}>15 วัน</div>
+                    <div style={{ fontSize: 9.5, color: 'var(--text-dim)', marginTop: 2 }}>Bi-Weekly</div>
+                  </div>
+
+                  <div style={{
+                    padding: '10px 8px',
+                    borderRadius: 10,
+                    background: 'rgba(0, 255, 135, 0.07)',
+                    border: '1px solid rgba(0, 255, 135, 0.35)',
+                    textAlign: 'center',
+                    position: 'relative'
+                  }}>
+                    <span style={{
+                      position: 'absolute',
+                      top: -7,
+                      right: 6,
+                      fontSize: 8.5,
+                      fontWeight: 800,
+                      background: 'var(--slime-green)',
+                      color: '#05070B',
+                      padding: '1px 5px',
+                      borderRadius: 4
+                    }}>คุ้มสุด</span>
+                    <div style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--slime-green)' }}>30 บาท</div>
+                    <div style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 700, marginTop: 2 }}>30 วัน</div>
+                    <div style={{ fontSize: 9.5, color: 'var(--text-dim)', marginTop: 2 }}>1.00 ฿/วัน</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Non-refundable Policy Warning Alert */}
+              <div style={{
+                marginBottom: 14,
+                padding: '9px 12px',
+                borderRadius: 10,
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                fontSize: 11,
+                lineHeight: 1.5,
+                color: '#FCA5A5'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, marginBottom: 2, color: '#EF4444' }}>
+                  <IconAlertCircle size={14} />
+                  <span>{lang === 'th' ? 'นโยบายการไม่คืนเงิน (Non-refundable):' : 'Non-refundable Policy:'}</span>
+                </div>
+                <div>
+                  {lang === 'th'
+                    ? 'เนื่องจากเงินสมทบทุนจะถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี รวมถึงกรณีระบบหยุดให้บริการจากเหตุสุดวิสัย'
+                    : 'Infrastructure donations are allocated immediately and are non-refundable under any circumstances.'}
+                </div>
+              </div>
+
               {/* Voucher URL Input */}
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-sub)' }}>
                     {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Voucher Link)' : 'TrueMoney Voucher Link'} <span style={{ color: '#EF4444' }}>*</span>
@@ -1221,7 +1032,7 @@ export default function TopupView({ lang, onToast }) {
                     }}
                   >
                     <IconHelp size={13} />
-                    <span>{lang === 'th' ? `วิธีสร้างซอง ${priceRate} บาท?` : `How to create voucher?`}</span>
+                    <span>{lang === 'th' ? 'วิธีสร้างซอง 10, 20, 30 บาท' : 'How to create voucher?'}</span>
                   </button>
                 </div>
 
@@ -1245,21 +1056,21 @@ export default function TopupView({ lang, onToast }) {
                 />
 
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Create voucher set to 1 recipient in TrueMoney app'}
+                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" (ยอด 10, 20 หรือ 30 บาท) ในแอป TrueMoney' : 'Set to equal amount, 1 recipient (10, 20 or 30 THB)'}
                 </div>
               </div>
 
               {/* Referral Code Input */}
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 14 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
                   {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
                 </label>
                 {guildData?.referralConfig?.enabled === false ? (
-                  <div style={{ padding: '10px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--red-alert)' }}>
+                  <div style={{ padding: '8px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 11.5, color: 'var(--red-alert)' }}>
                     [Paused] {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral program is temporarily paused'}
                   </div>
                 ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
-                  <div style={{ padding: '10px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 12, color: 'var(--red-alert)' }}>
+                  <div style={{ padding: '8px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 11.5, color: 'var(--red-alert)' }}>
                     [Closed] {lang === 'th'
                       ? `โปรโมชั่นโค้ดชวนเพื่อนหมดเขตแล้ว (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')})`
                       : `Referral promo has ended (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()})`}
@@ -1279,12 +1090,12 @@ export default function TopupView({ lang, onToast }) {
                         disabled={isMaxStacked}
                         style={{
                           flex: 1,
-                          padding: '10px 14px',
+                          padding: '9px 12px',
                           borderRadius: 10,
                           background: isMaxStacked ? 'rgba(255, 255, 255, 0.03)' : 'rgba(5, 7, 12, 0.8)',
                           border: '1px solid ' + (isMaxStacked ? 'rgba(255, 255, 255, 0.1)' : 'var(--border-light)'),
                           color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
-                          fontSize: 12.5,
+                          fontSize: 12,
                           fontFamily: 'var(--font-mono)',
                           letterSpacing: '0.04em',
                           cursor: isMaxStacked ? 'not-allowed' : 'text'
@@ -1295,13 +1106,13 @@ export default function TopupView({ lang, onToast }) {
                         onClick={handleApplyReferral}
                         disabled={isMaxStacked}
                         style={{
-                          padding: '0 16px',
+                          padding: '0 14px',
                           borderRadius: 10,
                           background: 'rgba(255, 255, 255, 0.08)',
                           border: '1px solid rgba(255, 255, 255, 0.16)',
                           color: isMaxStacked ? 'var(--text-dim)' : '#FFFFFF',
                           fontWeight: 600,
-                          fontSize: 12.5,
+                          fontSize: 12,
                           cursor: isMaxStacked ? 'not-allowed' : 'pointer',
                           whiteSpace: 'nowrap'
                         }}
@@ -1311,43 +1122,47 @@ export default function TopupView({ lang, onToast }) {
                     </div>
 
                     {referrerName && (
-                      <div style={{ fontSize: 11.5, color: 'var(--slime-green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+                      <div style={{ fontSize: 11, color: 'var(--slime-green)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
                         <IconCircleCheck size={13} />
-                        <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName} (+30 วันเมื่อร่วมสนับสนุน)` : `Referrer: ${referrerName}`}</span>
+                        <span>{lang === 'th' ? `ผู้แนะนำ: เซิร์ฟเวอร์ ${referrerName}` : `Referrer: ${referrerName}`}</span>
                       </div>
                     )}
                   </>
                 )}
               </div>
 
-              {/* Important Contribution & 90-Day Cap Tip Box */}
+              {/* Discord Support Help Strip */}
               <div style={{
                 marginBottom: 16,
-                padding: '10px 14px',
+                padding: '9px 12px',
                 borderRadius: 10,
-                background: isMaxStacked ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.07)',
-                border: '1px solid ' + (isMaxStacked ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.25)'),
-                fontSize: 11.5,
-                lineHeight: 1.55,
-                color: isMaxStacked ? '#FCA5A5' : '#FDE68A'
+                background: 'rgba(88, 101, 242, 0.08)',
+                border: '1px solid rgba(88, 101, 242, 0.25)',
+                fontSize: 11,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                color: '#CBD5E1'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, marginBottom: 4, color: isMaxStacked ? '#EF4444' : '#F59E0B' }}>
-                  <IconAlertCircle size={14} />
-                  <span>{lang === 'th' ? (isMaxStacked ? 'วันใช้งานสะสมครบโควตาสูงสุดแล้ว' : 'ข้อควรรู้ก่อนส่งซอง:') : (isMaxStacked ? 'Max 90-Day Subscription Reached' : 'Important Contribution Rules:')}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: '#5865F2', fontWeight: 800 }}>Discord</span>
+                  <span>{lang === 'th' ? 'พบปัญหาทางเทคนิคหรือสถานะไม่อัปเดต?' : 'Technical issues?'}</span>
                 </div>
-                {isMaxStacked ? (
-                  <div>
-                    {lang === 'th'
-                      ? 'เซิร์ฟเวอร์นี้มีวันใช้งานสะสมครบโควตาสูงสุด 90 วัน (3 เดือน) แล้ว ระบบล็อกการทำรายการชั่วคราวเพื่อป้องกันการเสียสิทธิ์ กรุณารอให้วันใช้งานเหลือน้อยกว่า 90 วันจึงจะเติมเพิ่มได้ครับ'
-                      : 'This server has reached the maximum 90-day subscription cap. New contributions are temporarily locked to protect your funds. Please wait until remaining days drop below 90.'}
-                  </div>
-                ) : (
-                  <div>
-                    {lang === 'th'
-                      ? 'ระบบคำนวณวันสะสมสูงสุดไม่เกิน 90 วัน (3 เดือน) กรุณาสร้างซองตรงตามยอด 29 บาทพอดี หากใส่ยอดเงินเกินกว่าเพดาน 90 วัน ระบบจะไม่สามารถทบวันเพิ่มได้และไม่รับผิดชอบยอดส่วนเกินครับ'
-                      : 'Maximum accumulated subscription is capped at 90 days. Please set voucher amount to exactly 29 THB. Any excess funds exceeding the 90-day cap cannot be stacked or refunded.'}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowTosModal(true)}
+                  style={{
+                    color: '#5865F2',
+                    fontWeight: 700,
+                    background: 'none',
+                    border: 'none',
+                    fontSize: 11,
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  {lang === 'th' ? 'ติดต่อทีมงาน' : 'Contact Support'}
+                </button>
               </div>
 
               {/* Confirm Support Button */}
@@ -1381,7 +1196,7 @@ export default function TopupView({ lang, onToast }) {
                   ) : (
                     <>
                       <IconSparkles size={16} />
-                      <span>{lang === 'th' ? `ยืนยันการร่วมสนับสนุน ฿${priceRate}` : `Confirm Contribution ฿${priceRate}`}</span>
+                      <span>{lang === 'th' ? 'ยืนยันการร่วมสมทบทุนค่าเซิร์ฟเวอร์' : 'Confirm Infrastructure Contribution'}</span>
                     </>
                   )}
                 </button>
@@ -1515,28 +1330,28 @@ export default function TopupView({ lang, onToast }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
             {
-              id: 'conduit',
-              title: lang === 'th' ? '1. นโยบายการส่งผ่านข้อมูลและเนื้อหา (Mere Conduit & Content Policy)' : '1. Data Forwarder & Content Policy',
-              preview: lang === 'th' ? 'ระบบทำหน้าที่เป็นเพียงตัวกลางส่งผ่านสัญญาณเสียงชั่วคราว (Transmission Buffer) โดยไม่มีการจัดเก็บหรือเผยแพร่ไฟล์สื่อถาวร' : 'GOOLIX functions strictly as a temporary audio transmission buffer without permanent media hosting.',
-              content: lang === 'th' ? 'GOOLIX ทำหน้าที่เป็นเพียงท่อส่งผ่านข้อมูลชั่วคราว (Mere Conduit) จากแหล่งต้นทางที่ผู้ใช้งานเป็นผู้ระบุคำสั่งไปยังห้องเสียงของ Discord เท่านั้น ไม่มีการจัดเก็บ ดัดแปลง หรือเผยแพร่ไฟล์เสียงและวิดีโอไว้ในฐานข้อมูลถาวร ผู้ใช้งานเป็นผู้รับผิดชอบต่อลิงก์และคำค้นหาที่สั่งให้บอทประมวลผลแต่เพียงผู้เดียว' : 'GOOLIX operates as a transient data conduit executing user audio requests to Discord voice channels. No media files are hosted permanently on our infrastructure. Users retain sole responsibility for requested content and streaming sources.'
+              id: 'donation',
+              title: lang === 'th' ? '1. ลักษณะการสนับสนุน (Infrastructure Donation)' : '1. Infrastructure Donation Policy',
+              preview: lang === 'th' ? 'ยอดเงินสนับสนุน (10, 20 หรือ 30 บาท) เป็นการร่วมสมทบทุนค่าใช้จ่ายด้านเซิร์ฟเวอร์เพื่อบำรุงรักษาระบบ' : 'Voluntary infrastructure donation (10, 20 or 30 THB) to maintain GOOLIX operations.',
+              content: lang === 'th' ? 'ยอดเงินสนับสนุน (10, 20 หรือ 30 บาท) เป็นการร่วมสมทบทุนค่าใช้จ่ายด้านเซิร์ฟเวอร์และโครงสร้างพื้นฐาน (Infrastructure Donation) เพื่อบำรุงรักษาระบบ GOOLIX โดยผู้สนับสนุนจะได้รับสิทธิ์การใช้งานช่องสัญญาณพิเศษ (Priority Slot) และสถานะ SUPPORTER เพื่อเป็นการขอบคุณ' : 'Donation amounts (10, 20 or 30 THB) represent voluntary server infrastructure contributions to sustain GOOLIX audio cluster operations. Supporters receive Priority Slot access and SUPPORTER status as gratitude.'
             },
             {
-              id: 'billing',
-              title: lang === 'th' ? '2. เงื่อนไขการร่วมสนับสนุนและสิทธิ์เซิร์ฟเวอร์ (Supporter & Billing Terms)' : '2. Supporter & Billing Terms',
-              preview: lang === 'th' ? 'สิทธิ์ผู้สนับสนุนผูกระดับเซิร์ฟเวอร์ (Server-Wide) สมาชิกทุกคนใช้งานพร้อมกันได้ทันที ยอดเงินเป็นการร่วมสนับสนุนค่าเซิร์ฟเวอร์' : 'Supporter perks unlock for the entire server. TrueMoney vouchers are voluntary server contributions.',
-              content: lang === 'th' ? 'ยอดเงินที่ทำรายการผ่านซองของขวัญ TrueMoney เป็นการร่วมบริจาคสนับสนุนค่าเช่าเซิร์ฟเวอร์และแบนด์วิธเพื่อขับเคลื่อนคอมมูนิตี้ สิทธิพิเศษของ Supporter จะผูกกับรหัสเซิร์ฟเวอร์ (Guild ID) ที่ระบุ เมื่อระบบเพิ่มวันใช้งานแล้ว ไม่สามารถขอคืนเงินหรือโอนย้ายสิทธิ์ข้ามเซิร์ฟเวอร์ได้ในทุกกรณี' : 'Contributions processed via TrueMoney vouchers support server infrastructure and bandwidth. Supporter benefits bind directly to the specified Guild ID. Contributions are strictly non-refundable and non-transferable once processed.'
+              id: 'nonrefundable',
+              title: lang === 'th' ? '2. นโยบายการไม่คืนเงิน (Non-refundable Policy)' : '2. Non-refundable Policy',
+              preview: lang === 'th' ? 'เนื่องจากเงินสมทบทุนถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี' : 'Allocated to server resources immediately; strictly non-refundable under all circumstances.',
+              content: lang === 'th' ? 'เนื่องจากเงินสมทบทุนจะถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี รวมถึงกรณีที่ระบบจำเป็นต้องยุติหรือระงับการให้บริการชั่วคราว/ถาวร อันเนื่องมาจากการเปลี่ยนแปลงนโยบายหรือข้อจำกัดทางเทคนิคของแพลตฟอร์มภายนอก (เช่น Discord หรือ YouTube) ผู้ใช้งานรับทราบและยอมรับเงื่อนไขนี้ก่อนยืนยันการส่งการสนับสนุน' : 'Since contributions are immediately provisioned toward upstream audio nodes and server hosting, all donations are strictly non-refundable under any circumstances, including temporary or permanent service cessations arising from upstream platform policy shifts.'
             },
             {
-              id: 'reliability',
-              title: lang === 'th' ? '3. ความพร้อมใช้งานและความเสถียรของระบบ (Service Availability & SLA)' : '3. Service Availability & SLA',
-              preview: lang === 'th' ? 'ให้บริการตามสภาพจริง (As-Is) พร้อมระบบ Priority Slot และระบบสลับโหนดสำรองอัจฉริยะ' : 'Provided on an As-Is basis with Priority Fast Slot access and multi-node fallback redundancy.',
-              content: lang === 'th' ? 'ระบบให้บริการตามสภาพจริง (As-Is) ไม่รับประกันการออนไลน์ 100% ตลอด 24 ชั่วโมง โดยผู้สนับสนุนจะได้รับสิทธิ์เข้าใช้งาน Priority Fast Slot เพื่อเปิดเพลงได้ทันที และระบบขอสงวนสิทธิ์ในการตัดสายอัตโนมัติเมื่อไม่มีผู้ฟังในห้องเสียง (Auto-Leave) เพื่อประหยัดทรัพยากรส่วนรวม' : 'Services are delivered on an As-Is basis without guarantee of 100% continuous uptime. Supporters receive Priority Fast Slot access for instant playback. The bot reserves the right to disconnect from empty voice channels to optimize shared resources.'
+              id: 'support',
+              title: lang === 'th' ? '3. กรณีพบปัญหาทางเทคนิค (Technical Support)' : '3. Technical Support & Verification',
+              preview: lang === 'th' ? 'หากสถานะไม่ปรับเป็น SUPPORTER อัตโนมัติ สามารถนำลิงก์ซองและ Guild ID ติดต่อทีมงานได้ทันที' : 'If status does not update automatically, contact Discord Support with voucher link and Guild ID.',
+              content: lang === 'th' ? 'หากส่งการสนับสนุนแล้วสถานะไม่ปรับเป็น SUPPORTER อัตโนมัติ หรือพบปัญหาการใช้งาน สามารถนำลิงก์ซองและ Guild ID มาติดต่อทีมงานได้ที่ช่องทาง Discord Support เพื่อให้ทีมงานตรวจสอบและเปิดสิทธิ์ให้โดยตรง' : 'If supporter perks do not activate automatically upon voucher redemption or technical glitches occur, please contact our support team on Discord with your voucher link and Guild ID for direct manual activation.'
             },
             {
-              id: 'maintenance',
-              title: lang === 'th' ? '4. การบำรุงรักษาโหนดและเครือข่าย (Node Maintenance & Fair Usage)' : '4. Node Maintenance & Fair Usage',
-              preview: lang === 'th' ? 'การปรับปรุงคลัสเตอร์และฟิลเตอร์เสียงเพื่อรักษาเสถียรภาพการสตรีมเสียงของส่วนรวมเป็นหลัก' : 'Dynamic cluster maintenance and audio filter adjustments to maintain global platform stability.',
-              content: lang === 'th' ? 'ฟังก์ชันและตัวเลือกการประมวลผลเสียงเสริมต่าง ๆ (เช่น DSP Filter, Smart Autoplay) อาจได้รับการปรับปรุง หรือระงับชั่วคราวตามสถานะภาระเครื่องเซิร์ฟเวอร์และการเปลี่ยนแปลงของแพลตฟอร์มต้นทาง เพื่อรักษาเสถียรภาพการสตรีมเสียงของส่วนรวมเป็นหลัก' : 'Supplemental features such as audio DSP filters and Smart Autoplay may undergo maintenance or temporary throttling based on hardware load and upstream provider updates to ensure optimal stability.'
+              id: 'disclaimer',
+              title: lang === 'th' ? '4. ข้อจำกัดความรับผิดชอบ (Content & Media Disclaimer)' : '4. Legal Disclaimer & Fair Use',
+              preview: lang === 'th' ? 'GOOLIX เป็นเพียงเครื่องมืออำนวยความสะดวกในการเล่นสื่อตามคำสั่ง ไม่ได้จัดเก็บหรือโฮสต์ไฟล์ใดๆ' : 'GOOLIX functions strictly as a playback automation tool and does not host or store media files.',
+              content: lang === 'th' ? 'GOOLIX เป็นเพียงเครื่องมืออำนวยความสะดวกในการเล่นสื่อตามคำสั่งของผู้ใช้ ระบบไม่ได้จัดเก็บ ทำซ้ำ หรือโฮสต์ไฟล์เสียงใดๆ ไว้บนเซิร์ฟเวอร์ และทำงานในฐานะตัวกลางส่งผ่านข้อมูลชั่วคราว (Mere Conduit) เท่านั้น' : 'GOOLIX operates solely as an interactive media playback tool responding to user instructions. The system does not permanently store, copy, distribute, or host audio files on its servers and acts strictly as a transient transmission buffer (Mere Conduit).'
             }
           ].map((item, idx) => {
             const isOpen = openAccordion === idx;
@@ -1631,7 +1446,7 @@ export default function TopupView({ lang, onToast }) {
             }}>
               <div style={{ fontWeight: 800, fontSize: 15, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <IconTrueMoneyVoucher size={18} stroke={2} />
-                <span>{lang === 'th' ? `วิธีสร้างซองของขวัญ ${priceRate} บาท` : `How to Create ${priceRate} THB Voucher`}</span>
+                <span>{lang === 'th' ? 'วิธีสร้างซองของขวัญ 10, 20 หรือ 30 บาท' : 'How to Create 10, 20, or 30 THB Voucher'}</span>
               </div>
               <button
                 type="button"
@@ -1659,8 +1474,11 @@ export default function TopupView({ lang, onToast }) {
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0, 255, 135, 0.15)', color: 'var(--slime-green)', fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>3</div>
                 <div>
-                  {lang === 'th' ? `กรอกยอดเงิน ` : 'Enter amount '}
-                  <strong style={{ color: 'var(--slime-green)' }}>{priceRate} {lang === 'th' ? 'บาท' : 'THB'}</strong>
+                  {lang === 'th' ? 'กรอกยอดเงิน ' : 'Enter amount '}
+                  <strong style={{ color: 'var(--slime-green)' }}>10, 20 หรือ 30 {lang === 'th' ? 'บาท' : 'THB'}</strong>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                    {lang === 'th' ? '(10 บาท = 7 วัน | 20 บาท = 15 วัน | 30 บาท = 30 วัน)' : '(10 THB = 7d | 20 THB = 15d | 30 THB = 30d)'}
+                  </div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
@@ -1783,21 +1601,14 @@ export default function TopupView({ lang, onToast }) {
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
                   {lang === 'th'
-                    ? '1. สถานะตัวกลางส่งผ่านข้อมูลและเนื้อหา (Mere Conduit & Content Disclaimer)'
-                    : '1. Mere Conduit & Content Disclaimer'}
+                    ? '1. ลักษณะการสนับสนุน (Infrastructure Donation)'
+                    : '1. Infrastructure Donation Policy'}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
                   <div>
-                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ไม่มีการจัดเก็บไฟล์ถาวร:' : '• No Permanent Storage:'}</strong>{' '}
                     {lang === 'th'
-                      ? 'ระบบทำงานในฐานะท่อส่งผ่านข้อมูลชั่วคราว (Transmission Buffer) จากแหล่งต้นทางที่ผู้ใช้งานเป็นผู้ระบุคำสั่งไปยังห้องเสียงของ Discord เท่านั้น ไม่มีการจัดเก็บ ดัดแปลง หรือเผยแพร่ไฟล์เสียงและวิดีโอไว้ในฐานข้อมูลถาวร (ระบบแคชทำงานแบบชั่วคราวเพื่อลดความหน่วงของเครือข่ายและถูกลบออกอัตโนมัติ)'
-                      : 'The system functions solely as a transient transmission buffer routing stream data requested by users directly to Discord voice channels. No media files are permanently hosted, altered, or distributed.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--slime-green)' }}>{lang === 'th' ? '• ความรับผิดชอบต่อเนื้อหา:' : '• Content Responsibility:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ผู้ใช้งานเป็นผู้รับผิดชอบต่อลิงก์และคำค้นหาที่สั่งให้บอทประมวลผลแต่เพียงผู้เดียว ทางผู้พัฒนาไม่สามารถตรวจสอบหรือควบคุมเนื้อหาต้นทางจากผู้ให้บริการภายนอกได้ และไม่มีส่วนรับผิดชอบต่อเนื้อหาที่ถูกส่งต่อไปยังเซิร์ฟเวอร์ของผู้ใช้งาน'
-                      : 'Users bear sole legal responsibility for all media queries dispatched to the bot. Developers do not curate external content and assume no liability for relayed streams.'}
+                      ? 'ยอดเงินสนับสนุน (10, 20 หรือ 30 บาท) เป็นการร่วมสมทบทุนค่าใช้จ่ายด้านเซิร์ฟเวอร์และโครงสร้างพื้นฐาน (Infrastructure Donation) เพื่อบำรุงรักษาระบบ GOOLIX โดยผู้สนับสนุนจะได้รับสิทธิ์การใช้งานช่องสัญญาณพิเศษ (Priority Slot) และสถานะ SUPPORTER เพื่อเป็นการขอบคุณ'
+                      : 'Donation amounts (10, 20 or 30 THB) represent voluntary server infrastructure contributions to sustain GOOLIX audio cluster operations. Supporters receive Priority Slot access and SUPPORTER status as gratitude.'}
                   </div>
                 </div>
               </div>
@@ -1806,21 +1617,14 @@ export default function TopupView({ lang, onToast }) {
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
                   {lang === 'th'
-                    ? '2. เงื่อนไขการร่วมสนับสนุนและสิทธิประโยชน์ (Supporter & Billing Terms)'
-                    : '2. Supporter & Billing Terms'}
+                    ? '2. นโยบายการไม่คืนเงิน (Non-refundable Policy)'
+                    : '2. Non-refundable Policy'}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
                   <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• ลักษณะการสนับสนุน:' : '• Voluntary Contribution:'}</strong>{' '}
                     {lang === 'th'
-                      ? 'ยอดเงินที่ทำรายการผ่านลิงก์ซองของขวัญ TrueMoney เป็นการร่วมบริจาคสนับสนุนค่าเช่าเซิร์ฟเวอร์และแบนด์วิธเพื่อขับเคลื่อนคอมมูนิตี้ ไม่ใช่การซื้อขายสินค้าหรือบริการเชิงพาณิชย์ เมื่อทำรายการสำเร็จแล้วไม่สามารถขอคืนเงินหรือยกเลิกได้ทุกกรณี'
-                      : 'Contributions via TrueMoney gift vouchers represent voluntary server hardware donations, not commercial purchases. All contributions are final and strictly non-refundable.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--cyber-pink)' }}>{lang === 'th' ? '• สิทธิ์ระดับเซิร์ฟเวอร์ (Server-Wide Access):' : '• Server-Wide Access:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'สิทธิพิเศษของผู้สนับสนุน (Supporter) จะผูกกับรหัสเซิร์ฟเวอร์ (Guild ID) ที่ระบุขณะทำรายการ โดยสมาชิกทุกคนที่เข้าฟังเพลงในเซิร์ฟเวอร์นั้นจะได้รับสิทธิพิเศษพร้อมกันทั้งหมด สิทธิ์นี้ไม่สามารถโอนย้ายไปยังเซิร์ฟเวอร์อื่นได้'
-                      : 'Supporter perks bind strictly to the designated Guild ID, benefiting all active listeners within that server. Perks cannot be transferred between guilds.'}
+                      ? 'เนื่องจากเงินสมทบทุนจะถูกนำไปจัดสรรทรัพยากรเซิร์ฟเวอร์ล่วงหน้าทันที จึงขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี รวมถึงกรณีที่ระบบจำเป็นต้องยุติหรือระงับการให้บริการชั่วคราว/ถาวร อันเนื่องมาจากการเปลี่ยนแปลงนโยบายหรือข้อจำกัดทางเทคนิคของแพลตฟอร์มภายนอก (เช่น Discord หรือ YouTube) ผู้ใช้งานรับทราบและยอมรับเงื่อนไขนี้ก่อนยืนยันการส่งการสนับสนุน'
+                      : 'Since contributions are immediately provisioned toward upstream audio nodes and server hosting, all donations are strictly non-refundable under any circumstances, including temporary or permanent service cessations arising from upstream platform policy shifts.'}
                   </div>
                 </div>
               </div>
@@ -1829,27 +1633,14 @@ export default function TopupView({ lang, onToast }) {
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
                   {lang === 'th'
-                    ? '3. การจำกัดความรับผิดชอบและความพร้อมใช้งาน (Availability & Liability)'
-                    : '3. Availability & Liability'}
+                    ? '3. กรณีพบปัญหาทางเทคนิค (Technical Support)'
+                    : '3. Technical Support & Manual Activation'}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
                   <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การรับประกันสถานะออนไลน์:' : '• Uptime Warranty:'}</strong>{' '}
                     {lang === 'th'
-                      ? 'ทางทีมพัฒนาพยายามดูแลให้ระบบทำงานได้อย่างราบรื่นที่สุด แต่ไม่รับประกันว่าบอทจะออนไลน์ตลอด 24 ชั่วโมงโดยไม่มีอาการกระตุกหรือดีเลย์ เนื่องจากคุณภาพสัญญาณขึ้นอยู่กับเซิร์ฟเวอร์ต้นทาง ระบบ Discord Gateway และโควตาเครือข่ายในแต่ละช่วงเวลา'
-                      : 'While the team strives for maximum stability, continuous 24/7 uninterrupted uptime cannot be guaranteed due to dependencies on Discord gateways and upstream providers.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• การปรับปรุงและยุติบริการ:' : '• Maintenance & Suspension:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ทีมพัฒนาขอสงวนสิทธิ์ในการรีสตาร์ทโหนด ปิดปรับปรุงระบบชั่วคราว ปรับเปลี่ยนโควตาช่องสัญญาณ หรือยุติการให้บริการเมื่อใดก็ได้โดยไม่จำเป็นต้องแจ้งให้ทราบล่วงหน้า'
-                      : 'We reserve the right to deploy maintenance updates, adjust audio buffer parameters, or modify service endpoints without prior notification.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: '#94A3B8' }}>{lang === 'th' ? '• ความปลอดภัยของเซิร์ฟเวอร์:' : '• Indemnification:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ทีมพัฒนาไม่รับผิดชอบต่อความเสียหายใดๆ ที่อาจเกิดขึ้นกับเซิร์ฟเวอร์ Discord หรือบัญชีของผู้ใช้งานจากการนำบอทไปติดตั้งใช้งาน'
-                      : 'The development team shall not be held liable for any damages, strikes, or penalties incurred on Discord guilds or accounts.'}
+                      ? 'หากส่งการสนับสนุนแล้วสถานะไม่ปรับเป็น SUPPORTER อัตโนมัติ หรือพบปัญหาการใช้งาน สามารถนำลิงก์ซองและ Guild ID มาติดต่อทีมงานได้ที่ช่องทาง Discord Support เพื่อให้ทีมงานตรวจสอบและเปิดสิทธิ์ให้โดยตรง'
+                      : 'If supporter perks do not activate automatically upon voucher redemption or technical glitches occur, please contact our support team on Discord with your voucher link and Guild ID for direct manual activation.'}
                   </div>
                 </div>
               </div>
@@ -1858,21 +1649,14 @@ export default function TopupView({ lang, onToast }) {
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
                   {lang === 'th'
-                    ? '4. นโยบายการใช้งานที่เหมาะสม (Fair Use & Anti-Abuse Policy)'
-                    : '4. Fair Use & Anti-Abuse Policy'}
+                    ? '4. ข้อจำกัดความรับผิดชอบ (Content & Media Disclaimer)'
+                    : '4. Legal Disclaimer & Mere Conduit'}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
                   <div>
-                    <strong style={{ color: 'var(--red-alert)' }}>{lang === 'th' ? '• การจัดการทรัพยากรอัตโนมัติ:' : '• Automated Resource Governance:'}</strong>{' '}
                     {lang === 'th'
-                      ? 'เพื่อรักษาคุณภาพเสียงของส่วนรวม ระบบจะตัดการเชื่อมต่อจากห้องเสียงอัตโนมัติหากไม่มีผู้ฟังอยู่ในห้อง หรือมีการเปิดสตรีมต่อเนื่องยาวนานเกินเกณฑ์ที่กำหนดโดยไม่มีการโต้ตอบ'
-                      : 'To conserve cluster resources, the bot will auto-disconnect from empty voice channels or prolonged unmonitored streams.'}
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--red-alert)' }}>{lang === 'th' ? '• การระงับสิทธิ์ (Ban Policy):' : '• Abuse & Ban Policy:'}</strong>{' '}
-                    {lang === 'th'
-                      ? 'ห้ามใช้บอทหรือสคริปต์อัตโนมัติเฝ้าห้องเพื่อดึงแบนด์วิธตลอด 24 ชั่วโมง ห้ามยิงคำสั่งรัวเพื่อก่อกวนระบบ (Spam/Flood) และห้ามอาศัยช่องโหว่ในการปั๊มวันใช้งานฟรี หากระบบตรวจพบการกระทำดังกล่าว ทีมพัฒนาขอสงวนสิทธิ์ในการระงับการใช้งานเซิร์ฟเวอร์นั้นถาวร (Ban Guild) และยกเลิกวันใช้งานคงเหลือทั้งหมดทันทีโดยไม่ต้องแจ้งให้ทราบล่วงหน้า'
-                      : 'Automated 24/7 socket idling, command flooding, and exploitation of promotional codes are strictly prohibited. Violating guilds are subject to immediate permanent guild bans and forfeiture of remaining days.'}
+                      ? 'GOOLIX เป็นเพียงเครื่องมืออำนวยความสะดวกในการเล่นสื่อตามคำสั่งของผู้ใช้ ระบบไม่ได้จัดเก็บ ทำซ้ำ หรือโฮสต์ไฟล์เสียงใดๆ ไว้บนเซิร์ฟเวอร์ และทำงานในฐานะตัวกลางส่งผ่านข้อมูลชั่วคราว (Mere Conduit) เท่านั้น'
+                      : 'GOOLIX operates solely as an interactive media playback tool responding to user instructions. The system does not permanently store, copy, distribute, or host audio files on its servers and acts strictly as a transient transmission buffer (Mere Conduit).'}
                   </div>
                 </div>
               </div>

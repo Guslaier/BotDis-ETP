@@ -298,7 +298,19 @@ class SubscriptionManager extends EventEmitter {
         const referralExpiresAt = config.referralExpiresAt || null;
 
         const sub = this.getGuildSubscription(guildId, guildName);
-        const addedDays = Math.max(1, Math.ceil((amountBaht / price30Days) * 30));
+        let addedDays = 0;
+        if (amountBaht >= 30) {
+            // 30 THB = 30 days (1.00 THB/day - best value)
+            addedDays = Math.floor(amountBaht);
+        } else if (amountBaht >= 20) {
+            // 20 THB = 15 days (~1.33 THB/day)
+            addedDays = 15 + Math.floor((amountBaht - 20) * 1.5);
+        } else if (amountBaht >= 10) {
+            // 10 THB = 7 days (~1.42 THB/day)
+            addedDays = 7 + Math.floor((amountBaht - 10) * 0.8);
+        } else {
+            addedDays = Math.max(1, Math.floor(amountBaht * 0.7));
+        }
         const addedMs = addedDays * 24 * 3600 * 1000;
 
         const now = Date.now();
