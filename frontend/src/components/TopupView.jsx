@@ -7,33 +7,24 @@ import {
   IconQrcode, IconUpload, IconReceipt2, IconClipboard, IconExternalLink
 } from '@tabler/icons-react';
 
-function IconTrueMoneyVoucher({ size = 18, stroke = 1.8, style = {}, className = '', ...props }) {
+function IconTrueMoneyVoucher({ size = 20, style = {}, className = '', ...props }) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
+    <img
+      src="/truemoney-wallet.png"
+      alt="TrueMoney Wallet"
       width={size}
       height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={stroke}
-      strokeLinecap="round"
-      strokeLinejoin="round"
       className={className}
       style={{
         display: 'inline-block',
         verticalAlign: 'middle',
+        objectFit: 'contain',
         flexShrink: 0,
+        borderRadius: 4,
         ...style
       }}
       {...props}
-    >
-      <rect x="3" y="4" width="18" height="16" rx="3" />
-      <path d="M3 9.5c2.5 1.5 4.5 2.5 6.2 2.5" />
-      <path d="M14.8 12c1.7 0 3.7-1 6.2-2.5" />
-      <circle cx="12" cy="12" r="2.8" />
-      <path d="M10.8 11.2l.6 1.6l.6-1.2l.6 1.2l.6-1.6" strokeWidth={Math.max(1, stroke * 0.72)} />
-    </svg>
+    />
   );
 }
 
@@ -410,7 +401,6 @@ export default function TopupView({ lang, onToast }) {
             marginBottom: 16,
             boxShadow: '0 0 16px rgba(0, 255, 135, 0.15)'
           }}>
-            <IconBolt size={14} stroke={2.2} />
             <span>{lang === 'th' ? '✦ GOOLIX สตรีมเสียงระดับ HQ' : '✦ GOOLIX High-Fidelity Audio Core'}</span>
           </div>
 
@@ -1000,7 +990,7 @@ export default function TopupView({ lang, onToast }) {
                 boxShadow: formTab === 'voucher' ? '0 2px 8px rgba(0, 255, 135, 0.2)' : 'none'
               }}
             >
-              <IconTrueMoneyVoucher size={16} stroke={1.8} />
+              <IconTrueMoneyVoucher size={18} />
               <span>{lang === 'th' ? 'ซอง TrueMoney (สะสม 29 บาท/เดือน)' : 'TrueMoney Voucher (29 THB/Mo)'}</span>
             </button>
 
@@ -1667,7 +1657,7 @@ export default function TopupView({ lang, onToast }) {
               borderBottom: '1px solid var(--border-subtle)'
             }}>
               <div style={{ fontWeight: 800, fontSize: 15, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <IconTrueMoneyVoucher size={18} stroke={2} />
+                <IconTrueMoneyVoucher size={22} />
                 <span>{lang === 'th' ? 'วิธีสร้างซองของขวัญ TrueMoney' : 'How to Create TrueMoney Voucher'}</span>
               </div>
               <button
