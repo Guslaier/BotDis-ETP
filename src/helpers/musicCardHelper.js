@@ -46,6 +46,7 @@ function createProgressBar(currentMs, totalMs, barLength = 15) {
 }
 
 const subscriptionManager = require('../billing/subscriptionManager');
+const settingsManager = require('./settingsManager');
 const i18n = require('./i18nHelper');
 
 function createNowPlayingCard(player, track, options = {}) {
@@ -211,13 +212,22 @@ function createNowPlayingCard(player, track, options = {}) {
             .setStyle(player.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary)
     );
 
-    // Row 4: Controls outside container (Close App / Stop Player)
+    const notifDisabled = (player.disableNotifications !== undefined)
+        ? Boolean(player.disableNotifications)
+        : !settingsManager.getGuildNotifications(guildId);
+
+    // Row 4: Controls outside container (Close App / Stop Player, Toggle Notifications)
     const rowOutside = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('music_stop')
             .setEmoji('🛑')
             .setLabel(i18n.t(guildId, 'BTN_STOP'))
-            .setStyle(ButtonStyle.Danger)
+            .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+            .setCustomId('music_toggle_notifications')
+            .setEmoji(notifDisabled ? '🔔' : '🔕')
+            .setLabel(notifDisabled ? i18n.t(guildId, 'BTN_NOTIFICATIONS_ON') : i18n.t(guildId, 'BTN_NOTIFICATIONS_OFF'))
+            .setStyle(notifDisabled ? ButtonStyle.Success : ButtonStyle.Secondary)
     );
 
     const isLegacy = (process.env.CARD_STYLE === 'legacy');

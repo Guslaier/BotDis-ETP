@@ -8,6 +8,7 @@ const { createNowPlayingCard, createPreparingCard } = require('./src/helpers/mus
 const favoriteManager = require('./src/helpers/favoriteManager');
 const AdminServer = require('./src/web/AdminServer');
 const subscriptionManager = require('./src/billing/subscriptionManager');
+const settingsManager = require('./src/helpers/settingsManager');
 const i18n = require('./src/helpers/i18nHelper');
 const onboardingHelper = require('./src/helpers/onboardingHelper');
 
@@ -113,6 +114,10 @@ async function repositionNowPlayingCard(player) {
 
 function scheduleReposition(player) {
     if (!player || !player.playing || !player.queue?.current) return;
+    const notifDisabled = (player.disableNotifications !== undefined)
+        ? Boolean(player.disableNotifications)
+        : !settingsManager.getGuildNotifications(player.guildId);
+    if (notifDisabled) return;
     if (player._repositionTimeout) return;
 
     const now = Date.now();
@@ -143,6 +148,23 @@ kazagumo.on("playerStart", async (player, track) => {
         if (player._repositionTimeout) {
             clearTimeout(player._repositionTimeout);
             player._repositionTimeout = null;
+        }
+
+        const notifDisabled = (player.disableNotifications !== undefined)
+            ? Boolean(player.disableNotifications)
+            : !settingsManager.getGuildNotifications(player.guildId);
+
+        // If notifications are disabled and we already have an active card, edit it silently in-place without triggering a new message notification
+        if (notifDisabled && player.nowPlayingMessage) {
+            try {
+                const cardData = createNowPlayingCard(player, track);
+                await player.nowPlayingMessage.edit(cardData);
+                player.messagesSinceCard = 0;
+                player.lastRepositionAt = Date.now();
+                return;
+            } catch (editErr) {
+                // If message edit fails (e.g. deleted), fall through to send fresh card
+            }
         }
 
         // Delete previous card so the new track card is always at the bottom of the chat
@@ -548,6 +570,33 @@ client.on('interactionCreate', async interaction => {
                     await interaction.message?.delete().catch(() => {});
                 } catch {}
                 player.destroy();
+                return;
+            }
+            case 'music_toggle_notifications': {
+                const guildId = interaction.guildId;
+                const currentDisabled = (player.disableNotifications !== undefined)
+                    ? Boolean(player.disableNotifications)
+                    : !settingsManager.getGuildNotifications(guildId);
+
+                const nextDisabled = !currentDisabled;
+                player.disableNotifications = nextDisabled;
+                settingsManager.setGuildNotifications(guildId, !nextDisabled);
+
+                await interaction.reply({
+                    content: nextDisabled
+                        ? i18n.t(guildId, 'NOTIF_OFF_SUCCESS')
+                        : i18n.t(guildId, 'NOTIF_ON_SUCCESS'),
+                    flags: MessageFlags.Ephemeral
+                }).catch(() => {});
+
+                if (player.nowPlayingMessage && player.queue?.current) {
+                    try {
+                        const cardData = createNowPlayingCard(player, player.queue.current);
+                        await player.nowPlayingMessage.edit(cardData).catch(() => {});
+                    } catch (err) {
+                        console.error('[music_toggle_notifications] Card update error:', err.message);
+                    }
+                }
                 return;
             }
             case 'music_add_song': {

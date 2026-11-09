@@ -130,6 +130,10 @@ const dictionary = {
         BTN_AUTOPLAY_ON: 'ออโต้เพลย์: เปิด',
         BTN_AUTOPLAY_OFF: 'ออโต้เพลย์: ปิด',
         BTN_STOP: 'หยุดเล่น',
+        BTN_NOTIFICATIONS_OFF: 'Notifications off',
+        BTN_NOTIFICATIONS_ON: 'Notifications on',
+        NOTIF_OFF_SUCCESS: '🔕 ปิดการแจ้งเตือนเริ่มเพลงแล้วครับ (การ์ดจะอัปเดตแบบเงียบๆ ไม่ส่งข้อความใหม่ทุกเพลง)',
+        NOTIF_ON_SUCCESS: '🔔 เปิดการแจ้งเตือนเริ่มเพลงแล้วครับ (บอทจะส่งการ์ดแจ้งเตือนเพลงใหม่ตามปกติ)',
 
         // Card Badges & Indicators
         CARD_STAGE_TITLE: 'Cosmic Stage 🟢',
@@ -291,6 +295,10 @@ const dictionary = {
         BTN_AUTOPLAY_ON: 'Autoplay On',
         BTN_AUTOPLAY_OFF: 'Autoplay Off',
         BTN_STOP: 'Stop',
+        BTN_NOTIFICATIONS_OFF: 'Notifications off',
+        BTN_NOTIFICATIONS_ON: 'Notifications on',
+        NOTIF_OFF_SUCCESS: '🔕 Disabled track start notifications (Player card will update silently without sending new messages).',
+        NOTIF_ON_SUCCESS: '🔔 Enabled track start notifications (Bot will announce new tracks in chat).',
 
         // Card Badges & Indicators
         CARD_STAGE_TITLE: 'Cosmic Stage 🟢',

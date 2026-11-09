@@ -80,6 +80,22 @@ class SettingsManager {
         return settings.autoplay;
     }
 
+    getGuildNotifications(guildId) {
+        if (!guildId) return true;
+        const settings = this.getGuildSettings(guildId);
+        return settings.notifications !== false && !settings.disableNotifications;
+    }
+
+    setGuildNotifications(guildId, enabled) {
+        if (!guildId) return true;
+        const settings = this.getGuildSettings(guildId);
+        settings.notifications = Boolean(enabled);
+        settings.disableNotifications = !enabled;
+        this.cache.set(guildId, settings);
+        this._save();
+        return settings.notifications;
+    }
+
     getGuildLanguage(guildId, guild = null) {
         const settings = this.getGuildSettings(guildId);
         if (settings.language === 'en' || settings.language === 'th') {
