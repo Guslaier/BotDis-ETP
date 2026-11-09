@@ -991,7 +991,7 @@ export default function TopupView({ lang, onToast }) {
               }}
             >
               <IconTrueMoneyVoucher size={18} />
-              <span>{lang === 'th' ? 'ซอง TrueMoney (สะสม 29 บาท/เดือน)' : 'TrueMoney Voucher (29 THB/Mo)'}</span>
+              <span>{lang === 'th' ? 'ซอง TrueMoney' : 'TrueMoney Voucher'}</span>
             </button>
 
             <button
@@ -1016,7 +1016,7 @@ export default function TopupView({ lang, onToast }) {
               }}
             >
               <IconGift size={14} />
-              <span>{lang === 'th' ? 'โค้ดกิจกรรม (Promo Drop)' : 'Promo Drop'}</span>
+              <span>{lang === 'th' ? 'โค้ดกิจกรรม' : 'Promo Drop'}</span>
             </button>
           </div>
 
@@ -1042,7 +1042,7 @@ export default function TopupView({ lang, onToast }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <IconFlame size={15} style={{ color: 'var(--slime-green)' }} />
                         <span style={{ fontSize: 12.5, fontWeight: 700, color: '#FFFFFF' }}>
-                          {lang === 'th' ? 'หลอดสะสมยอดสนับสนุน (29 บาท = 30 วัน)' : 'Supporter Accumulation Pot (29 THB = 30 Days)'}
+                          {lang === 'th' ? 'หลอดสะสมยอดสนับสนุน' : 'Supporter Accumulation Pot'}
                         </span>
                       </div>
                       <div style={{
@@ -1286,7 +1286,7 @@ export default function TopupView({ lang, onToast }) {
                     <div style={{ display: 'flex', gap: 8 }}>
                       <input
                         type="text"
-                        placeholder={lang === 'th' ? 'เช่น REF-27641D' : 'e.g. REF-27641D'}
+                        placeholder={lang === 'th' ? 'เช่น REF-27641D หรือ VIPPLUS' : 'e.g. REF-27641D'}
                         value={referralCode}
                         onChange={(e) => {
                           const val = e.target.value.toUpperCase();
