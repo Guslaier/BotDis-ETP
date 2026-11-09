@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Modal from './Modal';
 import { IconShield, IconServer, IconDatabase, IconWifi, IconActivity, IconCpu, IconRotateClockwise, IconTrash, IconPlayerPlay, IconPlayerStop, IconPlayerSkipForward, IconSearch, IconPlus, IconBan, IconCircleCheck, IconAlertTriangle, IconSettings, IconRefresh, IconPower, IconRadio, IconAdjustments, IconExternalLink, IconUsers, IconGlobe, IconMapPin, IconCloud, IconDeviceFloppy, IconGift, IconChevronLeft, IconChevronRight, IconCalendar, IconMinus, IconArrowRight, IconEye, IconEdit, IconShare, IconToggleLeft, IconToggleRight, IconCheck, IconX, IconSparkles, IconClock } from '@tabler/icons-react';
 
 export default function AdminDashboard({ lang, token, setToken, onToast }) {
@@ -2491,20 +2492,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
 
       {/* --- BAN MODAL --- */}
       {banModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999
-        }}>
-          <div className="glass-panel" style={{ width: 420, padding: 24 }}>
+        <Modal onClose={() => setBanModal(null)}>
+          <div className="glass-panel" style={{ width: 420, maxWidth: '94vw', padding: 24, borderRadius: 16 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14, color: 'var(--danger)' }}>
               {lang === 'th' ? 'แบนเซิร์ฟเวอร์' : 'Ban Guild'}: {banModal.guildName}
             </h3>
@@ -2538,25 +2527,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* --- EDIT NODE MODAL --- */}
       {editNodeModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999
-        }}>
-          <div className="glass-panel" style={{ width: 420, padding: 24 }}>
+        <Modal onClose={() => setEditNodeModal(null)}>
+          <div className="glass-panel" style={{ width: 420, maxWidth: '94vw', padding: 24, borderRadius: 16 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>
               {lang === 'th' ? 'ตั้งค่าโหนด' : 'Configure Node'}: {editNodeModal.id}
             </h3>
@@ -2658,26 +2635,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* --- EDIT DROP MODAL --- */}
       {editDropModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999,
-          padding: 16
-        }}>
-          <div className="glass-panel" style={{ width: 440, maxWidth: '100%', padding: 24, borderRadius: 16 }}>
+        <Modal onClose={() => setEditDropModal(null)}>
+          <div className="glass-panel" style={{ width: 440, maxWidth: '94vw', padding: 24, borderRadius: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
               <div style={{
                 width: 36,
@@ -2793,26 +2757,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* --- VIEW CLAIMED GUILDS MODAL --- */}
       {viewClaimedModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999,
-          padding: 16
-        }}>
-          <div className="glass-panel" style={{ width: 560, maxWidth: '100%', padding: 24, borderRadius: 16, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+        <Modal onClose={() => setViewClaimedModal(null)}>
+          <div className="glass-panel" style={{ width: 560, maxWidth: '94vw', padding: 24, borderRadius: 16, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{
@@ -2882,26 +2833,13 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* --- RESET REFERRAL SEASON MODAL --- */}
       {resetReferralModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999,
-          padding: 16
-        }}>
-          <div className="glass-panel" style={{ width: 440, maxWidth: '100%', padding: 24, borderRadius: 16 }}>
+        <Modal onClose={() => setResetReferralModal(false)}>
+          <div className="glass-panel" style={{ width: 440, maxWidth: '94vw', padding: 24, borderRadius: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <div style={{
                 width: 38,
@@ -2961,23 +2899,11 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
       {addNodeModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999
-        }}>
-          <div className="glass-panel" style={{ width: 440, padding: 24 }}>
+        <Modal onClose={() => setAddNodeModal(false)}>
+          <div className="glass-panel" style={{ width: 440, maxWidth: '94vw', padding: 24, borderRadius: 16 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
               <IconServer size={18} style={{ color: 'var(--slime-green)' }} />
               <span>{lang === 'th' ? 'เพิ่มโหนดประมวลผลเสียงเข้าคลัสเตอร์' : 'Add Audio Node to Cluster'}</span>
@@ -3075,7 +3001,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
       {/* --- CUSTOM ADJUST DAYS MODAL --- */}
       {adjustDaysModal && (() => {
@@ -3100,21 +3026,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
         const willBeDowngraded = previewExpiry <= now;
 
         return (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999,
-            padding: 16
-          }}>
-            <div className="glass-panel" style={{ width: 480, maxWidth: '100%', padding: 24, borderRadius: 16 }}>
+          <Modal onClose={() => setAdjustDaysModal(null)}>
+            <div className="glass-panel" style={{ width: 480, maxWidth: '94vw', padding: 24, borderRadius: 16 }}>
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <div style={{
@@ -3363,7 +3276,7 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
                 </button>
               </div>
             </div>
-          </div>
+          </Modal>
         );
       })()}
     </div>

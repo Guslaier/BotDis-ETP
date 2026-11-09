@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Modal from './Modal';
 import { 
   IconSparkles, IconCircleCheck, IconAlertCircle, IconGift, IconServer, IconShieldCheck, 
   IconClock, IconArrowRight, IconCopy, IconBolt, IconMusic, IconAward,
@@ -556,7 +557,7 @@ export default function TopupView({ lang, onToast }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div className="terminal-badge">1</div>
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
-                  {lang === 'th' ? 'เซิร์ฟเวอร์เป้าหมาย (Target Guild)' : 'Target Guild (Server Selection)'}
+                  {lang === 'th' ? 'เซิร์ฟเวอร์เป้าหมาย' : 'Target Guild'}
                 </h2>
               </div>
               <span style={{
@@ -896,7 +897,7 @@ export default function TopupView({ lang, onToast }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 11, fontSize: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#FFFFFF', fontWeight: 600 }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
-                    <span>{lang === 'th' ? 'ปลดล็อกทั้งเซิร์ฟเวอร์ (ครอบคลุมทุกคน)' : 'Unlocks for whole server'}</span>
+                    <span>{lang === 'th' ? 'ปลดล็อกทั้งเซิร์ฟเวอร์' : 'Unlocks for whole server'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC' }}>
                     <IconCheck size={15} style={{ color: 'var(--slime-green)', flexShrink: 0 }} />
@@ -938,7 +939,7 @@ export default function TopupView({ lang, onToast }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div className="terminal-badge">2</div>
               <h2 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
-                {lang === 'th' ? 'ร่วมสมทบทุนค่าเซิร์ฟเวอร์ (Infrastructure Donation)' : 'Infrastructure Donation'}
+                {lang === 'th' ? 'ร่วมสมทบทุนค่าเซิร์ฟเวอร์' : 'Infrastructure Donation'}
               </h2>
             </div>
             <span style={{
@@ -1181,7 +1182,7 @@ export default function TopupView({ lang, onToast }) {
               <div style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-sub)' }}>
-                    {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney (Voucher Link)' : 'TrueMoney Voucher Link'} <span style={{ color: '#EF4444' }}>*</span>
+                    {lang === 'th' ? 'ลิงก์ซองของขวัญ TrueMoney' : 'TrueMoney Voucher Link'} <span style={{ color: '#EF4444' }}>*</span>
                   </label>
                   <button
                     type="button"
@@ -1262,22 +1263,22 @@ export default function TopupView({ lang, onToast }) {
                 </div>
 
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5 }}>
-                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" (ขั้นต่ำ 10 บาทขึ้นไป เช่น 10, 20, 29, 30 หรือ 60 บาท) ในแอป TrueMoney' : 'Set to equal amount, 1 recipient (min 10 THB, e.g. 10, 20, 29, 30 or 60 THB)'}
+                  {lang === 'th' ? 'สร้างซองของขวัญแบบ "แบ่งเท่ากัน 1 คน" ในแอป TrueMoney' : 'Set to equal amount, 1 recipient'}
                 </div>
               </div>
 
               {/* Referral Code Input */}
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>
-                  {lang === 'th' ? 'รหัสชวนเพื่อน (Referral Code - ถ้ามี)' : 'Referral Code (Optional)'}
+                  {lang === 'th' ? 'รหัสชวนเพื่อน (ถ้ามี)' : 'Referral Code (Optional)'}
                 </label>
                 {guildData?.referralConfig?.enabled === false ? (
                   <div style={{ padding: '8px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 11.5, color: 'var(--red-alert)' }}>
-                    [Paused] {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral program is temporarily paused'}
+                    {lang === 'th' ? 'แคมเปญชวนเพื่อนปิดรับสิทธิ์ชั่วคราวครับ' : 'Referral program is temporarily paused'}
                   </div>
                 ) : (guildData?.referralConfig?.expiresAt && Date.now() > guildData.referralConfig.expiresAt) ? (
                   <div style={{ padding: '8px 12px', background: 'rgba(255, 51, 75, 0.08)', border: '1px solid rgba(255, 51, 75, 0.25)', borderRadius: 8, fontSize: 11.5, color: 'var(--red-alert)' }}>
-                    [Closed] {lang === 'th'
+                    {lang === 'th'
                       ? `โปรโมชั่นโค้ดชวนเพื่อนหมดเขตแล้ว (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString('th-TH')})`
                       : `Referral promo has ended (${new Date(guildData.referralConfig.expiresAt).toLocaleDateString()})`}
                   </div>
@@ -1629,26 +1630,15 @@ export default function TopupView({ lang, onToast }) {
 
       {/* MODAL 1: HOW TO CREATE TRUEMONEY VOUCHER GUIDE */}
       {showVoucherGuideModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 1000,
-          background: 'rgba(5, 7, 12, 0.85)',
-          backdropFilter: 'blur(10px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 20
-        }} onClick={() => setShowVoucherGuideModal(false)}>
+        <Modal onClose={() => setShowVoucherGuideModal(false)}>
           <div style={{
             background: 'var(--bg-surface)',
             border: '1px solid var(--border-light)',
             borderRadius: 18,
-            width: '100%',
-            maxWidth: 520,
+            width: 'min(520px, 94vw)',
             overflow: 'hidden',
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)'
-          }} onClick={(e) => e.stopPropagation()}>
+          }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -1726,34 +1716,23 @@ export default function TopupView({ lang, onToast }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL 2: FULL TERMS OF SERVICE DIALOG */}
       {showTosModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 1000,
-          background: 'rgba(5, 7, 12, 0.85)',
-          backdropFilter: 'blur(12px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 20
-        }} onClick={() => setShowTosModal(false)}>
+        <Modal onClose={() => setShowTosModal(false)}>
           <div style={{
             background: 'var(--bg-surface)',
             border: '1px solid var(--border-light)',
             borderRadius: 18,
-            width: '100%',
-            maxWidth: 720,
-            maxHeight: '85vh',
+            width: 'min(720px, 94vw)',
+            maxHeight: '86vh',
             display: 'flex',
             flexDirection: 'column',
             boxShadow: '0 24px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 255, 135, 0.08)',
             overflow: 'hidden'
-          }} onClick={(e) => e.stopPropagation()}>
+          }}>
             {/* Modal Header */}
             <div style={{
               display: 'flex',
@@ -1915,7 +1894,7 @@ export default function TopupView({ lang, onToast }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

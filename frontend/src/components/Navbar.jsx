@@ -68,7 +68,7 @@ export default function Navbar({ mode, lang, setLang, isAdminLoggedIn, onLogout 
             </span>
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-sub)', fontWeight: 500, letterSpacing: '-0.01em', marginTop: 1 }}>
-            {isAdmin ? 'Cluster Telemetry & Node Audio Routing' : 'Cosmic Slime High-Fidelity Audio Engine'}
+            {isAdmin ? 'Cluster Telemetry & Node Audio Routing' : 'High-Fidelity Audio Engine'}
           </div>
         </div>
       </div>

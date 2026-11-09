@@ -26,7 +26,7 @@ export default function Toast({ toasts, onDismiss }) {
       position: 'fixed',
       top: 24,
       right: 24,
-      zIndex: 9999,
+      zIndex: 100000,
       display: 'flex',
       flexDirection: 'column',
       gap: 10,
