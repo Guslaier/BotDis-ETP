@@ -361,7 +361,8 @@ class AdminServer {
             const remainingDays = (sub.plan === 'SUPPORTER' && sub.expiresAt > Date.now())
                 ? Math.ceil((sub.expiresAt - Date.now()) / (24 * 3600 * 1000))
                 : 0;
-            const isAdvanceLocked = remainingDays > 60;
+            const topupCheck = subscriptionManager.canAcceptTopup(guildId);
+            const isAdvanceLocked = !topupCheck.allowed;
 
             return this._sendJson(res, 200, {
                 success: true,
@@ -375,11 +376,9 @@ class AdminServer {
                     remainingDays,
                     isAdvanceLocked,
                     isMaxStacked: isAdvanceLocked,
-                    maxAccumulatedDays: 90,
-                    maxAdvanceDays: 60,
-                    advanceLockMessage: isAdvanceLocked
-                        ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
-                        : null,
+                    maxAccumulatedDays: topupCheck.maxAccumulatedDays || 90,
+                    maxAdvanceDays: topupCheck.maxDays || 60,
+                    advanceLockMessage: isAdvanceLocked ? topupCheck.error : null,
                     balanceBaht: sub.balanceBaht || 0,
                     neededBaht: Math.max(0, (config?.price30Days || 29) - (sub.balanceBaht || 0)),
                     lastDepositAt: sub.lastDepositAt || null,
@@ -412,6 +411,15 @@ class AdminServer {
                     maxClaims: activeEarlyBird.maxClaims,
                     expiresAt: activeEarlyBird.expiresAt || null
                 } : null
+            });
+        }
+
+        if (pathname === '/api/public/campaign/active' && req.method === 'GET') {
+            const campaignManager = require('../campaigns/campaignManager');
+            const activeCampaign = campaignManager.getActiveCampaign();
+            return this._sendJson(res, 200, {
+                success: true,
+                campaign: activeCampaign
             });
         }
 
@@ -908,6 +916,9 @@ class AdminServer {
                     guilds: subsList,
                     bannedGuilds: banManager.getAllBannedGuilds(),
                     campaigns,
+                    promoDrops: campaigns,
+                    systemCampaigns: require('../campaigns/campaignManager').getAllCampaigns(),
+                    activeCampaign: require('../campaigns/campaignManager').getActiveCampaign(),
                     transactions,
                     nodes
                 });
@@ -1126,6 +1137,55 @@ class AdminServer {
 
                 const result = subscriptionManager.updateCampaign(code, updates);
                 return this._sendJson(res, result.success ? 200 : 400, result);
+            }
+
+            // --- System Campaigns Management (Dynamic Events & Launch Engine) ---
+            if (pathname === '/api/admin/system-campaigns' && req.method === 'GET') {
+                const campaignManager = require('../campaigns/campaignManager');
+                return this._sendJson(res, 200, {
+                    success: true,
+                    campaigns: campaignManager.getAllCampaigns(),
+                    activeCampaign: campaignManager.getActiveCampaign()
+                });
+            }
+
+            if (pathname === '/api/admin/system-campaigns' && req.method === 'POST') {
+                const body = await this._parseBody(req);
+                const campaignManager = require('../campaigns/campaignManager');
+                const campaign = campaignManager.createCampaign(body);
+                return this._sendJson(res, 200, { success: true, campaign });
+            }
+
+            if (pathname.startsWith('/api/admin/system-campaigns/') && pathname.endsWith('/toggle') && req.method === 'POST') {
+                const parts = pathname.split('/');
+                const id = decodeURIComponent(parts[4] || '');
+                const body = await this._parseBody(req);
+                const campaignManager = require('../campaigns/campaignManager');
+                const campaign = campaignManager.toggleCampaign(id, body.isActive);
+                if (!campaign) {
+                    return this._sendJson(res, 404, { success: false, error: 'Campaign not found' });
+                }
+                return this._sendJson(res, 200, { success: true, campaign });
+            }
+
+            if (pathname.startsWith('/api/admin/system-campaigns/') && req.method === 'PUT') {
+                const parts = pathname.split('/');
+                const id = decodeURIComponent(parts[4] || '');
+                const body = await this._parseBody(req);
+                const campaignManager = require('../campaigns/campaignManager');
+                const campaign = campaignManager.updateCampaign(id, body);
+                if (!campaign) {
+                    return this._sendJson(res, 404, { success: false, error: 'Campaign not found' });
+                }
+                return this._sendJson(res, 200, { success: true, campaign });
+            }
+
+            if (pathname.startsWith('/api/admin/system-campaigns/') && req.method === 'DELETE') {
+                const parts = pathname.split('/');
+                const id = decodeURIComponent(parts[4] || '');
+                const campaignManager = require('../campaigns/campaignManager');
+                const deleted = campaignManager.deleteCampaign(id);
+                return this._sendJson(res, 200, { success: deleted });
             }
 
             if (pathname === '/api/admin/referral/reset' && req.method === 'POST') {

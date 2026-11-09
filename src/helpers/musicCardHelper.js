@@ -86,11 +86,15 @@ function createNowPlayingCard(player, track, options = {}) {
         sourceBadge = '🟢 Spotify';
     }
 
-    const isSupporter = subscriptionManager.isSupporter(guildId);
+    const tierConfig = subscriptionManager.getTierConfig(guildId);
+    const isSupporter = tierConfig.isSupporter;
+    const isBetaTrial = tierConfig.plan === 'BETA_TRIAL';
     const bufferText = `⚡ ${i18n.t(guildId, 'CARD_BUFFERING')}`;
     const bitrateBadge = isPreparing 
         ? bufferText 
-        : (isSupporter ? `⚡ ${i18n.t(guildId, 'CARD_SUPPORTER_TIER')}` : `📻 ${i18n.t(guildId, 'CARD_STANDARD_TIER')}`);
+        : (isBetaTrial 
+            ? `⚡ ${i18n.t(guildId, 'CARD_SUPPORTER_TIER')} [✦ Beta Trial]` 
+            : (isSupporter ? `⚡ ${i18n.t(guildId, 'CARD_SUPPORTER_TIER')}` : `📻 ${i18n.t(guildId, 'CARD_STANDARD_TIER')}`));
 
     let loopBadge = `🔁 ${i18n.t(guildId, 'CARD_LOOP_OFF')}`;
     if (player.loop === 'track') loopBadge = `🔂 ${i18n.t(guildId, 'CARD_LOOP_TRACK')}`;

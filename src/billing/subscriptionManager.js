@@ -62,21 +62,39 @@ class SubscriptionManager extends EventEmitter {
     canAcceptTopup(guildId) {
         if (!guildId) return { allowed: false, error: 'กรุณาระบุรหัสเซิร์ฟเวอร์ครับ' };
         const sub = this.getGuildSubscription(guildId);
-        if (!sub) return { allowed: true, remainingDays: 0, maxDays: 60 };
+        const campaignManager = require('../campaigns/campaignManager');
+        const activeCamp = campaignManager.getActiveCampaign();
         const now = Date.now();
-        if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
+
+        const maxAccumulatedDays = activeCamp?.topupPolicy?.maxAccumulatedDays || 90;
+        const maxAdvanceDays = activeCamp ? Math.max(7, maxAccumulatedDays - 30) : 60;
+
+        if (activeCamp?.topupPolicy && activeCamp.topupPolicy.allowTopup === false) {
+            return {
+                allowed: false,
+                remainingDays: 0,
+                maxDays: maxAdvanceDays,
+                maxAccumulatedDays,
+                error: 'ระบบปิดรับการสนับสนุนชั่วคราวระหว่างช่วงแคมเปญครับ'
+            };
+        }
+
+        if (sub && sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
             const remainingDays = Math.ceil((sub.expiresAt - now) / (24 * 3600 * 1000));
-            if (remainingDays > 60) {
+            if (remainingDays > maxAdvanceDays) {
                 return {
                     allowed: false,
                     remainingDays,
-                    maxDays: 60,
-                    error: `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
+                    maxDays: maxAdvanceDays,
+                    maxAccumulatedDays,
+                    error: activeCamp
+                        ? `ขณะนี้อยู่ในช่วงทดสอบระบบ (${activeCamp.name}) เซิร์ฟเวอร์นี้มีสิทธิ์ใช้งานอยู่แล้ว จึงจำกัดการสนับสนุนล่วงหน้าสูงสุดไม่เกิน ${maxAccumulatedDays} วัน เพื่อไม่ให้เกิดภาระผูกพันระยะยาว โดยจะเปิดรับรอบใหม่เมื่อวันคงเหลือต่ำกว่า ${maxAdvanceDays} วัน`
+                        : `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน ${maxAdvanceDays} วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า ${maxAdvanceDays} วัน`
                 };
             }
-            return { allowed: true, remainingDays, maxDays: 60 };
+            return { allowed: true, remainingDays, maxDays: maxAdvanceDays, maxAccumulatedDays };
         }
-        return { allowed: true, remainingDays: 0, maxDays: 60 };
+        return { allowed: true, remainingDays: 0, maxDays: maxAdvanceDays, maxAccumulatedDays };
     }
 
     _generateReferralCode(guildId) {
@@ -132,6 +150,12 @@ class SubscriptionManager extends EventEmitter {
     }
 
     isSupporter(guildId) {
+        const campaignManager = require('../campaigns/campaignManager');
+        const activeCamp = campaignManager.getActiveCampaign();
+        if (activeCamp?.perks?.grantSupporterToAll) {
+            return true;
+        }
+
         const sub = this.getGuildSubscription(guildId);
         if (!sub) return false;
         if (sub.plan === 'SUPPORTER' && sub.expiresAt > Date.now()) {
@@ -149,9 +173,15 @@ class SubscriptionManager extends EventEmitter {
     getTierConfig(guildId) {
         const supporter = this.isSupporter(guildId);
         const sub = this.getGuildSubscription(guildId);
+        const campaignManager = require('../campaigns/campaignManager');
+        const activeCamp = campaignManager.getActiveCampaign();
+        const isTrialCampaign = Boolean(activeCamp?.perks?.grantSupporterToAll && (!sub || sub.plan !== 'SUPPORTER' || sub.expiresAt <= Date.now()));
+
         return {
             isSupporter: supporter,
-            plan: supporter ? 'SUPPORTER' : 'FREE',
+            plan: supporter ? (isTrialCampaign ? 'BETA_TRIAL' : 'SUPPORTER') : 'FREE',
+            campaignName: isTrialCampaign ? activeCamp.name : null,
+            campaignEndsAt: isTrialCampaign ? activeCamp.endsAt : null,
             expiresAt: sub ? sub.expiresAt : 0,
             referralCode: sub ? sub.referralCode : '',
             audioFilter: (supporter && sub) ? (sub.audioFilter || 'off') : 'off',
@@ -245,8 +275,14 @@ class SubscriptionManager extends EventEmitter {
         }
 
         const config = this.getConfig();
+        const campaignManager = require('../campaigns/campaignManager');
+        const activeCamp = campaignManager.getActiveCampaign();
+
         const maxFree = config.maxFreeStreams || 6;
-        const maxTotal = config.maxTotalStreams || 12;
+        let maxTotal = config.maxTotalStreams || 12;
+        if (activeCamp?.perks?.maxConcurrentRooms) {
+            maxTotal = activeCamp.perks.maxConcurrentRooms;
+        }
 
         const isSupporter = this.isSupporter(guildId);
         const stats = this.getLiveStreamStats(kazagumo, client);
@@ -256,7 +292,9 @@ class SubscriptionManager extends EventEmitter {
                 return {
                     allowed: false,
                     reason: 'CLUSTER_FULL',
-                    message: 'ขณะนี้ช่องสัญญาณเซิร์ฟเวอร์เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่อีกครั้งครับ'
+                    message: activeCamp?.perks?.grantSupporterToAll
+                        ? `ขณะนี้มีห้องเปิดใช้งานครบโควตาทดสอบ ${maxTotal} ห้องพร้อมกันแล้ว กรุณารอสักครู่แล้วลองใหม่อีกครั้งครับ`
+                        : 'ขณะนี้ช่องสัญญาณเซิร์ฟเวอร์เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่อีกครั้งครับ'
                 };
             }
             return { allowed: true, slotType: 'SUPPORTER_PRIORITY' };
@@ -329,19 +367,8 @@ class SubscriptionManager extends EventEmitter {
         sub.updatedAt = now;
 
         if (cyclesUnlocked > 0) {
-            if (sub.plan === 'SUPPORTER' && sub.expiresAt > now) {
-                sub.expiresAt += addedMs;
-            } else {
-                sub.expiresAt = now + addedMs;
-            }
-
-            // Lock maximum accumulated subscription ceiling to 90 days (3 months / 3 billing cycles)
-            const MAX_ACCUMULATED_DAYS = 90;
-            const maxDurationMs = MAX_ACCUMULATED_DAYS * 24 * 3600 * 1000;
-            if (sub.expiresAt > now + maxDurationMs) {
-                sub.expiresAt = now + maxDurationMs;
-            }
-
+            const campaignManager = require('../campaigns/campaignManager');
+            sub.expiresAt = campaignManager.calculateNewExpiry(sub.expiresAt, cyclesUnlocked, now);
             sub.plan = 'SUPPORTER';
             sub.source = isSandbox ? 'SANDBOX_DONATION' : 'DONATION';
             sub.warned3Days = false;

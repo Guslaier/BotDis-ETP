@@ -97,6 +97,188 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
   const hasInitializedFeaturesRef = useRef(false);
   const isFeaturesDirtyRef = useRef(false);
 
+  // Dynamic System Campaigns State
+  const [campaignModal, setCampaignModal] = useState(null); // null | { mode: 'create' | 'edit', campaign: obj }
+  const [campForm, setCampForm] = useState({
+    id: '',
+    name: '',
+    isActive: true,
+    startsAt: '',
+    endsAt: '',
+    grantSupporterToAll: true,
+    maxConcurrentRooms: 50,
+    allowTopup: true,
+    expiryPolicy: 'deferred_stack',
+    fixedTargetDate: '',
+    maxAccumulatedDays: 37,
+    badgeText: '✦ BETA LAUNCH',
+    bannerTitle: '✦ GOOLIX ฉลองเปิดตัว! ปลดล็อก SUPPORTER ให้ลองฟรีทุกเซิร์ฟ',
+    bannerSubtitle: 'มาเปิดให้ลองของจริงกันก่อน! จัดเต็ม หน้า UI คุมเพลงสวยๆ กดง่ายไม่ต้องพิมพ์คำสั่งบ่อย, อัดคิวเพลงยาวๆ, แล้วก็ เล่นตรงจากลิงก์ 100% เพลงไม่เพี้ยน ไม่สลับเวอร์ชัน แน่นอน ฟังฟรีได้เลย 7 วันเต็ม',
+    infoPoint1: 'จำกัด 50 ห้องพร้อมกันนะ: ช่วงนี้เปิดเพื่อเทสระบบ ดูว่าเซิร์ฟรับไหวแค่ไหน เลยจำกัดให้เปิดพร้อมกันได้มากสุด 50 ห้อง ณ ช่วงเวลานั้น ถ้าเต็มอาจจะต้องรอคิวแป๊บนึง',
+    infoPoint2: 'ครบ 7 วันแล้วเป็นไงต่อ?: ระบบจะเปิดห้องสายฟรีให้ใช้งานตามปกติ ส่วนสิทธิ์ SUPPORTER กับช่อง Priority ลัดคิว จะกลับไปเป็นของคนที่ร่วมโดเนทช่วยค่าเซิร์ฟตามเดิม',
+    infoPoint3: 'ช่วยกันดันได้นะ: ถ้าชอบบอทตัวนี้ แล้วมีคนช่วยโดเนทซัพพอร์ตมากพอจนเซิร์ฟเวอร์อยู่รอด เดี๋ยวเราเอาเงินไปเปิดโหนดเพิ่ม แล้วขยายห้องให้สายฟรีได้ฟังกันเยอะขึ้นอีกแน่นอน!',
+    showCountdown: true
+  });
+  const [savingCampaign, setSavingCampaign] = useState(false);
+
+  const handleOpenCreateCampaign = () => {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const toLocalIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    
+    setCampForm({
+      id: `camp-${Date.now().toString(36)}`,
+      name: 'GOOLIX Grand Launch Beta (7 Days Free Supporter)',
+      isActive: true,
+      startsAt: toLocalIso(now),
+      endsAt: toLocalIso(new Date(now.getTime() + 7 * 24 * 3600 * 1000)),
+      grantSupporterToAll: true,
+      maxConcurrentRooms: 50,
+      allowTopup: true,
+      expiryPolicy: 'deferred_stack',
+      fixedTargetDate: '',
+      maxAccumulatedDays: 37,
+      badgeText: '✦ BETA LAUNCH',
+      bannerTitle: '✦ GOOLIX ฉลองเปิดตัว! ปลดล็อก SUPPORTER ให้ลองฟรีทุกเซิร์ฟ',
+      bannerSubtitle: 'มาเปิดให้ลองของจริงกันก่อน! จัดเต็ม หน้า UI คุมเพลงสวยๆ กดง่ายไม่ต้องพิมพ์คำสั่งบ่อย, อัดคิวเพลงยาวๆ, แล้วก็ เล่นตรงจากลิงก์ 100% เพลงไม่เพี้ยน ไม่สลับเวอร์ชัน แน่นอน ฟังฟรีได้เลย 7 วันเต็ม',
+      infoPoint1: 'จำกัด 50 ห้องพร้อมกันนะ: ช่วงนี้เปิดเพื่อเทสระบบ ดูว่าเซิร์ฟรับไหวแค่ไหน เลยจำกัดให้เปิดพร้อมกันได้มากสุด 50 ห้อง ณ ช่วงเวลานั้น ถ้าเต็มอาจจะต้องรอคิวแป๊บนึง',
+      infoPoint2: 'ครบ 7 วันแล้วเป็นไงต่อ?: ระบบจะเปิดห้องสายฟรีให้ใช้งานตามปกติ ส่วนสิทธิ์ SUPPORTER กับช่อง Priority ลัดคิว จะกลับไปเป็นของคนที่ร่วมโดเนทช่วยค่าเซิร์ฟตามเดิม',
+      infoPoint3: 'ช่วยกันดันได้นะ: ถ้าชอบบอทตัวนี้ แล้วมีคนช่วยโดเนทซัพพอร์ตมากพอจนเซิร์ฟเวอร์อยู่รอด เดี๋ยวเราเอาเงินไปเปิดโหนดเพิ่ม แล้วขยายห้องให้สายฟรีได้ฟังกันเยอะขึ้นอีกแน่นอน!',
+      showCountdown: true
+    });
+    setCampaignModal({ mode: 'create' });
+  };
+
+  const handleOpenEditCampaign = (camp) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    const toLocalIso = (timestamp) => {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    setCampForm({
+      id: camp.id,
+      name: camp.name || '',
+      isActive: camp.isActive !== false,
+      startsAt: toLocalIso(camp.startsAt),
+      endsAt: toLocalIso(camp.endsAt),
+      grantSupporterToAll: Boolean(camp.perks?.grantSupporterToAll),
+      maxConcurrentRooms: camp.perks?.maxConcurrentRooms || 50,
+      allowTopup: camp.topupPolicy?.allowTopup !== false,
+      expiryPolicy: camp.topupPolicy?.expiryPolicy || 'deferred_stack',
+      fixedTargetDate: toLocalIso(camp.topupPolicy?.fixedTargetDate),
+      maxAccumulatedDays: camp.topupPolicy?.maxAccumulatedDays || 37,
+      badgeText: camp.announcement?.badgeText || '✦ CAMPAIGN',
+      bannerTitle: camp.announcement?.bannerTitle || '',
+      bannerSubtitle: camp.announcement?.bannerSubtitle || '',
+      infoPoint1: camp.announcement?.infoPoints?.[0] || '',
+      infoPoint2: camp.announcement?.infoPoints?.[1] || '',
+      infoPoint3: camp.announcement?.infoPoints?.[2] || '',
+      showCountdown: camp.announcement?.showCountdown !== false
+    });
+    setCampaignModal({ mode: 'edit', campaign: camp });
+  };
+
+  const handleSaveCampaign = async (e) => {
+    if (e) e.preventDefault();
+    setSavingCampaign(true);
+    try {
+      const payload = {
+        id: campForm.id,
+        name: campForm.name,
+        isActive: campForm.isActive,
+        startsAt: campForm.startsAt ? new Date(campForm.startsAt).getTime() : Date.now(),
+        endsAt: campForm.endsAt ? new Date(campForm.endsAt).getTime() : Date.now() + 7 * 24 * 3600 * 1000,
+        perks: {
+          grantSupporterToAll: campForm.grantSupporterToAll,
+          maxConcurrentRooms: parseInt(campForm.maxConcurrentRooms, 10) || 50
+        },
+        topupPolicy: {
+          allowTopup: campForm.allowTopup,
+          expiryPolicy: campForm.expiryPolicy,
+          fixedTargetDate: campForm.fixedTargetDate ? new Date(campForm.fixedTargetDate).getTime() : null,
+          maxAccumulatedDays: parseInt(campForm.maxAccumulatedDays, 10) || 37
+        },
+        announcement: {
+          badgeText: campForm.badgeText,
+          bannerTitle: campForm.bannerTitle,
+          bannerSubtitle: campForm.bannerSubtitle,
+          infoPoints: [campForm.infoPoint1, campForm.infoPoint2, campForm.infoPoint3].filter(Boolean),
+          showCountdown: campForm.showCountdown
+        }
+      };
+
+      const isEdit = campaignModal?.mode === 'edit';
+      const url = isEdit ? `/api/admin/system-campaigns/${encodeURIComponent(campForm.id)}` : '/api/admin/system-campaigns';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'สำเร็จ' : 'Success', lang === 'th' ? 'บันทึกข้อมูลแคมเปญเรียบร้อยแล้ว' : 'Campaign saved successfully');
+        setCampaignModal(null);
+        fetchData();
+      } else {
+        onToast('error', lang === 'th' ? 'เกิดข้อผิดพลาด' : 'Error', resJson.error || 'Failed to save');
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    } finally {
+      setSavingCampaign(false);
+    }
+  };
+
+  const handleToggleCampaign = async (id, currentIsActive) => {
+    try {
+      const res = await fetch(`/api/admin/system-campaigns/${encodeURIComponent(id)}/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ isActive: !currentIsActive })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'สำเร็จ' : 'Success', !currentIsActive ? (lang === 'th' ? 'เปิดใช้งานแคมเปญแล้ว' : 'Campaign activated') : (lang === 'th' ? 'ปิดการใช้งานแคมเปญแล้ว' : 'Campaign deactivated'));
+        fetchData();
+      } else {
+        onToast('error', 'Error', resJson.error || 'Failed to toggle');
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
+  const handleDeleteCampaign = async (id, name) => {
+    if (!window.confirm(lang === 'th' ? `คุณแน่ใจหรือไม่ว่าต้องการลบแคมเปญ "${name}"?` : `Are you sure you want to delete campaign "${name}"?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/system-campaigns/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        onToast('success', lang === 'th' ? 'สำเร็จ' : 'Success', lang === 'th' ? 'ลบแคมเปญเรียบร้อยแล้ว' : 'Campaign deleted');
+        fetchData();
+      } else {
+        onToast('error', 'Error', resJson.error || 'Failed to delete');
+      }
+    } catch (err) {
+      onToast('error', 'Error', err.message);
+    }
+  };
+
   const fetchData = async () => {
     if (!token) return;
     try {
@@ -842,7 +1024,8 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           { id: 'nodes', label: lang === 'th' ? 'โหนดประมวลผลเสียง (Cluster)' : 'Audio Nodes', icon: <IconServer size={15} /> },
           { id: 'streams', label: `${lang === 'th' ? 'ห้องที่กำลังเล่น' : 'Live Streams'} (${data?.players?.length || 0})`, icon: <IconRadio size={15} /> },
           { id: 'guilds', label: lang === 'th' ? 'จัดการเซิร์ฟเวอร์ (Subscriptions)' : 'Guilds', icon: <IconShield size={15} /> },
-          { id: 'drops', label: lang === 'th' ? 'แคมเปญ Early-Bird' : 'Drops', icon: <IconPlus size={15} /> },
+          { id: 'campaigns', label: lang === 'th' ? 'ระบบแคมเปญ & เปิดตัว (Campaigns)' : 'Campaigns', icon: <IconSparkles size={15} /> },
+          { id: 'drops', label: lang === 'th' ? 'แจกโค้ด (Promo Drops)' : 'Promo Drops', icon: <IconPlus size={15} /> },
           { id: 'tx', label: lang === 'th' ? 'ประวัติธุรกรรม (Audit Log)' : 'Transactions', icon: <IconActivity size={15} /> },
           { id: 'settings', label: lang === 'th' ? 'ตั้งค่าระบบ (Settings)' : 'Settings', icon: <IconSettings size={15} /> }
         ].map(t => (
@@ -1595,6 +1778,278 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           </div>
         </div>
       )}
+
+      {/* --- TAB: DYNAMIC EVENTS & SYSTEM CAMPAIGNS --- */}
+      {activeSubTab === 'campaigns' && (() => {
+        const campaigns = data?.systemCampaigns || [];
+        const now = Date.now();
+        const activeCamp = campaigns.find(c => c.isActive && now >= c.startsAt && now <= c.endsAt);
+
+        const formatDt = (ts) => {
+          if (!ts) return '-';
+          const d = new Date(ts);
+          return `${d.toLocaleDateString(lang === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        };
+
+        const getStatusBadge = (c) => {
+          if (!c.isActive) {
+            return <span className="slime-badge" style={{ background: 'rgba(100, 116, 139, 0.2)', color: '#94A3B8', border: '1px solid rgba(100, 116, 139, 0.4)' }}>{lang === 'th' ? 'ปิดใช้งาน' : 'Disabled'}</span>;
+          }
+          if (now < c.startsAt) {
+            return <span className="slime-badge slime-badge-warning">{lang === 'th' ? 'ตั้งเวลาล่วงหน้า' : 'Scheduled'}</span>;
+          }
+          if (now > c.endsAt) {
+            return <span className="slime-badge slime-badge-danger">{lang === 'th' ? 'สิ้นสุดแล้ว' : 'Ended'}</span>;
+          }
+          return <span className="slime-badge" style={{ background: 'rgba(0, 255, 136, 0.15)', color: 'var(--slime-green)', border: '1px solid rgba(0, 255, 136, 0.4)' }}>{lang === 'th' ? 'กำลังทำงาน' : 'Active'}</span>;
+        };
+
+        return (
+          <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* 1. Header & Actions */}
+            <div className="glass-panel" style={{ padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    background: 'rgba(0, 255, 136, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--slime-green)'
+                  }}>
+                    <IconSparkles size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: '#FFF' }}>
+                      {lang === 'th' ? 'ระบบแคมเปญ & จัดการการเปิดตัว (Dynamic Events & Launch)' : 'System Campaigns & Launch Engine'}
+                    </h3>
+                    <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                      {lang === 'th'
+                        ? 'สร้างและควบคุมแคมเปญเปิดตัว ปลดล็อกสิทธิ์ทดลองฟรี คุมเพดานห้องสตรีม และนโยบายวันหมดอายุ'
+                        : 'Manage launch events, free trials, concurrent room quotas, and dynamic topup expiry policies'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <button
+                    onClick={handleOpenCreateCampaign}
+                    className="btn btn-sm btn-primary"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700 }}
+                  >
+                    <IconPlus size={15} />
+                    <span>{lang === 'th' ? 'สร้างแคมเปญใหม่' : 'Create Campaign'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Active Campaign Status Card */}
+            {activeCamp ? (
+              <div className="glass-panel" style={{
+                padding: 22,
+                border: '1px solid rgba(0, 255, 136, 0.45)',
+                boxShadow: '0 0 25px rgba(0, 255, 136, 0.08)',
+                background: 'linear-gradient(180deg, rgba(0, 255, 136, 0.05) 0%, rgba(17, 24, 39, 0.7) 100%)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 14, marginBottom: 16 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <span className="slime-badge" style={{ background: 'rgba(0, 255, 136, 0.2)', color: 'var(--slime-green)', border: '1px solid var(--slime-green)', fontWeight: 800 }}>
+                        {activeCamp.announcement?.badgeText || '✦ ACTIVE CAMPAIGN'}
+                      </span>
+                      <span style={{ fontSize: 11, color: 'var(--text-sub)' }}>ID: {activeCamp.id}</span>
+                    </div>
+                    <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+                      {activeCamp.name}
+                    </h2>
+                    <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 4, maxWidth: 700 }}>
+                      {activeCamp.announcement?.bannerSubtitle || 'ไม่มีรายละเอียด'}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      onClick={() => handleToggleCampaign(activeCamp.id, activeCamp.isActive)}
+                      className="btn btn-sm"
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        color: '#EF4444',
+                        fontWeight: 700,
+                        padding: '7px 14px'
+                      }}
+                      title="Kill Switch"
+                    >
+                      <IconPower size={14} />
+                      <span>{lang === 'th' ? 'ปิดแคมเปญทันที (Kill Switch)' : 'Kill Switch'}</span>
+                    </button>
+                    <button
+                      onClick={() => handleOpenEditCampaign(activeCamp)}
+                      className="btn btn-sm"
+                      style={{ padding: '7px 14px' }}
+                    >
+                      <IconEdit size={14} />
+                      <span>{lang === 'th' ? 'แก้ไข' : 'Edit'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Specs Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: 12,
+                  padding: 14,
+                  borderRadius: 12,
+                  background: 'rgba(10, 15, 25, 0.6)',
+                  border: '1px solid var(--card-border)'
+                }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{lang === 'th' ? 'สิทธิ์ SUPPORTER' : 'Supporter Perks'}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: activeCamp.perks?.grantSupporterToAll ? 'var(--slime-green)' : '#FFF' }}>
+                      {activeCamp.perks?.grantSupporterToAll ? (lang === 'th' ? 'ปลดล็อกทุกเซิร์ฟเวอร์ (Free for All)' : 'Free for All Servers') : (lang === 'th' ? 'เฉพาะผู้ร่วมโดเนท' : 'Standard')}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{lang === 'th' ? 'เพดานห้องพร้อมกัน' : 'Max Concurrent Rooms'}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#38BDF8' }}>
+                      {activeCamp.perks?.maxConcurrentRooms || 50} {lang === 'th' ? 'ห้องทั่วระบบ' : 'Rooms Total'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{lang === 'th' ? 'นโยบายวันหมดอายุ' : 'Expiry Policy'}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#FBBF24' }}>
+                      {activeCamp.topupPolicy?.expiryPolicy === 'deferred_stack'
+                        ? (lang === 'th' ? 'Deferred Stack (นับต่อจากวันจบแคมเปญ)' : 'Deferred Stack')
+                        : (activeCamp.topupPolicy?.expiryPolicy === 'fixed_target'
+                          ? (lang === 'th' ? 'Fixed Target (ตัดจบตามวันที่กำหนด)' : 'Fixed Target')
+                          : (lang === 'th' ? 'Standard (ทบปกติ)' : 'Standard'))}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{lang === 'th' ? 'เพดานสะสมสูงสุด' : 'Max Accumulated Days'}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#FFF' }}>
+                      {activeCamp.topupPolicy?.maxAccumulatedDays || 37} {lang === 'th' ? 'วัน' : 'days'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{lang === 'th' ? 'ระยะเวลาแคมเปญ' : 'Campaign Duration'}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#E2E8F0' }}>
+                      {formatDt(activeCamp.startsAt)} - {formatDt(activeCamp.endsAt)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="glass-panel" style={{ padding: '24px 20px', textAlign: 'center', border: '1px dashed var(--card-border)' }}>
+                <div style={{ color: 'var(--text-sub)', fontSize: 13.5 }}>
+                  {lang === 'th'
+                    ? 'ขณะนี้ไม่มีแคมเปญที่เปิดใช้งานอยู่ — ระบบกำลังทำงานในโหมดปกติ (Standard Mode โควตาปกติ)'
+                    : 'No active campaign running — the system is currently operating in Standard Mode.'}
+                </div>
+              </div>
+            )}
+
+            {/* 3. All Campaigns List Table */}
+            <div className="glass-panel" style={{ padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h4 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: '#FFF' }}>
+                  {lang === 'th' ? 'รายการแคมเปญทั้งหมด' : 'All Campaigns'} ({campaigns.length})
+                </h4>
+              </div>
+
+              {campaigns.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-dim)', fontSize: 13 }}>
+                  {lang === 'th' ? 'ยังไม่มีข้อมูลแคมเปญ' : 'No campaigns created yet'}
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="custom-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>{lang === 'th' ? 'ชื่อแคมเปญ' : 'Campaign Name'}</th>
+                        <th>{lang === 'th' ? 'สถานะ' : 'Status'}</th>
+                        <th>{lang === 'th' ? 'ระยะเวลา' : 'Timeframe'}</th>
+                        <th>{lang === 'th' ? 'สิทธิ์ / โควตาห้อง' : 'Perks & Rooms'}</th>
+                        <th>{lang === 'th' ? 'นโยบายเติมเงิน' : 'Topup Rules'}</th>
+                        <th style={{ textAlign: 'right' }}>{lang === 'th' ? 'จัดการ' : 'Actions'}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {campaigns.map(c => (
+                        <tr key={c.id}>
+                          <td>
+                            <div style={{ fontWeight: 700, color: '#FFF', fontSize: 13 }}>{c.name}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'monospace' }}>{c.id}</div>
+                          </td>
+                          <td>{getStatusBadge(c)}</td>
+                          <td style={{ fontSize: 12, color: 'var(--text-sub)', whiteSpace: 'nowrap' }}>
+                            <div>{formatDt(c.startsAt)}</div>
+                            <div style={{ color: 'var(--text-dim)' }}>ถึง {formatDt(c.endsAt)}</div>
+                          </td>
+                          <td style={{ fontSize: 12 }}>
+                            <div style={{ color: c.perks?.grantSupporterToAll ? 'var(--slime-green)' : '#94A3B8' }}>
+                              {c.perks?.grantSupporterToAll ? (lang === 'th' ? 'ปลด Supporter ทุกเซิร์ฟ' : 'Supporter for All') : (lang === 'th' ? 'โหมดปกติ' : 'Standard')}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#38BDF8' }}>
+                              {c.perks?.maxConcurrentRooms || 50} {lang === 'th' ? 'ห้องพร้อมกัน' : 'rooms cap'}
+                            </div>
+                          </td>
+                          <td style={{ fontSize: 12, color: '#E2E8F0' }}>
+                            <div>
+                              <span style={{ color: '#FBBF24', fontWeight: 600 }}>{c.topupPolicy?.expiryPolicy || 'deferred_stack'}</span>
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                              {lang === 'th' ? `เพดาน ${c.topupPolicy?.maxAccumulatedDays || 37} วัน` : `Cap ${c.topupPolicy?.maxAccumulatedDays || 37}d`}
+                            </div>
+                          </td>
+                          <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => handleToggleCampaign(c.id, c.isActive)}
+                                className="btn btn-sm"
+                                style={{
+                                  padding: '5px 10px',
+                                  fontSize: 11,
+                                  color: c.isActive ? 'var(--slime-green)' : 'var(--text-dim)',
+                                  background: c.isActive ? 'rgba(0, 255, 136, 0.1)' : 'rgba(255, 255, 255, 0.05)'
+                                }}
+                                title={c.isActive ? 'Disable' : 'Enable'}
+                              >
+                                {c.isActive ? <IconToggleRight size={16} /> : <IconToggleLeft size={16} />}
+                              </button>
+                              <button
+                                onClick={() => handleOpenEditCampaign(c)}
+                                className="btn btn-sm"
+                                style={{ padding: '5px 10px', fontSize: 11 }}
+                                title="Edit"
+                              >
+                                <IconEdit size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCampaign(c.id, c.name)}
+                                className="btn btn-sm"
+                                style={{ padding: '5px 10px', fontSize: 11, color: '#EF4444' }}
+                                title="Delete"
+                              >
+                                <IconTrash size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* --- TAB 4: CAMPAIGNS & PROMOTIONS (REFERRAL + EARLY-BIRD DROPS) --- */}
       {activeSubTab === 'drops' && (() => {
@@ -3279,6 +3734,310 @@ export default function AdminDashboard({ lang, token, setToken, onToast }) {
           </Modal>
         );
       })()}
+
+      {/* --- SYSTEM CAMPAIGN CREATE / EDIT MODAL --- */}
+      {campaignModal && (
+        <Modal onClose={() => setCampaignModal(null)}>
+          <div className="glass-panel" style={{ width: 680, maxWidth: '95vw', padding: 24, borderRadius: 16, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, borderBottom: '1px solid var(--card-border)', paddingBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: 'rgba(0, 255, 136, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--slime-green)'
+                }}>
+                  <IconSparkles size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#FFF' }}>
+                    {campaignModal.mode === 'edit'
+                      ? (lang === 'th' ? 'แก้ไขแคมเปญ' : 'Edit Campaign')
+                      : (lang === 'th' ? 'สร้างแคมเปญใหม่' : 'Create Campaign')}
+                  </h3>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 2 }}>
+                    ID: <span style={{ fontFamily: 'monospace', color: 'var(--slime-green)' }}>{campForm.id}</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCampaignModal(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-sub)', cursor: 'pointer', padding: 4 }}
+              >
+                <IconX size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCampaign} style={{ overflowY: 'auto', flex: 1, paddingRight: 4, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* 1. Basic Info */}
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--slime-green)', display: 'block', marginBottom: 8 }}>
+                  1. {lang === 'th' ? 'ข้อมูลแคมเปญทั่วไป' : 'General Info'}
+                </label>
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                    {lang === 'th' ? 'ชื่อแคมเปญ' : 'Campaign Name'}
+                  </label>
+                  <input
+                    type="text"
+                    className="custom-input"
+                    value={campForm.name}
+                    onChange={(e) => setCampForm({ ...campForm, name: e.target.value })}
+                    placeholder="เช่น GOOLIX Grand Launch Beta"
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                      {lang === 'th' ? 'วันและเวลาเริ่มต้น' : 'Starts At'}
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="custom-input"
+                      value={campForm.startsAt}
+                      onChange={(e) => setCampForm({ ...campForm, startsAt: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                      {lang === 'th' ? 'วันและเวลาสิ้นสุด' : 'Ends At'}
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="custom-input"
+                      value={campForm.endsAt}
+                      onChange={(e) => setCampForm({ ...campForm, endsAt: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    id="campIsActive"
+                    checked={campForm.isActive}
+                    onChange={(e) => setCampForm({ ...campForm, isActive: e.target.checked })}
+                    style={{ accentColor: 'var(--slime-green)' }}
+                  />
+                  <label htmlFor="campIsActive" style={{ fontSize: 12, color: '#FFF', cursor: 'pointer' }}>
+                    {lang === 'th' ? 'เปิดใช้งานแคมเปญนี้ทันที (Active)' : 'Enable this campaign now (Active)'}
+                  </label>
+                </div>
+              </div>
+
+              {/* 2. Perks & Scaling */}
+              <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 14 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--slime-green)', display: 'block', marginBottom: 8 }}>
+                  2. {lang === 'th' ? 'สิทธิ์การใช้งาน & เพดานห้อง (Perks & Scaling)' : 'Perks & Scaling'}
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--card-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <input
+                        type="checkbox"
+                        id="campGrantSupporter"
+                        checked={campForm.grantSupporterToAll}
+                        onChange={(e) => setCampForm({ ...campForm, grantSupporterToAll: e.target.checked })}
+                        style={{ accentColor: 'var(--slime-green)' }}
+                      />
+                      <label htmlFor="campGrantSupporter" style={{ fontSize: 12, fontWeight: 700, color: '#FFF', cursor: 'pointer' }}>
+                        {lang === 'th' ? 'แจก SUPPORTER ฟรีทุกเซิร์ฟ' : 'Grant Supporter to All'}
+                      </label>
+                    </div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-dim)', paddingLeft: 22 }}>
+                      {lang === 'th' ? 'ปลดล็อกคิว 100 เพลง, HQ Audio ให้ทุกกิลด์โดยไม่ต้องเติมเงิน' : 'Unlocks 100-queue and HQ for all servers'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                      {lang === 'th' ? 'จำกัดห้องพร้อมกันทั้งระบบ (Max Rooms)' : 'Max Concurrent Rooms'}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="custom-input"
+                      value={campForm.maxConcurrentRooms}
+                      onChange={(e) => setCampForm({ ...campForm, maxConcurrentRooms: e.target.value })}
+                      required
+                    />
+                    <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginTop: 4 }}>
+                      {lang === 'th' ? 'เพดานห้องสตรีมรวมช่วงทดสอบ เช่น 50 ห้อง' : 'Cluster room cap, e.g. 50'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Topup & Expiry Rules */}
+              <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 14 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--slime-green)', display: 'block', marginBottom: 8 }}>
+                  3. {lang === 'th' ? 'นโยบายการเติมเงิน & วันหมดอายุ (Topup Policy)' : 'Topup Policy'}
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                      {lang === 'th' ? 'รูปแบบการคำนวณวันหมดอายุ (Expiry Policy)' : 'Expiry Policy'}
+                    </label>
+                    <select
+                      className="custom-input"
+                      value={campForm.expiryPolicy}
+                      onChange={(e) => setCampForm({ ...campForm, expiryPolicy: e.target.value })}
+                    >
+                      <option value="deferred_stack">Deferred Stack (นับต่อจากวันสิ้นสุดแคมเปญ)</option>
+                      <option value="fixed_target">Fixed Target (ตัดจบตามวันที่กำหนด)</option>
+                      <option value="standard">Standard (ทบปกติ)</option>
+                    </select>
+                    <div style={{ fontSize: 10.5, color: '#FBBF24', marginTop: 4 }}>
+                      {campForm.expiryPolicy === 'deferred_stack'
+                        ? (lang === 'th' ? 'เติมช่วงนี้ 30 วัน จะเริ่มนับต่อจากวันที่ 7 ฟรี (ได้ 7+30 = 37 วัน ไม่กินสิทธิ์ฟรี)' : 'Stacks after trial ends')
+                        : (campForm.expiryPolicy === 'fixed_target'
+                          ? (lang === 'th' ? 'วันหมดอายุจะถูกล็อกให้สิ้นสุด ณ วันที่กำหนดของรอบนี้' : 'Snaps to designated end date')
+                          : (lang === 'th' ? 'ทบวันตามเวลาปัจจุบันตามปกติ' : 'Normal stacking'))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                      {lang === 'th' ? 'เพดานสะสมวันสูงสุด (Max Accumulated Days)' : 'Max Days Cap'}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="custom-input"
+                      value={campForm.maxAccumulatedDays}
+                      onChange={(e) => setCampForm({ ...campForm, maxAccumulatedDays: e.target.value })}
+                      required
+                    />
+                    <div style={{ fontSize: 10.5, color: 'var(--text-dim)', marginTop: 4 }}>
+                      {lang === 'th' ? 'เช่น 37 วัน (7 วันฟรี + 30 วันเติม)' : 'e.g. 37 days'}
+                    </div>
+                  </div>
+                </div>
+
+                {campForm.expiryPolicy === 'fixed_target' && (
+                  <div style={{ marginTop: 10 }}>
+                    <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                      {lang === 'th' ? 'วันที่กำหนดตัดจบ (Fixed Target Date)' : 'Fixed Target Date'}
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="custom-input"
+                      value={campForm.fixedTargetDate}
+                      onChange={(e) => setCampForm({ ...campForm, fixedTargetDate: e.target.value })}
+                      required={campForm.expiryPolicy === 'fixed_target'}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 4. Announcement Banner (Public Web) */}
+              <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 14 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--slime-green)', display: 'block', marginBottom: 8 }}>
+                  4. {lang === 'th' ? 'ข้อความประชาสัมพันธ์หน้าเว็บ (Public Announcement)' : 'Announcement'}
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10, marginBottom: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                      {lang === 'th' ? 'ข้อความ Badge' : 'Badge Text'}
+                    </label>
+                    <input
+                      type="text"
+                      className="custom-input"
+                      value={campForm.badgeText}
+                      onChange={(e) => setCampForm({ ...campForm, badgeText: e.target.value })}
+                      placeholder="✦ BETA LAUNCH"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                      {lang === 'th' ? 'พาดหัวแบนเนอร์ (Banner Title)' : 'Banner Title'}
+                    </label>
+                    <input
+                      type="text"
+                      className="custom-input"
+                      value={campForm.bannerTitle}
+                      onChange={(e) => setCampForm({ ...campForm, bannerTitle: e.target.value })}
+                      placeholder="✦ GOOLIX ฉลองเปิดตัว! ปลดล็อก SUPPORTER ให้ลองฟรีทุกเซิร์ฟ"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 10 }}>
+                  <label style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
+                    {lang === 'th' ? 'คำอธิบายแบนเนอร์ (Banner Subtitle)' : 'Banner Subtitle'}
+                  </label>
+                  <textarea
+                    className="custom-input"
+                    rows="2"
+                    value={campForm.bannerSubtitle}
+                    onChange={(e) => setCampForm({ ...campForm, bannerSubtitle: e.target.value })}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 11, color: 'var(--text-sub)' }}>
+                    {lang === 'th' ? 'จุดเด่น 3 ข้อ (Info Bullet Points)' : '3 Bullet Points'}
+                  </label>
+                  <input
+                    type="text"
+                    className="custom-input"
+                    value={campForm.infoPoint1}
+                    onChange={(e) => setCampForm({ ...campForm, infoPoint1: e.target.value })}
+                    placeholder="ข้อ 1: เช่น จำกัด 50 ห้องพร้อมกันนะ..."
+                  />
+                  <input
+                    type="text"
+                    className="custom-input"
+                    value={campForm.infoPoint2}
+                    onChange={(e) => setCampForm({ ...campForm, infoPoint2: e.target.value })}
+                    placeholder="ข้อ 2: เช่น ครบ 7 วันแล้วเป็นไงต่อ?..."
+                  />
+                  <input
+                    type="text"
+                    className="custom-input"
+                    value={campForm.infoPoint3}
+                    onChange={(e) => setCampForm({ ...campForm, infoPoint3: e.target.value })}
+                    placeholder="ข้อ 3: เช่น ช่วยกันดันได้นะ..."
+                  />
+                </div>
+
+                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    id="campShowCountdown"
+                    checked={campForm.showCountdown}
+                    onChange={(e) => setCampForm({ ...campForm, showCountdown: e.target.checked })}
+                    style={{ accentColor: 'var(--slime-green)' }}
+                  />
+                  <label htmlFor="campShowCountdown" style={{ fontSize: 12, color: '#FFF', cursor: 'pointer' }}>
+                    {lang === 'th' ? 'แสดงตัวนับเวลาถอยหลัง (Live Countdown)' : 'Show Live Countdown'}
+                  </label>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 12, borderTop: '1px solid var(--card-border)', paddingTop: 14 }}>
+                <button type="button" onClick={() => setCampaignModal(null)} className="btn btn-sm">
+                  {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+                </button>
+                <button type="submit" disabled={savingCampaign} className="btn btn-sm btn-primary" style={{ fontWeight: 700 }}>
+                  {savingCampaign ? (lang === 'th' ? 'กำลังบันทึก...' : 'Saving...') : (lang === 'th' ? 'บันทึกข้อมูล' : 'Save Campaign')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

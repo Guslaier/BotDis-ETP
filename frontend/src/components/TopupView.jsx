@@ -70,11 +70,27 @@ export default function TopupView({ lang, onToast }) {
     }
   };
 
+  const [activeCampaign, setActiveCampaign] = useState(null);
+
+  const fetchActiveCampaign = async () => {
+    try {
+      const res = await fetch('/api/public/campaign/active');
+      const data = await res.json();
+      if (data.success && data.campaign && data.campaign.isActive) {
+        setActiveCampaign(data.campaign);
+      } else {
+        setActiveCampaign(null);
+      }
+    } catch {}
+  };
+
   const remainingDays = (guildData?.guild?.isSupporter && guildData?.guild?.expiresAt && guildData.guild.expiresAt > Date.now())
     ? Math.ceil((guildData.guild.expiresAt - Date.now()) / (24 * 3600 * 1000))
     : (guildData?.guild?.remainingDays || 0);
 
-  const isAdvanceLocked = Boolean(remainingDays > 60 || guildData?.guild?.isAdvanceLocked);
+  const isAdvanceLocked = Boolean(guildData?.guild?.isAdvanceLocked !== undefined
+    ? guildData.guild.isAdvanceLocked
+    : (remainingDays > (guildData?.guild?.maxAdvanceDays || 60)));
   const isMaxStacked = isAdvanceLocked;
 
   const formatCountdown = (targetMs, l) => {
@@ -104,6 +120,7 @@ export default function TopupView({ lang, onToast }) {
       verifyGuild(g, u);
     }
     fetchPromptPayQr(29);
+    fetchActiveCampaign();
   }, []);
 
   const verifyGuild = async (targetGuildId = guildId, targetUserId = userId) => {
@@ -176,13 +193,12 @@ export default function TopupView({ lang, onToast }) {
   const handleVerifySlip = async (e) => {
     if (e) e.preventDefault();
     if (isAdvanceLocked) {
-      onToast(
-        'warning',
-        lang === 'th' ? 'จำกัดการเติมล่วงหน้า' : 'Advance Top-up Locked',
+      const lockMsg = guildData?.guild?.advanceLockMessage || (
         lang === 'th'
-          ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
-          : `This server has more than 60 days remaining (${remainingDays} days left). You will be able to top up when remaining days are below 60 days.`
+          ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน ${guildData?.guild?.maxAdvanceDays || 60} วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า ${guildData?.guild?.maxAdvanceDays || 60} วัน`
+          : `This server has more than ${guildData?.guild?.maxAdvanceDays || 60} days remaining (${remainingDays} days left). You will be able to top up when remaining days are below ${guildData?.guild?.maxAdvanceDays || 60} days.`
       );
+      onToast('warning', lang === 'th' ? 'จำกัดการเติมล่วงหน้า' : 'Advance Top-up Locked', lockMsg);
       return;
     }
     if (!guildId.trim()) {
@@ -225,13 +241,12 @@ export default function TopupView({ lang, onToast }) {
   const handleTopup = async (e) => {
     if (e) e.preventDefault();
     if (isAdvanceLocked) {
-      onToast(
-        'warning',
-        lang === 'th' ? 'จำกัดการเติมล่วงหน้า' : 'Advance Top-up Locked',
+      const lockMsg = guildData?.guild?.advanceLockMessage || (
         lang === 'th'
-          ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
-          : `This server has more than 60 days remaining (${remainingDays} days left). You will be able to top up when remaining days are below 60 days.`
+          ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน ${guildData?.guild?.maxAdvanceDays || 60} วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า ${guildData?.guild?.maxAdvanceDays || 60} วัน`
+          : `This server has more than ${guildData?.guild?.maxAdvanceDays || 60} days remaining (${remainingDays} days left). You will be able to top up when remaining days are below ${guildData?.guild?.maxAdvanceDays || 60} days.`
       );
+      onToast('warning', lang === 'th' ? 'จำกัดการเติมล่วงหน้า' : 'Advance Top-up Locked', lockMsg);
       return;
     }
     if (!guildId.trim()) {
@@ -348,6 +363,128 @@ export default function TopupView({ lang, onToast }) {
   return (
     <div style={{ maxWidth: 1080, margin: '24px auto', padding: '0 18px' }} className="fade-in">
       
+      {/* --- DYNAMIC LAUNCH CAMPAIGN ANNOUNCEMENT BANNER --- */}
+      {activeCampaign && (
+        <div style={{
+          marginBottom: 32,
+          padding: '24px 28px',
+          borderRadius: 20,
+          background: 'linear-gradient(135deg, rgba(0, 255, 136, 0.12) 0%, rgba(10, 15, 25, 0.95) 100%)',
+          border: '1px solid rgba(0, 255, 136, 0.4)',
+          boxShadow: '0 12px 40px rgba(0, 255, 136, 0.12)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Ambient Glow */}
+          <div style={{
+            position: 'absolute',
+            top: -40,
+            right: -40,
+            width: 180,
+            height: 180,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(0, 255, 136, 0.25) 0%, transparent 70%)',
+            pointerEvents: 'none'
+          }} />
+
+          {/* Top Pill Row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 14px',
+              borderRadius: 999,
+              background: 'rgba(0, 255, 136, 0.18)',
+              border: '1px solid var(--slime-green)',
+              color: 'var(--slime-green)',
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase'
+            }}>
+              <span>{activeCampaign.announcement?.badgeText || '✦ BETA LAUNCH'}</span>
+            </div>
+
+            {activeCampaign.announcement?.showCountdown !== false && activeCampaign.endsAt && (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 14px',
+                borderRadius: 999,
+                background: 'rgba(251, 191, 36, 0.12)',
+                border: '1px solid rgba(251, 191, 36, 0.4)',
+                color: '#FBBF24',
+                fontSize: 12,
+                fontWeight: 700
+              }}>
+                <IconClock size={14} />
+                <span>{formatCountdown(activeCampaign.endsAt, lang)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Title & Subtitle */}
+          <h2 style={{
+            fontSize: 'clamp(1.4rem, 3vw, 1.85rem)',
+            fontWeight: 800,
+            color: '#FFFFFF',
+            lineHeight: 1.3,
+            margin: '0 0 10px 0',
+            letterSpacing: '-0.02em'
+          }}>
+            {activeCampaign.announcement?.bannerTitle || activeCampaign.name}
+          </h2>
+
+          {activeCampaign.announcement?.bannerSubtitle && (
+            <p style={{
+              fontSize: 'clamp(13px, 1.8vw, 14.5px)',
+              lineHeight: 1.6,
+              color: '#CBD5E1',
+              margin: '0 0 16px 0',
+              maxWidth: 900
+            }}>
+              {activeCampaign.announcement.bannerSubtitle}
+            </p>
+          )}
+
+          {/* 3 Bullet Info Points */}
+          {Array.isArray(activeCampaign.announcement?.infoPoints) && activeCampaign.announcement.infoPoints.length > 0 && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: 12,
+              marginTop: 14,
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              paddingTop: 16
+            }}>
+              {activeCampaign.announcement.infoPoints.map((point, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: 12,
+                    background: 'rgba(0, 0, 0, 0.35)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    fontSize: 12.5,
+                    lineHeight: 1.55,
+                    color: '#E2E8F0'
+                  }}
+                >
+                  <div style={{ color: 'var(--slime-green)', fontWeight: 700, marginBottom: 4 }}>
+                    • {point.split(':')[0]}
+                  </div>
+                  <div style={{ color: '#94A3B8', fontSize: 12 }}>
+                    {point.includes(':') ? point.split(':').slice(1).join(':').trim() : point}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 1. HERO SOUNDSTAGE HEADER */}
       <section style={{
         textAlign: 'center',
@@ -1132,9 +1269,13 @@ export default function TopupView({ lang, onToast }) {
                       <span>{lang === 'th' ? '• เศษเงินยกยอดสะสมรอบหน้า' : '• Excess carried forward'}</span>
                       <span>{lang === 'th' ? '• ยอดสะสมมีอายุ 60 วัน' : '• Pot expires in 60 days'}</span>
                       <span style={{ width: '100%', color: '#94A3B8', marginTop: 2 }}>
-                        {lang === 'th'
-                          ? '• สะสมวันใช้งานได้สูงสุด 90 วัน (เติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน)'
-                          : '• Max 90 days total (top-up unlocks when < 60 days remain)'}
+                        {activeCampaign?.topupPolicy
+                          ? (lang === 'th'
+                              ? `• สะสมวันใช้งานได้สูงสุด ${activeCampaign.topupPolicy.maxAccumulatedDays || 37} วัน (${activeCampaign.topupPolicy.expiryPolicy === 'deferred_stack' ? 'เริ่มนับต่อจากวันสิ้นสุดแคมเปญ' : 'ตัดจบตามวันที่กำหนด'})`
+                              : `• Max ${activeCampaign.topupPolicy.maxAccumulatedDays || 37} days total (${activeCampaign.topupPolicy.expiryPolicy === 'deferred_stack' ? 'stacks after campaign' : 'fixed target date'})`)
+                          : (lang === 'th'
+                              ? '• สะสมวันใช้งานได้สูงสุด 90 วัน (เติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน)'
+                              : '• Max 90 days total (top-up unlocks when < 60 days remain)')}
                       </span>
                     </div>
                   </div>
@@ -1184,9 +1325,11 @@ export default function TopupView({ lang, onToast }) {
                       {lang === 'th' ? 'จำกัดการเติมล่วงหน้า (Advance Lock)' : 'Advance Top-up Locked'}
                     </div>
                     <div>
-                      {lang === 'th'
-                        ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า 60 วัน`
-                        : `This server has more than 60 days remaining (${remainingDays} days left). You will be able to top up when remaining days are below 60 days.`}
+                      {guildData?.guild?.advanceLockMessage || (
+                        lang === 'th'
+                          ? `เซิร์ฟเวอร์นี้มีวันใช้งานคงเหลือเกิน ${guildData?.guild?.maxAdvanceDays || 60} วันแล้ว (เหลือ ${remainingDays} วัน) จะสามารถเติมรอบใหม่ได้เมื่อวันคงเหลือต่ำกว่า ${guildData?.guild?.maxAdvanceDays || 60} วัน`
+                          : `This server has more than ${guildData?.guild?.maxAdvanceDays || 60} days remaining (${remainingDays} days left). You will be able to top up when remaining days are below ${guildData?.guild?.maxAdvanceDays || 60} days.`
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1221,7 +1364,7 @@ export default function TopupView({ lang, onToast }) {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
                     type="text"
-                    placeholder={isAdvanceLocked ? (lang === 'th' ? `เซิร์ฟเวอร์มีวันคงเหลือเกิน 60 วันแล้ว (เหลือ ${remainingDays} วัน)` : `Remaining days > 60 days (${remainingDays}d left)`) : "https://gift.truemoney.com/campaign/?v=..."}
+                    placeholder={isAdvanceLocked ? (guildData?.guild?.advanceLockMessage || (lang === 'th' ? `เซิร์ฟเวอร์มีวันคงเหลือเกิน ${guildData?.guild?.maxAdvanceDays || 60} วันแล้ว` : `Remaining days > ${guildData?.guild?.maxAdvanceDays || 60} days`)) : "https://gift.truemoney.com/campaign/?v=..."}
                     value={voucher}
                     onChange={(e) => setVoucher(e.target.value)}
                     disabled={isAdvanceLocked}
@@ -1416,7 +1559,7 @@ export default function TopupView({ lang, onToast }) {
                   {isAdvanceLocked ? (
                     <>
                       <IconLock size={16} />
-                      <span>{lang === 'th' ? `วันคงเหลือเกิน 60 วัน (เหลือ ${remainingDays} วัน)` : `Locked: ${remainingDays} Days Left`}</span>
+                      <span>{guildData?.guild?.advanceLockMessage ? (lang === 'th' ? `จำกัดการเติมล่วงหน้า (เหลือ ${remainingDays} วัน)` : `Advance Top-up Locked (${remainingDays}d)`) : (lang === 'th' ? `วันคงเหลือเกิน ${guildData?.guild?.maxAdvanceDays || 60} วัน (เหลือ ${remainingDays} วัน)` : `Locked: ${remainingDays} Days Left`)}</span>
                     </>
                   ) : submittingTopup ? (
                     <span>{lang === 'th' ? 'กำลังตรวจสอบยอดและทำรายการ...' : 'Verifying Voucher...'}</span>
