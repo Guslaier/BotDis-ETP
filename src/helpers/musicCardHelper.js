@@ -281,13 +281,17 @@ function createNowPlayingCard(player, track, options = {}) {
 
     // Modern Discord Components V2: Container layout (Accent colored bar enclosing all text & buttons)
     const accentColorInt = isPreparing ? 0xFFA500 : (isSupporter ? 0x00FF88 : 0x00B0FF);
+    const trackUrl = (track?.realSource?.includes('Bypass') && track?.fallbackUri)
+        ? track.fallbackUri
+        : (track?.uri || 'https://discord.com');
+
     const contentMarkdown = isPreparing
         ? `### ⏳ ${player.manager.client.user.username} • ${stageTitle}\n` +
           `**${safeTitle}**\n\n` +
           `\`⏳ ${statusText}\`  \`${bufferText}\`\n\n` +
           `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\`\n\n` +
           `*🔊 #${channelName}  •  👥 ${listeningText}*`
-        : `### [${safeTitle}](${track?.uri || 'https://discord.com'})\n` +
+        : `### [${safeTitle}](${trackUrl})\n` +
           `**${safeAuthor}**${requesterTag}\n\n` +
           `\`${sourceBadge}\`  \`${bitrateBadge}\`  \`${loopBadge}\`  \`${volBadge}\`${filterBadge}\n\n` +
           `\`${timeCurrent}\`  ${progressVisual}  \`${timeTotal}\`\n\n` +

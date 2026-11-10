@@ -239,6 +239,30 @@ class CacheManager {
         return path.join(this.cacheDir, `${this.getTrackHash(identifier)}.opus`);
     }
 
+    getTrackMetaPath(identifier) {
+        return path.join(this.cacheDir, `${this.getTrackHash(identifier)}.meta.json`);
+    }
+
+    saveTrackMeta(identifier, meta) {
+        try {
+            const metaPath = this.getTrackMetaPath(identifier);
+            fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
+        } catch (err) {
+            console.error('[CacheManager] Failed to save track meta:', err.message);
+        }
+    }
+
+    getTrackMeta(identifier) {
+        try {
+            const metaPath = this.getTrackMetaPath(identifier);
+            if (!fs.existsSync(metaPath)) return null;
+            const content = fs.readFileSync(metaPath, 'utf-8');
+            return JSON.parse(content);
+        } catch {
+            return null;
+        }
+    }
+
     isCached(identifier) {
         const filePath = this.getTrackPath(identifier);
         return fs.existsSync(filePath) && fs.statSync(filePath).size > 1024;
@@ -321,12 +345,7 @@ class CacheManager {
         return args;
     }
 
-    _getSoundCloudFallback(track) {
-        const identifier = track.identifier || track.uri;
-        if (identifier && this.scMatchCache.has(identifier)) {
-            return this.scMatchCache.get(identifier);
-        }
-
+    _getSoundCloudSearchQuery(track) {
         const title = track.title || '';
         const author = track.author || '';
         const cleanTitle = title
@@ -341,7 +360,17 @@ class CacheManager {
         if (author && !isTopicOrLabel && !query.toLowerCase().includes(author.toLowerCase())) {
             query = `${query} ${author}`;
         }
-        const res = query ? `scsearch1:${query.trim()}` : null;
+        return (query || title).trim();
+    }
+
+    _getSoundCloudFallback(track) {
+        const identifier = track.identifier || track.uri;
+        if (identifier && this.scMatchCache.has(identifier)) {
+            return this.scMatchCache.get(identifier);
+        }
+
+        const query = this._getSoundCloudSearchQuery(track);
+        const res = query ? `scsearch1:${query}` : null;
         if (identifier && res) {
             if (this.scMatchCache.size > 200) {
                 const firstKey = this.scMatchCache.keys().next().value;
@@ -431,8 +460,18 @@ class CacheManager {
         // 1. Play from cached file if present (<0.1s latency)
         if (this.isCached(identifier)) {
             console.log(`[CacheManager:Stream] Cache HIT for "${track.title}" (Serving from disk) | Filter: ${filter} | Bitrate: ${bitrate}`);
-            if (!track.realSource) {
-                track.realSource = (track.uri && track.uri.includes('soundcloud.com')) ? 'SoundCloud' : 'YouTube';
+            const meta = this.getTrackMeta(identifier);
+            if (meta && meta.realSource) {
+                track.realSource = meta.realSource;
+                if (meta.fallbackUri) track.fallbackUri = meta.fallbackUri;
+            } else {
+                if (this.scMatchCache.has(identifier) || youtubeCircuit.isOpen()) {
+                    track.realSource = 'SoundCloud (Bypass Fallback)';
+                    const cleanQuery = this._getSoundCloudSearchQuery(track);
+                    track.fallbackUri = `https://soundcloud.com/search?q=${encodeURIComponent(cleanQuery)}`;
+                } else {
+                    track.realSource = (track.uri && track.uri.includes('soundcloud.com')) ? 'SoundCloud (Direct)' : 'YouTube (Direct)';
+                }
             }
             return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate, identifier);
         }
@@ -444,6 +483,8 @@ class CacheManager {
         if (isYouTube && youtubeCircuit.isOpen()) {
             console.log(`[CacheManager:Stream] Circuit OPEN -> Fast-tracking "${track.title}" directly via SoundCloud pipe`);
             track.realSource = 'SoundCloud (Bypass Fallback)';
+            const cleanQuery = this._getSoundCloudSearchQuery(track);
+            track.fallbackUri = `https://soundcloud.com/search?q=${encodeURIComponent(cleanQuery)}`;
             return this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn, filter, bitrate, player);
         }
 
@@ -465,8 +506,12 @@ class CacheManager {
             console.log(`[CacheManager:Stream] Caching track to disk before playback: "${track.title}" (Mode: ${streamMode})`);
             await this.prepareTrack(track, false, onSpawn);
             if (this.isCached(identifier)) {
-                if (!track.realSource) {
-                    track.realSource = (track.uri && track.uri.includes('soundcloud.com')) ? 'SoundCloud' : 'YouTube';
+                const meta = this.getTrackMeta(identifier);
+                if (meta && meta.realSource) {
+                    track.realSource = meta.realSource;
+                    if (meta.fallbackUri) track.fallbackUri = meta.fallbackUri;
+                } else if (!track.realSource) {
+                    track.realSource = (track.uri && track.uri.includes('soundcloud.com')) ? 'SoundCloud (Direct)' : 'YouTube (Direct)';
                 }
                 return this._streamFromDisk(targetPath, seekSeconds, volume, onSpawn, filter, bitrate, identifier);
             }
@@ -475,6 +520,8 @@ class CacheManager {
                 console.warn(`[CacheManager] Anti-bot block detected: ${err.message}. Fast-switching to SoundCloud...`);
                 youtubeCircuit.trip(err.message);
                 track.realSource = 'SoundCloud (Bypass Fallback)';
+                const cleanQuery = this._getSoundCloudSearchQuery(track);
+                track.fallbackUri = `https://soundcloud.com/search?q=${encodeURIComponent(cleanQuery)}`;
                 return this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn, filter, bitrate, player);
             }
             console.log(`[CacheManager] Disk caching timed out or failed for "${track.title}". Streaming directly via live pipe...`);
@@ -632,6 +679,8 @@ class CacheManager {
                     console.log(`[CacheManager] Auto-switching to SoundCloud stream for: ${track.title}${isBotBan ? ' (Anti-Bot detected)' : ''}`);
                     try {
                         track.realSource = 'SoundCloud (Bypass Fallback)';
+                        const cleanQuery = this._getSoundCloudSearchQuery(track);
+                        track.fallbackUri = `https://soundcloud.com/search?q=${encodeURIComponent(cleanQuery)}`;
                         const fallbackStream = await this._trySoundCloudFallback(track, seekSeconds, volume, onSpawn, filter, bitrate, player);
                         return resolve(fallbackStream);
                     } catch (fbErr) {
@@ -664,6 +713,10 @@ class CacheManager {
                     proxyManager.reportSuccess(activeProxy, Date.now() - startTime);
                 }
                 track.realSource = isFallback ? 'SoundCloud (Bypass Fallback)' : (track.uri && track.uri.includes('soundcloud.com') ? 'SoundCloud (Direct)' : 'YouTube (Direct)');
+                if (isFallback && !track.fallbackUri) {
+                    const cleanQuery = this._getSoundCloudSearchQuery(track);
+                    track.fallbackUri = `https://soundcloud.com/search?q=${encodeURIComponent(cleanQuery)}`;
+                }
                 console.log(`[CacheManager:Stream] First audio buffer dispatched for "${track.title}" in ${Date.now() - startTime}ms (${bufferedBytes} bytes pre-buffered) | Real Source: ${track.realSource}`);
                 if (player && player.nowPlayingMessage) {
                     try {
@@ -773,6 +826,21 @@ class CacheManager {
                     return reject(new Error(`Remote node ${node.id} responded with status ${res.statusCode}`));
                 }
 
+                if (res.headers['x-real-source']) {
+                    try {
+                        track.realSource = decodeURIComponent(res.headers['x-real-source']);
+                    } catch {
+                        track.realSource = res.headers['x-real-source'];
+                    }
+                }
+                if (res.headers['x-fallback-uri']) {
+                    try {
+                        track.fallbackUri = decodeURIComponent(res.headers['x-fallback-uri']);
+                    } catch {
+                        track.fallbackUri = res.headers['x-fallback-uri'];
+                    }
+                }
+
                 res.streamType = (res.headers['content-type'] && res.headers['content-type'].includes('webm')) ? 'webm/opus' : 'ogg/opus';
 
                 res.kill = () => {
@@ -801,6 +869,8 @@ class CacheManager {
 
     async _trySoundCloudFallback(track, seekSeconds = 0, volume = 100, onSpawn = null, filter = 'off', bitrate = '64k', player = null) {
         track.realSource = 'SoundCloud (Bypass Fallback)';
+        const cleanQuery = this._getSoundCloudSearchQuery(track);
+        track.fallbackUri = `https://soundcloud.com/search?q=${encodeURIComponent(cleanQuery)}`;
         const fallbackQuery = this._getSoundCloudFallback(track);
         if (!fallbackQuery) {
             throw new Error('No valid fallback search query could be generated.');
@@ -878,6 +948,15 @@ class CacheManager {
                         }
                     });
                     track.realSource = 'SoundCloud (Bypass Fallback)';
+                    const cleanQuery = this._getSoundCloudSearchQuery(track);
+                    track.fallbackUri = `https://soundcloud.com/search?q=${encodeURIComponent(cleanQuery)}`;
+                    this.saveTrackMeta(identifier, {
+                        identifier,
+                        realSource: 'SoundCloud (Bypass Fallback)',
+                        fallbackUri: track.fallbackUri,
+                        sourceUrl: fallback,
+                        cachedAt: Date.now()
+                    });
                     if (fs.existsSync(targetPath)) return targetPath;
                 }
             }
@@ -915,6 +994,14 @@ class CacheManager {
                     proxyManager.reportSuccess(activeProxy, Date.now() - startTime);
                 }
                 track.realSource = track.uri && track.uri.includes('soundcloud.com') ? 'SoundCloud (Direct)' : 'YouTube (Direct)';
+                track.fallbackUri = null;
+                this.saveTrackMeta(identifier, {
+                    identifier,
+                    realSource: track.realSource,
+                    fallbackUri: null,
+                    sourceUrl: track.uri,
+                    cachedAt: Date.now()
+                });
             } catch (err) {
                 if (isBackground && (wasAborted || err.signal === 'SIGTERM' || err.killed)) {
                     console.log(`[CacheManager] Background pre-cache aborted for "${track.title}" (Yielded to interactive request).`);
@@ -949,6 +1036,15 @@ class CacheManager {
                         }
                     });
                     track.realSource = 'SoundCloud (Bypass Fallback)';
+                    const cleanQuery = this._getSoundCloudSearchQuery(track);
+                    track.fallbackUri = `https://soundcloud.com/search?q=${encodeURIComponent(cleanQuery)}`;
+                    this.saveTrackMeta(identifier, {
+                        identifier,
+                        realSource: 'SoundCloud (Bypass Fallback)',
+                        fallbackUri: track.fallbackUri,
+                        sourceUrl: fallback,
+                        cachedAt: Date.now()
+                    });
                     console.log(`[CacheManager] Track cached via SoundCloud: "${track.title}"`);
                 } else {
                     throw err;
@@ -999,7 +1095,11 @@ class CacheManager {
 
                     // If file exceeded TTL and is not actively streaming, delete it
                     if (now - stats.mtimeMs > maxAgeMs && !isPinned) {
-                        try { fs.unlinkSync(fullPath); } catch {}
+                        try {
+                            fs.unlinkSync(fullPath);
+                            const metaPath = path.join(this.cacheDir, `${fileIdentifier}.meta.json`);
+                            if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
+                        } catch {}
                     } else {
                         totalSizeBytes += stats.size;
                         fileStats.push({
@@ -1011,6 +1111,17 @@ class CacheManager {
                         });
                     }
                 } catch {}
+            }
+
+            // Prune orphaned .meta.json files
+            for (const file of files) {
+                if (file.endsWith('.meta.json')) {
+                    const baseHash = file.slice(0, -10);
+                    const audioPath = path.join(this.cacheDir, `${baseHash}.opus`);
+                    if (!fs.existsSync(audioPath)) {
+                        try { fs.unlinkSync(path.join(this.cacheDir, file)); } catch {}
+                    }
+                }
             }
 
             const maxMb = parseInt(process.env.CACHE_MAX_SIZE_MB || '350', 10);
@@ -1030,6 +1141,8 @@ class CacheManager {
 
                     try {
                         fs.unlinkSync(item.path);
+                        const metaPath = path.join(this.cacheDir, `${item.identifier}.meta.json`);
+                        if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
                         totalSizeBytes -= item.size;
                         evictedBytes += item.size;
                         evictedCount++;

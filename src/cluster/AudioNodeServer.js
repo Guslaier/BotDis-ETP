@@ -304,7 +304,14 @@ class AudioNodeServer {
                     let spawned = null;
                     if (cacheManager.isCached(identifier)) {
                         console.log(`[AudioNode] Disk Cache HIT for "${title}" (Instant 0ms start)`);
-                        spawned = cacheManager._streamFromDisk(targetPath, seekSeconds, volume, null, filter, bitrate);
+                        const meta = cacheManager.getTrackMeta(identifier);
+                        if (meta && meta.realSource) {
+                            track.realSource = meta.realSource;
+                            if (meta.fallbackUri) track.fallbackUri = meta.fallbackUri;
+                        } else {
+                            track.realSource = (track.uri && track.uri.includes('soundcloud.com')) ? 'SoundCloud (Direct)' : 'YouTube (Direct)';
+                        }
+                        spawned = cacheManager._streamFromDisk(targetPath, seekSeconds, volume, null, filter, bitrate, identifier);
                     } else {
                         spawned = await cacheManager._spawnPipedStream(
                             track,
@@ -338,7 +345,9 @@ class AudioNodeServer {
                         'Content-Type': contentType,
                         'Transfer-Encoding': 'chunked',
                         'Cache-Control': 'no-cache, no-store',
-                        'Connection': 'keep-alive'
+                        'Connection': 'keep-alive',
+                        'x-real-source': encodeURIComponent(track.realSource || 'YouTube (Direct)'),
+                        'x-fallback-uri': encodeURIComponent(track.fallbackUri || '')
                     });
 
                     streamInstance.pipe(res);
